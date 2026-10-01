@@ -3,6 +3,7 @@ import {
   Logger,
   OnModuleDestroy,
   OnModuleInit,
+  ServiceUnavailableException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PrismaPg } from '@prisma/adapter-pg';
@@ -38,6 +39,13 @@ export class PrismaService implements OnModuleInit, OnModuleDestroy {
 
   async onModuleDestroy() {
     await this.client?.$disconnect();
+  }
+
+  get db(): PrismaClient {
+    if (!this.client) {
+      throw new ServiceUnavailableException('Banco de dados indisponível');
+    }
+    return this.client;
   }
 
   async isConnected(): Promise<boolean> {

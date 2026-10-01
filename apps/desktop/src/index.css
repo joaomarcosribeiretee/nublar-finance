@@ -1,0 +1,172 @@
+@import "tailwindcss";
+
+:root {
+  --background: #0a0f0d;
+  --surface: #101714;
+  --surface-2: #151e1a;
+  --raised: #1b2620;
+  --foreground: #e8efe9;
+  --muted: #8a9a90;
+  --faint: #56655c;
+  --line: rgb(232 239 233 / 7%);
+  --line-strong: rgb(232 239 233 / 13%);
+  --gold: #c9a45c;
+  --positive: #6cc495;
+  --negative: #e58a7c;
+  --transfer: #8fa8cc;
+  --titlebar: 40px;
+  /* Chart series: dark steps validated with the dataviz validator against
+     --surface (adjacent CVD ΔE >= 8.4, all >= 3:1). Fixed order, never cycled. */
+  --series-1: #3987e5;
+  --series-2: #d95926;
+  --series-3: #199e70;
+  --series-4: #c98500;
+  --series-5: #d55181;
+  --series-6: #008300;
+  --series-7: #9085e9;
+  --series-8: #e66767;
+  --grid: rgb(232 239 233 / 6%);
+  color-scheme: dark;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-raised: var(--raised);
+  --color-foreground: var(--foreground);
+  --color-muted: var(--muted);
+  --color-faint: var(--faint);
+  --color-line: var(--line);
+  --color-line-strong: var(--line-strong);
+  --color-gold: var(--gold);
+  --color-positive: var(--positive);
+  --color-negative: var(--negative);
+  --color-transfer: var(--transfer);
+  --font-sans: "Outfit", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Fraunces", ui-serif, Georgia, serif;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  user-select: none;
+}
+
+input,
+textarea {
+  user-select: text;
+}
+
+::selection {
+  background: rgb(201 164 92 / 30%);
+}
+
+:focus-visible {
+  outline: 2px solid rgb(201 164 92 / 60%);
+  outline-offset: 2px;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--line-strong);
+  border: 3px solid transparent;
+  border-radius: 99px;
+  background-clip: padding-box;
+}
+
+input[type="date"]::-webkit-calendar-picker-indicator {
+  filter: invert(0.7);
+  cursor: pointer;
+}
+
+.drag {
+  -webkit-app-region: drag;
+}
+.no-drag {
+  -webkit-app-region: no-drag;
+}
+
+.tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+@keyframes enter {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+}
+
+@keyframes fade {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes pop {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.98);
+  }
+}
+
+@keyframes shimmer {
+  to {
+    background-position: -200% 0;
+  }
+}
+
+.animate-enter {
+  animation: enter 280ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+.skeleton {
+  border-radius: 8px;
+  background: linear-gradient(
+    90deg,
+    var(--surface-2) 25%,
+    var(--raised) 50%,
+    var(--surface-2) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.4s linear infinite;
+}
+
+dialog.modal {
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: inherit;
+  max-width: none;
+  max-height: none;
+}
+dialog.modal[open] {
+  animation: pop 200ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+dialog.modal::backdrop {
+  background: rgb(4 7 6 / 72%);
+  backdrop-filter: blur(4px);
+  animation: fade 200ms ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after,
+  dialog.modal::backdrop {
+    animation-duration: 1ms !important;
+    transition-duration: 1ms !important;
+  }
+}

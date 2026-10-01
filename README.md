@@ -1,4 +1,27 @@
-# 🦖 Nublar
+<p align="center">
+  <img src="assets/logo.png" alt="Nublar" width="140" />
+</p>
+
+<h1 align="center">Nublar</h1>
+
+<p align="center">
+  Dashboard pessoal da vida financeira.<br />
+  App desktop. A API é a fonte da verdade do dinheiro.
+</p>
+
+<p align="center">
+  <strong>Onde estou?</strong>
+  &nbsp;·&nbsp;
+  <strong>Para onde o dinheiro está indo?</strong>
+  &nbsp;·&nbsp;
+  <strong>Para onde as finanças estão caminhando?</strong>
+</p>
+
+<p align="center">
+  Desktop &nbsp;·&nbsp; Electron + React &nbsp;·&nbsp; NestJS &nbsp;·&nbsp; Supabase
+</p>
+
+---
 
 **Nublar** é uma plataforma pessoal de organização e acompanhamento financeiro, criada para centralizar toda a vida financeira do usuário de maneira simples, visual e didática.
 
@@ -13,30 +36,39 @@ A proposta é permitir que o usuário entenda rapidamente:
 - como seu patrimônio está evoluindo;
 - quais são seus próximos compromissos financeiros.
 
-O projeto começa como uma aplicação **Web/Desktop para uso pessoal**, mas sua arquitetura deve permitir evolução futura para mobile e integrações externas sem reescrever o core financeiro.
+O projeto começa como uma aplicação **desktop para uso pessoal**, mas sua arquitetura deve permitir evolução futura para mobile e integrações externas sem reescrever o core financeiro.
 
 ---
 
 # 🚀 Como executar
 
-A Fase 0 sobe a fundação: monorepo, web, API, PostgreSQL e os checks do projeto.
+A Fase 0 sobe a fundação: monorepo, app desktop, API, Supabase e os checks do projeto.
 
 Requisitos:
 
 - Node.js 20 ou superior
 - pnpm 10
-- Docker, para o PostgreSQL
+- Um projeto no Supabase
 
 ```bash
 pnpm install
-docker compose up -d
+pnpm --filter @nublar/api db:migrate
 pnpm dev
 ```
 
-- Web: http://localhost:3000
+Antes de `pnpm dev`, preencha `apps/api/.env` e `apps/desktop/.env`:
+
+- `DATABASE_URL`: Supabase → Project Settings → Database → Connection string → URI. Use a conexão direta na porta `5432`.
+- `SUPABASE_ANON_KEY` (API) e `VITE_SUPABASE_ANON_KEY` (desktop): a mesma publishable key, em Project Settings → API.
+
+`.env` só é lido quando a API sobe: depois de alterá-lo, reinicie `pnpm dev`.
+
+Atalho no app: `N` abre um novo lançamento de qualquer tela.
+
+- O app abre numa janela desktop
 - API: http://localhost:3333/health
 
-Os exemplos de ambiente estão em `apps/api/.env.example` e `apps/web/.env.example`.
+Logos e imagens ficam em `assets/`, não na raiz do repositório. O exemplo de ambiente está em `apps/api/.env.example`.
 
 ---
 
@@ -448,7 +480,7 @@ A arquitetura deve favorecer:
 Fluxo principal:
 
 ```text
-Web
+Desktop
  │
  ▼
 REST API
@@ -460,17 +492,17 @@ Application / Domain
 Repositories
  │
  ▼
-PostgreSQL
+Supabase (PostgreSQL)
 ```
 
 Futuramente:
 
 ```text
-Web ───────┐
-           │
-Mobile ────┼────► Nublar API ────► PostgreSQL
-           │
-Integrações┘
+Desktop ─────┐
+             │
+Mobile ──────┼────► Nublar API ────► Supabase
+             │
+Integrações ─┘
 ```
 
 O backend é a **fonte da verdade das regras financeiras**.
@@ -489,9 +521,10 @@ Turborepo
 ## Frontend
 
 ```text
-Next.js
+Electron
 React
 TypeScript
+Vite
 Tailwind CSS
 shadcn/ui
 TanStack Query
@@ -507,14 +540,13 @@ Node.js
 NestJS
 TypeScript
 Prisma
-PostgreSQL
+Supabase (PostgreSQL)
 ```
 
 ## Infraestrutura
 
 ```text
-Docker
-Docker Compose
+Supabase
 GitHub Actions
 ```
 
@@ -537,14 +569,17 @@ Redis poderá ser introduzido futuramente caso exista uma necessidade real.
 nublar/
 
 apps/
-├── web/
-│   └── Next.js
+├── desktop/
+│   └── Electron + React
 │
 ├── api/
 │   └── NestJS
 │
 └── mobile/
     └── React Native (futuro)
+
+assets/
+└── logo.png
 
 packages/
 ├── types/
@@ -559,10 +594,8 @@ docs/
 └── decisions/
 
 infra/
-├── docker/
 └── scripts/
 
-docker-compose.yml
 package.json
 pnpm-workspace.yaml
 turbo.json
@@ -620,9 +653,8 @@ A arquitetura deve permanecer simples enquanto preservar separação de responsa
 # 🎨 Organização do Frontend
 
 ```text
-apps/web/src/
+apps/desktop/src/
 
-app/
 components/
 features/
 hooks/
@@ -866,21 +898,20 @@ Caso exista ambiguidade que possa alterar comportamento financeiro relevante, pe
 
 # 🗺️ Roadmap Inicial
 
-## Fase 0 — Fundação
+## Fase 0 — Fundação ✅
 
 - Monorepo
-- Next.js
+- Electron
 - NestJS
-- PostgreSQL
+- Supabase (PostgreSQL)
 - Prisma
-- Docker
 - Configuração de ambiente
 - Lint
 - Typecheck
 - Testes
 - CI
 
-## Fase 1 — Core Financeiro
+## Fase 1 — Core Financeiro ✅
 
 - Usuário
 - Autenticação
@@ -891,7 +922,9 @@ Caso exista ambiguidade que possa alterar comportamento financeiro relevante, pe
 - Transferências
 - Histórico de transações
 
-## Fase 2 — Compromissos
+## Fase 2 — Compromissos ✅
+
+Regras em `docs/decisions/0001-regras-de-compromissos.md`.
 
 - Cartões
 - Faturas
@@ -900,7 +933,9 @@ Caso exista ambiguidade que possa alterar comportamento financeiro relevante, pe
 - Despesas recorrentes
 - Receitas recorrentes
 
-## Fase 3 — Dashboard
+## Fase 3 — Dashboard ✅
+
+Tela Análises: patrimônio, receitas × despesas, poupança, categorias, distribuição, natureza dos gastos e compromissos futuros. Regras em `docs/decisions/0002-investimentos-e-analises.md`.
 
 - Patrimônio
 - Saldo disponível
@@ -912,7 +947,9 @@ Caso exista ambiguidade que possa alterar comportamento financeiro relevante, pe
 - Gráficos
 - Comparações mensais
 
-## Fase 4 — Investimentos
+## Fase 4 — Investimentos ✅
+
+Cotações automáticas ficam para o futuro: valores são atualizados à mão.
 
 - Renda fixa
 - Ações
@@ -923,14 +960,18 @@ Caso exista ambiguidade que possa alterar comportamento financeiro relevante, pe
 - Distribuição patrimonial
 - Rentabilidade
 
-## Fase 5 — Planejamento
+## Fase 5 — Planejamento ✅
+
+Orçamentos, metas, calendário e projeção. Regras em `docs/decisions/0003-planejamento-e-importacao.md`.
 
 - Metas
 - Orçamentos
 - Calendário financeiro
 - Projeções
 
-## Fase 6 — Automação
+## Fase 6 — Automação ✅
+
+Importação OFX/CSV para contas, com revisão, duplicados e regras aprendidas.
 
 - CSV
 - OFX
@@ -990,6 +1031,6 @@ O sistema deve ajudar o usuário a responder três perguntas:
 ---
 
 **Status:** Em desenvolvimento  
-**Plataforma inicial:** Web/Desktop  
+**Plataforma inicial:** Desktop  
 **Mobile:** Planejado  
 **Uso inicial:** Pessoal

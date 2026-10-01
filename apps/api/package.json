@@ -13,6 +13,7 @@
     "test": "jest",
     "test:e2e": "jest --config ./test/jest-e2e.json",
     "db:generate": "prisma generate",
+    "db:migrate": "prisma migrate deploy --config prisma7.config.ts",
     "postinstall": "prisma generate"
   },
   "dependencies": {
@@ -23,8 +24,10 @@
     "@nublar/validation": "workspace:*",
     "@prisma/adapter-pg": "^7.10.0",
     "@prisma/client": "^7.10.0",
+    "@supabase/supabase-js": "^2.76.1",
     "pg": "^8.16.3",
     "reflect-metadata": "^0.2.2",
+    "zod": "^4.1.11",
     "rxjs": "^7.8.1"
   },
   "devDependencies": {

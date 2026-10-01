@@ -8,4 +8,371 @@ datasource db {
   provider = "postgresql"
 }
 
-// Domain models arrive in Fase 1: user, accounts, and transactions.
+// Passwords stay in Supabase Auth. This id is the Supabase user id.
+
+model User {
+  id             String                @id @db.Uuid
+  email          String
+  createdAt      DateTime              @default(now())
+  updatedAt      DateTime              @updatedAt
+  accounts       Account[]
+  categories     Category[]
+  transactions   Transaction[]
+  creditCards    CreditCard[]
+  institutions   Institution[]
+  investments    Investment[]
+  valuations     InvestmentValuation[]
+  budgets        Budget[]
+  categoryRules  CategoryRule[]
+  goals          Goal[]
+  cardPurchases  CardPurchase[]
+  recurringRules RecurringRule[]
+}
+
+/// Bank, broker or digital wallet that groups accounts and cards.
+model Institution {
+  id          String       @id @default(uuid()) @db.Uuid
+  userId      String       @db.Uuid
+  name        String
+  color       String
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accounts    Account[]
+  cards       CreditCard[]
+  investments Investment[]
+
+  @@unique([userId, name])
+  @@index([userId])
+}
+
+model Account {
+  id                String          @id @default(uuid()) @db.Uuid
+  userId            String          @db.Uuid
+  /// Null for cash and anything outside a bank.
+  institutionId     String?         @db.Uuid
+  /// Optional nickname; empty means "show the type" (e.g. "Conta corrente").
+  name              String          @default("")
+  type              AccountType
+  currency          String          @default("BRL")
+  /// Minor units held before tracking started. Not income.
+  openingBalance    BigInt          @default(0)
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+  user              User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  institution       Institution?    @relation(fields: [institutionId], references: [id], onDelete: Restrict)
+  transactions      Transaction[]   @relation("AccountTransactions")
+  incomingTransfers Transaction[]   @relation("TransferDestination")
+  cardsPaidFrom     CreditCard[]
+  recurringRules    RecurringRule[]
+  goalLinks         GoalLink[]
+
+  @@index([userId])
+}
+
+model Category {
+  id             String          @id @default(uuid()) @db.Uuid
+  userId         String          @db.Uuid
+  name           String
+  kind           CategoryKind
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  user           User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  transactions   Transaction[]
+  cardPurchases  CardPurchase[]
+  recurringRules RecurringRule[]
+  budget         Budget?
+  rules          CategoryRule[]
+
+  @@unique([userId, kind, name])
+  @@index([userId])
+}
+
+model Transaction {
+  id                   String            @id @default(uuid()) @db.Uuid
+  userId               String            @db.Uuid
+  /// Null for credit card purchase installments.
+  accountId            String?           @db.Uuid
+  destinationAccountId String?           @db.Uuid
+  cardId               String?           @db.Uuid
+  /// YYYY-MM of the card invoice (card installments and card payments).
+  invoiceMonth         String?
+  purchaseId           String?           @db.Uuid
+  installmentNumber    Int?
+  installmentCount     Int?
+  recurringRuleId      String?           @db.Uuid
+  /// YYYY-MM the recurring occurrence belongs to.
+  occurrence           String?
+  /// Contributions (INVESTMENT) and redemptions (REDEMPTION).
+  investmentId         String?           @db.Uuid
+  categoryId           String?           @db.Uuid
+  type                 TransactionType
+  amount               BigInt
+  currency             String            @default("BRL")
+  description          String            @default("")
+  date                 DateTime          @db.Date
+  source               TransactionSource @default(MANUAL)
+  /// Bank id (OFX FITID) of an imported entry; stops importing it twice.
+  importKey            String?
+  status               TransactionStatus @default(POSTED)
+  createdAt            DateTime          @default(now())
+  updatedAt            DateTime          @updatedAt
+  user                 User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  account              Account?          @relation("AccountTransactions", fields: [accountId], references: [id], onDelete: Restrict)
+  destinationAccount   Account?          @relation("TransferDestination", fields: [destinationAccountId], references: [id], onDelete: Restrict)
+  category             Category?         @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  card                 CreditCard?       @relation(fields: [cardId], references: [id], onDelete: Restrict)
+  purchase             CardPurchase?     @relation(fields: [purchaseId], references: [id], onDelete: Cascade)
+  recurringRule        RecurringRule?    @relation(fields: [recurringRuleId], references: [id], onDelete: SetNull)
+  investment           Investment?       @relation(fields: [investmentId], references: [id], onDelete: Restrict)
+
+  @@unique([recurringRuleId, occurrence])
+  @@unique([accountId, importKey])
+  @@index([userId, date])
+  @@index([userId, invoiceMonth])
+  @@index([accountId])
+  @@index([cardId])
+}
+
+model CreditCard {
+  id               String          @id @default(uuid()) @db.Uuid
+  userId           String          @db.Uuid
+  institutionId    String?         @db.Uuid
+  name             String
+  limit            BigInt
+  closingDay       Int
+  dueDay           Int
+  paymentAccountId String?         @db.Uuid
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
+  user             User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  paymentAccount   Account?        @relation(fields: [paymentAccountId], references: [id], onDelete: SetNull)
+  institution      Institution?    @relation(fields: [institutionId], references: [id], onDelete: Restrict)
+  purchases        CardPurchase[]
+  transactions     Transaction[]
+  recurringRules   RecurringRule[]
+
+  @@index([userId])
+}
+
+/// One purchase on a card. Its installments are Transaction rows.
+model CardPurchase {
+  id           String        @id @default(uuid()) @db.Uuid
+  userId       String        @db.Uuid
+  cardId       String        @db.Uuid
+  categoryId   String        @db.Uuid
+  description  String        @default("")
+  amount       BigInt
+  installments Int
+  date         DateTime      @db.Date
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  card         CreditCard    @relation(fields: [cardId], references: [id], onDelete: Restrict)
+  category     Category      @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  transactions Transaction[]
+
+  @@index([userId])
+  @@index([cardId])
+}
+
+model RecurringRule {
+  id           String          @id @default(uuid()) @db.Uuid
+  userId       String          @db.Uuid
+  type         TransactionType
+  /// Exactly one of accountId / cardId. On a card it is billed on every invoice.
+  accountId    String?         @db.Uuid
+  cardId       String?         @db.Uuid
+  /// Set for "parcelado em N vezes": amount is the total, split like card purchases.
+  installments Int?
+  categoryId   String          @db.Uuid
+  amount       BigInt
+  description  String          @default("")
+  dayOfMonth   Int
+  startMonth   String
+  endMonth     String?
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+  user         User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  account      Account?        @relation(fields: [accountId], references: [id], onDelete: Restrict)
+  category     Category        @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  transactions Transaction[]
+  card         CreditCard?     @relation(fields: [cardId], references: [id], onDelete: Restrict)
+
+  @@index([userId])
+}
+
+enum AccountType {
+  CHECKING
+  SAVINGS
+  CASH
+  BROKERAGE
+  CRYPTO
+  OTHER
+}
+
+enum CategoryKind {
+  INCOME
+  EXPENSE
+}
+
+enum TransactionType {
+  INCOME
+  EXPENSE
+  TRANSFER
+  INVESTMENT
+  CARD_PAYMENT
+  REDEMPTION
+}
+
+enum TransactionSource {
+  MANUAL
+  CSV_IMPORT
+  OFX_IMPORT
+  OPEN_FINANCE
+}
+
+enum TransactionStatus {
+  PENDING
+  POSTED
+  CANCELED
+}
+
+enum AssetClass {
+  FIXED_INCOME
+  STOCK
+  FII
+  ETF
+  CRYPTO
+  OTHER
+}
+
+/// A position held at an institution. Its value is tracked by manual
+/// valuations plus contributions and redemptions made after them.
+model Investment {
+  id             String                @id @default(uuid()) @db.Uuid
+  userId         String                @db.Uuid
+  institutionId  String?               @db.Uuid
+  name           String
+  assetClass     AssetClass
+  /// Informative only, e.g. "PETR4" and "100". No quotes are fetched.
+  ticker         String                @default("")
+  quantity       String                @default("")
+  /// What was already applied before tracking started. Not an expense.
+  openingApplied BigInt                @default(0)
+  startDate      DateTime              @db.Date
+  maturityDate   DateTime?             @db.Date
+  /// Fixed income only.
+  product        FixedIncomeProduct?
+  indexer        Indexer?
+  /// 11000 = 110% of CDI; 650 = IPCA + 6,5%; 1200 = 12% a.a. prefixado.
+  rateBps        Int?
+  liquidity      Liquidity?
+  createdAt      DateTime              @default(now())
+  updatedAt      DateTime              @updatedAt
+  user           User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  institution    Institution?          @relation(fields: [institutionId], references: [id], onDelete: Restrict)
+  valuations     InvestmentValuation[]
+  transactions   Transaction[]
+  goalLinks      GoalLink[]
+
+  @@index([userId])
+}
+
+/// "On this date the position was worth this much", including movements up to that day.
+model InvestmentValuation {
+  id           String     @id @default(uuid()) @db.Uuid
+  userId       String     @db.Uuid
+  investmentId String     @db.Uuid
+  date         DateTime   @db.Date
+  value        BigInt
+  createdAt    DateTime   @default(now())
+  user         User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  investment   Investment @relation(fields: [investmentId], references: [id], onDelete: Cascade)
+
+  @@index([investmentId, date])
+}
+
+enum FixedIncomeProduct {
+  CDB
+  LCI
+  LCA
+  TESOURO_SELIC
+  TESOURO_IPCA
+  TESOURO_PREFIXADO
+  DEBENTURE
+  CRI_CRA
+  FUND
+  OTHER
+}
+
+enum Indexer {
+  CDI
+  IPCA
+  PREFIXED
+  SELIC
+}
+
+enum Liquidity {
+  DAILY
+  AT_MATURITY
+}
+
+/// Monthly spending limit for one expense category, the same every month.
+model Budget {
+  id         String   @id @default(uuid()) @db.Uuid
+  userId     String   @db.Uuid
+  categoryId String   @unique @db.Uuid
+  amount     BigInt
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  category   Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+/// A savings target. Progress = linked accounts + linked investments + manual amount.
+model Goal {
+  id          String     @id @default(uuid()) @db.Uuid
+  userId      String     @db.Uuid
+  name        String
+  target      BigInt
+  targetDate  DateTime?  @db.Date
+  /// Money set aside outside the app or not linked to anything.
+  manualSaved BigInt     @default(0)
+  color       String
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  user        User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  links       GoalLink[]
+
+  @@index([userId])
+}
+
+model GoalLink {
+  id           String      @id @default(uuid()) @db.Uuid
+  goalId       String      @db.Uuid
+  accountId    String?     @db.Uuid
+  investmentId String?     @db.Uuid
+  goal         Goal        @relation(fields: [goalId], references: [id], onDelete: Cascade)
+  account      Account?    @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  investment   Investment? @relation(fields: [investmentId], references: [id], onDelete: Cascade)
+
+  @@unique([goalId, accountId])
+  @@unique([goalId, investmentId])
+}
+
+/// Learned from imports: descriptions containing `keyword` get `categoryId`.
+model CategoryRule {
+  id         String   @id @default(uuid()) @db.Uuid
+  userId     String   @db.Uuid
+  keyword    String
+  categoryId String   @db.Uuid
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  category   Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, keyword])
+}
