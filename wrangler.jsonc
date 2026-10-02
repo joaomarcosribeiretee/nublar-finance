@@ -2,7 +2,7 @@
   "name": "nublar",
   "compatibility_date": "2026-10-02",
   "assets": {
-    "directory": "./dist",
+    "directory": "./apps/desktop/dist",
     "not_found_handling": "single-page-application"
   }
 }
