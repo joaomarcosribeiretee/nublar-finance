@@ -1,7 +1,10 @@
 {
   "extends": "./tsconfig.json",
   "compilerOptions": {
-    "rootDir": "src"
+    "rootDir": "src",
+    // Kept inside dist: nest deletes dist before building, and a stale
+    // buildinfo outside it makes tsc skip emitting entirely.
+    "tsBuildInfoFile": "./dist/tsconfig.build.tsbuildinfo"
   },
   "include": ["src"],
   "exclude": ["node_modules", "dist", "**/*spec.ts"]

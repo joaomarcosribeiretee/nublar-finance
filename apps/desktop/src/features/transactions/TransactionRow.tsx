@@ -3,6 +3,7 @@ import { Money } from "@/components/Money";
 import { useToast } from "@/components/Toast";
 import { errorMessage } from "@/lib/api";
 import { useConfirmTransaction, useSkipTransaction, type Transaction } from "@/lib/queries";
+import { shortDate } from "@/lib/dates";
 import { entryTypeLabels } from "@/lib/labels";
 
 type Look = {
@@ -58,9 +59,12 @@ function subtitleOf(transaction: Transaction): string {
 export function TransactionRow({
   transaction,
   onOpen,
+  showDate,
 }: {
   transaction: Transaction;
   onOpen: (transaction: Transaction) => void;
+  /** Rows grouped by invoice rather than by day show their own date. */
+  showDate?: boolean;
 }) {
   const look = lookOf(transaction);
   const pending = transaction.status === "PENDING";
@@ -96,7 +100,10 @@ export function TransactionRow({
               </span>
             ) : null}
           </span>
-          <span className="block truncate text-xs text-muted">{subtitleOf(transaction)}</span>
+          <span className="block truncate text-xs text-muted">
+            {showDate ? `${shortDate(transaction.date)} · ` : ""}
+            {subtitleOf(transaction)}
+          </span>
         </span>
         <Money
           amount={transaction.amount}

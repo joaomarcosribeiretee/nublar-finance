@@ -67,5 +67,12 @@ describe('credit card rules', () => {
     expect(
       invoiceStatus({ total: 100n, paid: 100n, today: '2026-10-11', ...dates }),
     ).toBe('PAID');
+    expect(
+      invoiceStatus({ total: 0n, paid: 100n, today: '2026-10-11', ...dates }),
+    ).toBe('PAID');
+    // A partial payment does not settle the bill.
+    expect(
+      invoiceStatus({ total: 100n, paid: 40n, today: '2026-10-05', ...dates }),
+    ).toBe('CLOSED');
   });
 });

@@ -8,6 +8,7 @@ import type { Transaction } from "@/lib/queries";
 import { InstitutionsScreen } from "@/features/institutions/InstitutionsScreen";
 import { AnalyticsScreen } from "@/features/analytics/AnalyticsScreen";
 import { CardsScreen } from "@/features/cards/CardsScreen";
+import { InvoicesScreen } from "@/features/invoices/InvoicesScreen";
 import { BudgetsScreen } from "@/features/planning/BudgetsScreen";
 import { CalendarScreen } from "@/features/planning/CalendarScreen";
 import { GoalsScreen } from "@/features/planning/GoalsScreen";
@@ -15,7 +16,7 @@ import { InvestmentsScreen } from "@/features/investments/InvestmentsScreen";
 import { CategoriesScreen } from "@/features/categories/CategoriesScreen";
 import { RecurringScreen } from "@/features/recurring/RecurringScreen";
 import { HomeScreen } from "@/features/home/HomeScreen";
-import { TransactionForm } from "@/features/transactions/TransactionForm";
+import { TransactionForm, type FormPreset } from "@/features/transactions/TransactionForm";
 import { TransactionsScreen } from "@/features/transactions/TransactionsScreen";
 
 const screens = {
@@ -25,6 +26,7 @@ const screens = {
   investments: { label: "Investimentos", icon: "trend" },
   analytics: { label: "Análises", icon: "chart" },
   cards: { label: "Cartões", icon: "card" },
+  invoices: { label: "Faturas", icon: "receipt" },
   budgets: { label: "Orçamentos", icon: "gauge" },
   goals: { label: "Metas", icon: "target" },
   calendar: { label: "Calendário", icon: "calendar" },
@@ -37,7 +39,7 @@ type Screen = keyof typeof screens;
 /** Sidebar sections: overview, where the money is, setup. */
 const navGroups: { title?: string; items: Screen[] }[] = [
   { items: ["home", "analytics", "transactions"] },
-  { title: "Patrimônio", items: ["accounts", "investments", "cards"] },
+  { title: "Patrimônio", items: ["accounts", "investments", "cards", "invoices"] },
   { title: "Planejamento", items: ["budgets", "goals", "calendar"] },
   { title: "Organização", items: ["recurring", "categories"] },
 ];
@@ -48,11 +50,16 @@ const monthly: Screen[] = ["home", "transactions", "analytics", "budgets", "cale
 export function Shell({ email }: { email: string }) {
   const [screen, setScreen] = useState<Screen>("home");
   const [month, setMonth] = useState(currentMonth);
-  const [form, setForm] = useState<{ open: boolean; editing: Transaction | null }>({
+  const [form, setForm] = useState<{
+    open: boolean;
+    editing: Transaction | null;
+    preset?: FormPreset | null;
+  }>({
     open: false,
     editing: null,
   });
   const [creatingAccount, setCreatingAccount] = useState(false);
+  const [invoiceCard, setInvoiceCard] = useState<string | null>(null);
 
   const openNew = () => setForm({ open: true, editing: null });
   const openEdit = (transaction: Transaction) => setForm({ open: true, editing: transaction });
@@ -152,7 +159,10 @@ export function Shell({ email }: { email: string }) {
                 onEdit={openEdit}
                 onSeeAll={() => setScreen("transactions")}
                 onCreateAccount={goToNewAccount}
-                onCards={() => setScreen("cards")}
+                onCards={(cardId) => {
+                  setInvoiceCard(cardId ?? null);
+                  setScreen("invoices");
+                }}
                 onAnalytics={() => setScreen("analytics")}
                 onBudgets={() => setScreen("budgets")}
                 onGoals={() => setScreen("goals")}
@@ -170,7 +180,21 @@ export function Shell({ email }: { email: string }) {
                 onOpenInvestments={() => setScreen("investments")}
               />
             ) : null}
-            {screen === "cards" ? <CardsScreen /> : null}
+            {screen === "cards" ? (
+              <CardsScreen
+                onOpenInvoices={(cardId) => {
+                  setInvoiceCard(cardId);
+                  setScreen("invoices");
+                }}
+              />
+            ) : null}
+            {screen === "invoices" ? (
+              <InvoicesScreen
+                cardId={invoiceCard}
+                onEdit={openEdit}
+                onAdd={(preset) => setForm({ open: true, editing: null, preset })}
+              />
+            ) : null}
             {screen === "budgets" ? <BudgetsScreen month={month} /> : null}
             {screen === "goals" ? <GoalsScreen /> : null}
             {screen === "calendar" ? <CalendarScreen month={month} /> : null}
@@ -185,6 +209,7 @@ export function Shell({ email }: { email: string }) {
       <TransactionForm
         open={form.open}
         editing={form.editing}
+        preset={form.preset}
         month={month}
         onClose={() => setForm((current) => ({ ...current, open: false }))}
         onNeedAccount={goToNewAccount}

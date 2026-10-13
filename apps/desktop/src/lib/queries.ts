@@ -1,6 +1,7 @@
 import {
   QueryClient,
   useMutation,
+  useQueries,
   useQuery,
   useQueryClient,
 } from "@tanstack/react-query";
@@ -76,6 +77,8 @@ export type InvoiceSummary = {
   dueDate: string;
   total: string;
   paid: string;
+  /** Part of the total still scheduled (recurring charges not confirmed yet). */
+  scheduled: string;
   remaining: string;
   status: InvoiceStatus;
 };
@@ -93,21 +96,12 @@ export type Card = {
   currentInvoice: InvoiceSummary;
 };
 
-export type InvoiceItem = {
-  id: string;
-  type: "EXPENSE" | "CARD_PAYMENT";
-  amount: string;
-  description: string;
-  date: string;
-  purchaseId: string | null;
-  installmentNumber: number | null;
-  installmentCount: number | null;
-  category: Ref | null;
-  account: Ref | null;
-};
+/** Same shape as a transaction, so it opens in the usual editor. */
+export type InvoiceItem = Transaction & { purchaseId: string | null };
 
 export type Invoice = InvoiceSummary & {
   card: Omit<Card, "debt" | "available" | "currentInvoice">;
+  timeline: { month: string; total: string; status: InvoiceStatus }[];
   items: InvoiceItem[];
 };
 
@@ -514,6 +508,25 @@ export function useTransactions(month: string) {
   });
 }
 
+/** Several months at once; each shares the cache of its single-month query. */
+export function useTransactionsFor(months: string[]) {
+  return useQueries({
+    queries: months.map((month) => ({
+      queryKey: keys.transactions(month),
+      queryFn: () => api<Transaction[]>(`/transactions?month=${month}`),
+    })),
+  });
+}
+
+export function useSummariesFor(months: string[]) {
+  return useQueries({
+    queries: months.map((month) => ({
+      queryKey: keys.summary(month),
+      queryFn: () => api<Summary>(`/summary?month=${month}`),
+    })),
+  });
+}
+
 export function useSummary(month: string) {
   return useQuery({
     queryKey: keys.summary(month),
@@ -570,6 +583,21 @@ const json = (method: string, body?: unknown): RequestInit => ({
 export const useSaveTransaction = () =>
   useMoneyMutation(({ id, input }: { id?: string; input: TransactionInput }) =>
     api<Transaction>(id ? `/transactions/${id}` : "/transactions", json(id ? "PUT" : "POST", input)),
+  );
+
+export type OccurrenceInput = {
+  amount: string;
+  categoryId: string;
+  description: string;
+  date: string;
+  accountId?: string;
+  scope: "one" | "following";
+};
+
+/** Edits a recurring occurrence without detaching it from its rule. */
+export const useUpdateOccurrence = () =>
+  useMoneyMutation(({ id, input }: { id: string; input: OccurrenceInput }) =>
+    api<Transaction>(`/transactions/${id}/occurrence`, json("PUT", input)),
   );
 
 export const useDeleteTransaction = () =>

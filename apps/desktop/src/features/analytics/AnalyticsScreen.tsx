@@ -93,7 +93,7 @@ export function AnalyticsScreen({ month }: { month: string }) {
         />
       ) : (
         <>
-          <Kpis data={data} months={months} />
+          <Kpis data={data} />
           <NetWorthChart data={data} dim={dim} />
           <div className="grid grid-cols-2 gap-4">
             <IncomeExpenseChart data={data} dim={dim} />
@@ -114,9 +114,16 @@ export function AnalyticsScreen({ month }: { month: string }) {
   );
 }
 
-function Kpis({ data, months }: { data: Analytics | undefined; months: number }) {
+/** The browsed month up front; the period average only as a reference. */
+function Kpis({ data }: { data: Analytics | undefined }) {
   const k = data?.kpis;
+  const point = data?.series.find((p) => p.month === data.to);
   const change = k ? BigInt(k.netWorthChange) : 0n;
+  const income = point ? BigInt(point.income) : 0n;
+  const expense = point ? BigInt(point.expense) : 0n;
+  const result = income - expense;
+  const monthName = data ? monthLabel(data.to).split(" ")[0].toLowerCase() : "";
+  const loading = !k || !point;
   return (
     <div className="grid grid-cols-5 gap-3">
       <StatTile
@@ -134,28 +141,36 @@ function Kpis({ data, months }: { data: Analytics | undefined; months: number })
         }
       />
       <StatTile
-        label="Receita média"
-        loading={!k}
-        value={k ? <Money amount={k.averageIncome} /> : null}
-        detail="por mês"
+        label={`Receitas de ${monthName}`}
+        loading={loading}
+        value={point ? <Money amount={point.income} tone="positive" /> : null}
+        detail={k ? `média ${formatMinorUnits(k.averageIncome)}` : null}
       />
       <StatTile
-        label="Gasto médio"
-        loading={!k}
-        value={k ? <Money amount={k.averageExpense} /> : null}
-        detail="por mês"
+        label={`Despesas de ${monthName}`}
+        loading={loading}
+        value={point ? <Money amount={point.expense} /> : null}
+        detail={
+          point
+            ? income > 0n
+              ? `${formatBps(Number((expense * 10000n) / income))} do que entrou`
+              : k
+                ? `média ${formatMinorUnits(k.averageExpense)}`
+                : null
+            : null
+        }
       />
       <StatTile
-        label="Taxa de poupança"
-        loading={!k}
-        value={k ? formatBps(k.savingsRateBps) : null}
-        detail="do que entrou, sobrou"
+        label="Sobrou no mês"
+        loading={loading}
+        value={point ? <Money amount={result.toString()} tone="auto" /> : null}
+        detail={point ? `taxa de poupança ${formatBps(point.savingsRateBps)}` : null}
       />
       <StatTile
-        label="Investido"
-        loading={!k}
-        value={k ? <Money amount={k.invested} /> : null}
-        detail={k ? `líquido em ${Math.min(months, k.trackedMonths)} meses` : null}
+        label={`Investido em ${monthName}`}
+        loading={loading}
+        value={point ? <Money amount={point.invested} /> : null}
+        detail={k ? `${formatMinorUnits(k.invested)} no período` : null}
       />
     </div>
   );

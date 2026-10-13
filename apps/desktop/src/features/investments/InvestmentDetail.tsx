@@ -21,7 +21,8 @@ import {
   useMoveInvestment,
   type InvestmentDetail as Detail,
 } from "@/lib/queries";
-import { liquidityLabels, productLabels, rateLabel } from "@/lib/rates";
+import { bpsToPercentInput, liquidityLabels, parsePercentToBps, productLabels, rateLabel } from "@/lib/rates";
+import { cdiPreview, isTaxExempt, loadCdiBps, saveCdiBps } from "@/lib/yield";
 import { GainText } from "./GainText";
 import { InvestmentForm } from "./InvestmentForm";
 
@@ -59,6 +60,8 @@ export function InvestmentDetail({ id, onClose }: { id: string; onClose: () => v
       </div>
 
       <FixedIncomeFacts data={data} />
+
+      <CdiPreview data={data} />
 
       <HistoryChart data={data} />
 
@@ -369,5 +372,85 @@ function FixedIncomeFacts({ data }: { data: Detail }) {
         </li>
       ))}
     </ul>
+  );
+}
+
+/** What a CDI-indexed position would earn at a CDI the user can adjust. */
+function CdiPreview({ data }: { data: Detail }) {
+  const [cdiBps, setCdiBps] = useState(loadCdiBps);
+  const [cdiInput, setCdiInput] = useState(() => bpsToPercentInput(loadCdiBps()));
+  if (data.assetClass !== "FIXED_INCOME" || data.indexer !== "CDI" || BigInt(data.current) <= 0n) {
+    return null;
+  }
+  const percentOfCdi = data.rateBps ?? 10000;
+  const horizons = cdiPreview({
+    current: data.current,
+    cdiBps,
+    percentOfCdiBps: percentOfCdi,
+    product: data.product,
+    startDate: data.startDate,
+    maturityDate: data.maturityDate,
+    today: todayLocal(),
+  });
+  if (horizons.length === 0) {
+    return null;
+  }
+  const exempt = isTaxExempt(data.product);
+
+  function commit(value: string) {
+    const bps = parsePercentToBps(value);
+    if (bps && bps > 0) {
+      setCdiBps(bps);
+      saveCdiBps(bps);
+      setCdiInput(bpsToPercentInput(bps));
+    } else {
+      setCdiInput(bpsToPercentInput(cdiBps));
+    }
+  }
+
+  return (
+    <div className="rounded-2xl border border-line p-4">
+      <div className="flex items-center justify-between gap-3">
+        <div>
+          <p className="text-sm">Prévia de rendimento</p>
+          <p className="mt-0.5 text-xs text-muted">
+            {bpsToPercentInput(percentOfCdi)}% do CDI sobre o valor atual · {exempt ? "isento de IR" : "líquido de IR"}
+          </p>
+        </div>
+        <label className="flex items-center gap-2 text-xs text-muted">
+          CDI
+          <input
+            aria-label="CDI anual"
+            className={`${controlClass} !w-20 !py-1 text-right tabular`}
+            inputMode="decimal"
+            value={cdiInput}
+            onChange={(event) => setCdiInput(event.target.value)}
+            onBlur={(event) => commit(event.target.value)}
+            onKeyDown={(event) => {
+              if (event.key === "Enter") commit(event.currentTarget.value);
+            }}
+          />
+          % a.a.
+        </label>
+      </div>
+      <dl className="mt-4 grid grid-cols-4 gap-px overflow-hidden rounded-xl border border-line bg-line">
+        {horizons.map((horizon) => (
+          <div key={horizon.label} className="bg-surface-2 px-3 py-2.5">
+            <dt className="text-[11px] text-muted">{horizon.label}</dt>
+            <dd className="mt-1 text-sm">
+              <Money amount={horizon.net} tone="positive" sign="+" />
+            </dd>
+            {!exempt ? (
+              <dd className="text-[11px] text-faint">
+                bruto <Money amount={horizon.gross} />
+              </dd>
+            ) : null}
+          </div>
+        ))}
+      </dl>
+      <p className="mt-2 text-[11px] text-faint">
+        Estimativa com CDI constante; não altera o valor da posição, que segue pelas suas atualizações.
+      </p>
+    </div>
   );
 }

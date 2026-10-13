@@ -64,7 +64,7 @@ export function RecurringScreen() {
           </Button>
         }
       >
-        Todo mês o Nublar cria um lançamento pendente. Ele só afeta o saldo depois que você confirma.
+        Todo mês o Nublar cria o lançamento e confirma sozinho na data (no cartão, quando a fatura fecha). Até lá dá para ajustar ou pular.
       </PageHeader>
 
       {rules.isError ? <p className="text-sm text-negative">{errorMessage(rules.error)}</p> : null}

@@ -1,4 +1,9 @@
-import { dayOf, splitInstallments } from './cards';
+import {
+  dayOf,
+  invoiceDates,
+  splitInstallments,
+  type CardCycle,
+} from './cards';
 import { shiftMonth } from './month';
 
 export type RecurringSchedule = {
@@ -79,4 +84,29 @@ export function occurrenceAmount(
     installmentNumber: index + 1,
     installmentCount: plan.installments,
   };
+}
+
+/**
+ * Whether a scheduled occurrence should confirm itself today: on an account
+ * when its date arrives; on a card when its invoice closes, since by then it
+ * is on the bill. Occurrences dated before the rule was registered are past
+ * months the user may have handled elsewhere, so they stay for review.
+ */
+export function settlesBy(
+  occurrence: {
+    date: string;
+    invoiceMonth: string | null;
+    card: CardCycle | null;
+    ruleCreatedOn: string;
+  },
+  today: string,
+): boolean {
+  if (occurrence.date < occurrence.ruleCreatedOn) {
+    return false;
+  }
+  const settleDate =
+    occurrence.card && occurrence.invoiceMonth
+      ? invoiceDates(occurrence.invoiceMonth, occurrence.card).closingDate
+      : occurrence.date;
+  return settleDate <= today;
 }

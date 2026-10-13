@@ -3,6 +3,7 @@ import { AccountSelect } from "@/components/AccountSelect";
 import { CategoryChips } from "./CategoryChips";
 import { Button } from "@/components/Button";
 import { EmptyState } from "@/components/EmptyState";
+import { Icon } from "@/components/Icon";
 import { controlClass, Field } from "@/components/Field";
 import { Modal } from "@/components/Modal";
 import { Money } from "@/components/Money";
@@ -21,6 +22,7 @@ import {
   useSavePurchase,
   useSaveRecurring,
   useSaveTransaction,
+  useUpdateOccurrence,
   type EntryType,
   type Transaction,
 } from "@/lib/queries";
@@ -33,17 +35,22 @@ const typeOptions: { value: EntryType; label: string; activeClass: string }[] = 
 
 type Repeat = "once" | "monthly" | "installments";
 
+export type FormPreset = { cardId: string; date: string };
+
 export function TransactionForm({
   open,
   onClose,
   month,
   editing,
+  preset,
   onNeedAccount,
 }: {
   open: boolean;
   onClose: () => void;
   month: string;
   editing: Transaction | null;
+  /** New card purchase started from an invoice. */
+  preset?: FormPreset | null;
   onNeedAccount: () => void;
 }) {
   const title = !editing
@@ -68,6 +75,7 @@ export function TransactionForm({
         <FormBody
           month={month}
           editing={editing}
+          preset={editing ? null : (preset ?? null)}
           onDone={onClose}
           onNeedAccount={() => {
             onClose();
@@ -82,11 +90,13 @@ export function TransactionForm({
 function FormBody({
   month,
   editing,
+  preset,
   onDone,
   onNeedAccount,
 }: {
   month: string;
   editing: Transaction | null;
+  preset: FormPreset | null;
   onDone: () => void;
   onNeedAccount: () => void;
 }) {
@@ -100,12 +110,18 @@ function FormBody({
   const removePurchase = useDeletePurchase();
   const confirm = useConfirmTransaction();
   const saveRecurring = useSaveRecurring();
+  const updateOccurrence = useUpdateOccurrence();
 
   const purchase = editing?.purchase ?? null;
+  // One month of a recurring rule: edited in place, never detached from it.
+  const occurrence = editing?.recurring && !purchase ? editing : null;
+  const [scope, setScope] = useState<"one" | "following">("one");
   const [type, setType] = useState<EntryType>(
     editing && !isMovement(editing.type) ? (editing.type as EntryType) : "EXPENSE",
   );
-  const [payWith, setPayWith] = useState<"account" | "card">(purchase ? "card" : "account");
+  const [payWith, setPayWith] = useState<"account" | "card">(
+    purchase || editing?.card || preset ? "card" : "account",
+  );
   const [amount, setAmount] = useState(
     purchase ? minorUnitsToInput(purchase.amount) : editing ? minorUnitsToInput(editing.amount) : "",
   );
@@ -113,7 +129,7 @@ function FormBody({
   const [destinationAccountId, setDestinationAccountId] = useState(
     editing?.destinationAccount?.id ?? "",
   );
-  const [cardId, setCardId] = useState(editing?.card?.id ?? "");
+  const [cardId, setCardId] = useState(editing?.card?.id ?? preset?.cardId ?? "");
   const [repeat, setRepeat] = useState<Repeat>(
     purchase && purchase.installments > 1 ? "installments" : "once",
   );
@@ -124,7 +140,9 @@ function FormBody({
   const [description, setDescription] = useState(
     purchase ? purchase.description : (editing?.description ?? ""),
   );
-  const [date, setDate] = useState(purchase?.date ?? editing?.date ?? defaultDateFor(month));
+  const [date, setDate] = useState(
+    purchase?.date ?? editing?.date ?? preset?.date ?? defaultDateFor(month),
+  );
   const [error, setError] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
 
@@ -144,7 +162,8 @@ function FormBody({
   const chosenCard = cardId || cardList[0]?.id || "";
   const chosenCategory = visibleCategories.some((c) => c.id === categoryId) ? categoryId : "";
   const parsedAmount = parseReaisToMinorUnits(amount);
-  const saving = saveEntry.isPending || savePurchase.isPending || saveRecurring.isPending;
+  const saving =
+    saveEntry.isPending || savePurchase.isPending || saveRecurring.isPending || updateOccurrence.isPending;
 
   if (accounts.isSuccess && accountList.length === 0) {
     return (
@@ -178,6 +197,22 @@ function FormBody({
 
     setError(null);
     try {
+      if (occurrence) {
+        await updateOccurrence.mutateAsync({
+          id: occurrence.id,
+          input: {
+            amount: parsedAmount,
+            categoryId: chosenCategory,
+            description: description.trim(),
+            date,
+            accountId: onCard ? undefined : sourceId,
+            scope,
+          },
+        });
+        toast(scope === "following" ? "Recorrência atualizada daqui em diante" : "Lançamento atualizado");
+        onDone();
+        return;
+      }
       if (!editing && effectiveRepeat === "monthly") {
         // Fixed every month: becomes a recurring rule. Recorded now, so the
         // first occurrence already happened unless it is in the future.
@@ -196,7 +231,7 @@ function FormBody({
             postFirst: date <= todayLocal(),
           },
         });
-        toast("Recorrência criada: aparece todo mês para confirmar");
+        toast("Recorrência criada: confirmada automaticamente a cada mês");
         onDone();
         return;
       }
@@ -274,7 +309,7 @@ function FormBody({
         toast("Compra excluída");
       } else {
         await removeEntry.mutateAsync(editing.id);
-        toast(editing.status === "PENDING" ? "Pulado este mês" : "Lançamento excluído");
+        toast(occurrence || editing.status === "PENDING" ? "Pulado este mês" : "Lançamento excluído");
       }
       onDone();
     } catch (reason: unknown) {
@@ -306,7 +341,7 @@ function FormBody({
 
   return (
     <form onSubmit={(event) => void submit(event)} className="space-y-5">
-      {!pending && !purchase ? (
+      {!pending && !purchase && !occurrence ? (
         <Segmented
           value={type}
           options={typeOptions}
@@ -334,7 +369,7 @@ function FormBody({
         </div>
       </label>
 
-      {type === "EXPENSE" && cardList.length > 0 && !pending ? (
+      {type === "EXPENSE" && cardList.length > 0 && !pending && !occurrence ? (
         <div className="flex items-center justify-between">
           <span className="text-xs text-muted">Pagar com</span>
           <Segmented
@@ -367,6 +402,7 @@ function FormBody({
               <select
                 className={controlClass}
                 value={chosenCard}
+                disabled={Boolean(occurrence)}
                 onChange={(event) => setCardId(event.target.value)}
               >
                 {cardList.map((card) => (
@@ -415,22 +451,43 @@ function FormBody({
           {effectiveRepeat === "monthly" ? (
             <p className="animate-enter text-xs text-faint">
               {onCard
-                ? "Entra em toda fatura do cartão, na data de vencimento. Cada mês aparece como pendente para confirmar."
-                : `Todo dia ${Number(date.slice(8, 10))}, a partir de ${monthLabel(date.slice(0, 7)).toLowerCase()}. Cada mês aparece como pendente para confirmar.`}
+                ? "Entra em toda fatura do cartão e é confirmado quando a fatura fecha."
+                : `Todo dia ${Number(date.slice(8, 10))}, a partir de ${monthLabel(date.slice(0, 7)).toLowerCase()}. Confirmado automaticamente na data.`}
             </p>
           ) : null}
           {effectiveRepeat === "installments" && !onCard ? (
             <p className="text-xs text-faint">
-              Uma parcela por mês na conta, a partir desta data. As próximas aparecem como pendentes.
+              Uma parcela por mês na conta, a partir desta data. Cada uma é confirmada automaticamente na data.
             </p>
           ) : null}
         </div>
       ) : null}
 
-      {editing?.recurring ? (
-        <p className="text-xs text-faint">
-          Faz parte de uma recorrência. Aqui você muda só este mês; para mudar todos, use Recorrentes.
-        </p>
+      {occurrence ? (
+        <div className="space-y-2 rounded-2xl border border-line p-3">
+          <div className="flex items-center justify-between gap-3">
+            <span className="flex items-center gap-1.5 text-xs text-muted">
+              <Icon name="repeat" size={13} />
+              Recorrência
+            </span>
+            <Segmented
+              size="sm"
+              value={scope}
+              options={[
+                { value: "one" as const, label: "Só este mês" },
+                { value: "following" as const, label: "Este e os próximos" },
+              ]}
+              onChange={setScope}
+            />
+          </div>
+          <p className="text-xs text-faint">
+            {scope === "one"
+              ? "Continua recorrente; os outros meses não mudam."
+              : (occurrence.installmentCount ?? 1) > 1
+                ? "Descrição, categoria e conta mudam a partir deste mês. O valor das outras parcelas segue o total do parcelamento."
+                : "Valor, descrição, categoria e conta mudam a partir deste mês."}
+          </p>
+        </div>
       ) : null}
 
       <div className="grid grid-cols-[1fr_160px] gap-3">
@@ -480,8 +537,8 @@ function FormBody({
               ? purchase && purchase.installments > 1
                 ? `Excluir ${purchase.installments} parcelas`
                 : "Confirmar"
-              : pending
-                ? "Pular"
+              : pending || occurrence
+                ? "Pular este mês"
                 : "Excluir"}
           </Button>
         ) : null}

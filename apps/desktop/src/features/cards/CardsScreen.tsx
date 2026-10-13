@@ -32,7 +32,7 @@ const statusStyle: Record<InvoiceStatus, string> = {
   OVERDUE: "bg-negative/15 text-negative",
 };
 
-function StatusPill({ status }: { status: InvoiceStatus }) {
+export function StatusPill({ status }: { status: InvoiceStatus }) {
   return (
     <span className={`rounded-full px-2 py-0.5 text-[11px] font-medium ${statusStyle[status]}`}>
       {invoiceStatusLabels[status]}
@@ -40,7 +40,7 @@ function StatusPill({ status }: { status: InvoiceStatus }) {
   );
 }
 
-export function CardsScreen() {
+export function CardsScreen({ onOpenInvoices }: { onOpenInvoices?: (cardId: string) => void }) {
   const cards = useCards();
   const [creating, setCreating] = useState(false);
   const [openId, setOpenId] = useState<string | null>(null);
@@ -94,7 +94,13 @@ export function CardsScreen() {
         <CardForm card={null} onDone={() => setCreating(false)} />
       </Modal>
       <Modal open={open !== null} onClose={() => setOpenId(null)} title={open?.name ?? ""} width={640}>
-        {open ? <CardDetail card={open} onClose={() => setOpenId(null)} /> : null}
+        {open ? (
+          <CardDetail
+            card={open}
+            onClose={() => setOpenId(null)}
+            onOpenInvoices={onOpenInvoices ? () => onOpenInvoices(open.id) : undefined}
+          />
+        ) : null}
       </Modal>
     </section>
   );
@@ -144,7 +150,15 @@ function CardTile({ card, onOpen }: { card: Card; onOpen: () => void }) {
   );
 }
 
-function CardDetail({ card, onClose }: { card: Card; onClose: () => void }) {
+function CardDetail({
+  card,
+  onClose,
+  onOpenInvoices,
+}: {
+  card: Card;
+  onClose: () => void;
+  onOpenInvoices?: () => void;
+}) {
   const [month, setMonth] = useState(card.currentInvoice.month);
   const [view, setView] = useState<"invoice" | "pay" | "edit">("invoice");
   const invoice = useInvoice(card.id, month);
@@ -241,21 +255,34 @@ function CardDetail({ card, onClose }: { card: Card; onClose: () => void }) {
             <Icon name="pencil" size={14} />
             Editar cartão
           </Button>
+          {onOpenInvoices ? (
+            <Button variant="ghost" onClick={onOpenInvoices}>
+              <Icon name="receipt" size={14} />
+              Ver faturas
+            </Button>
+          ) : null}
           <div className="flex-1" />
-          <Button
-            variant="primary"
-            onClick={() => setView("pay")}
-            disabled={!data || BigInt(data.remaining) <= 0n}
-          >
-            Pagar fatura
-          </Button>
+          {data?.status === "PAID" ? (
+            <span className="flex items-center gap-1.5 text-sm text-positive">
+              <Icon name="check" size={15} />
+              Fatura paga
+            </span>
+          ) : (
+            <Button
+              variant="primary"
+              onClick={() => setView("pay")}
+              disabled={!data || BigInt(data.remaining) <= 0n}
+            >
+              Pagar fatura
+            </Button>
+          )}
         </footer>
       ) : null}
     </div>
   );
 }
 
-function PayForm({
+export function PayForm({
   card,
   month,
   remaining,
@@ -283,8 +310,12 @@ function PayForm({
       return;
     }
     try {
+      if (BigInt(minor) > BigInt(remaining)) {
+        setError("O valor passa do que falta pagar nesta fatura.");
+        return;
+      }
       await pay.mutateAsync({ cardId: card.id, accountId: chosen, amount: minor, date, invoiceMonth: month });
-      toast("Pagamento registrado");
+      toast(minor === remaining ? "Fatura paga" : "Pagamento parcial registrado");
       onDone();
     } catch (reason: unknown) {
       setError(errorMessage(reason));
@@ -314,7 +345,8 @@ function PayForm({
         </Field>
       </div>
       <p className="text-xs text-faint">
-        Sai da conta e abate a dívida do cartão. Não é despesa: as compras já contaram na fatura.
+        Sai da conta e abate a dívida do cartão. Não é despesa: as compras já contaram na fatura. As
+        cobranças previstas desta fatura são confirmadas junto.
       </p>
       {error ? <p className="text-sm text-negative">{error}</p> : null}
       <div className="flex justify-end gap-2">

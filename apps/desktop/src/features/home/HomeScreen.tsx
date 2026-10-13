@@ -34,7 +34,7 @@ export function HomeScreen({
   onEdit: (transaction: Transaction) => void;
   onSeeAll: () => void;
   onCreateAccount: () => void;
-  onCards: () => void;
+  onCards: (cardId?: string) => void;
   onAnalytics: () => void;
   onBudgets: () => void;
   onGoals: () => void;
@@ -282,7 +282,7 @@ function Commitments({
 }: {
   summary: Summary;
   onOpen: (transaction: Transaction) => void;
-  onCards: () => void;
+  onCards: (cardId?: string) => void;
 }) {
   return (
     <article className="rounded-3xl border border-line bg-surface p-3">
@@ -295,7 +295,7 @@ function Commitments({
           <li key={invoice.card.id}>
             <button
               type="button"
-              onClick={onCards}
+              onClick={() => onCards(invoice.card.id)}
               className="flex w-full items-center gap-3 rounded-2xl px-3 py-2.5 text-left transition-colors hover:bg-white/[0.035]"
             >
               <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gold/10 text-gold">

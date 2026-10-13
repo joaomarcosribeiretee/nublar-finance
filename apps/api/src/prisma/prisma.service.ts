@@ -26,7 +26,7 @@ export class PrismaService implements OnModuleInit, OnModuleDestroy {
     try {
       const adapter = new PrismaPg({
         connectionString,
-        connectionTimeoutMillis: 2000,
+        connectionTimeoutMillis: 10000,
       });
       this.client = new PrismaClient({ adapter });
       await this.client.$connect();

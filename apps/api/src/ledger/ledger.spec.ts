@@ -171,11 +171,45 @@ describe('ledger', () => {
       expect(invoiceTotals(card, '2026-10', cardEntries)).toEqual({
         total: 3334n,
         paid: 3334n,
+        scheduled: 0n,
       });
       expect(invoiceTotals(card, '2026-11', cardEntries)).toEqual({
         total: 3333n,
         paid: 0n,
+        scheduled: 0n,
       });
+    });
+
+    it('puts scheduled card charges on the invoice but not in the debt', () => {
+      const withSubscription: LedgerEntry[] = [
+        ...cardEntries,
+        {
+          type: 'EXPENSE',
+          accountId: null,
+          destinationAccountId: null,
+          cardId: card,
+          invoiceMonth: '2026-11',
+          amount: 2990n,
+          date: '2026-11-15',
+          status: 'PENDING',
+        },
+        {
+          type: 'EXPENSE',
+          accountId: null,
+          destinationAccountId: null,
+          cardId: card,
+          invoiceMonth: '2026-11',
+          amount: 1000n,
+          date: '2026-11-15',
+          status: 'CANCELED',
+        },
+      ];
+      expect(invoiceTotals(card, '2026-11', withSubscription)).toEqual({
+        total: 6323n,
+        paid: 0n,
+        scheduled: 2990n,
+      });
+      expect(cardDebt(card, withSubscription)).toBe(6666n);
     });
   });
 

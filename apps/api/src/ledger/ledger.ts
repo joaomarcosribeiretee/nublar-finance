@@ -181,17 +181,23 @@ export function monthExpenseByCategory(
     .sort((a, b) => (a.amount === b.amount ? 0 : a.amount > b.amount ? -1 : 1));
 }
 
-/** Total billed and paid on one invoice of one card. */
+/**
+ * Total billed and paid on one invoice of one card. Everything charged to
+ * the card is on the invoice, so scheduled (pending) charges count in the
+ * total too; `scheduled` tells how much of it is not confirmed yet.
+ */
 export function invoiceTotals(
   cardId: string,
   invoiceMonth: string,
   entries: LedgerEntry[],
-): { total: bigint; paid: bigint } {
+): { total: bigint; paid: bigint; scheduled: bigint } {
   let total = 0n;
   let paid = 0n;
+  let scheduled = 0n;
   for (const entry of entries) {
+    const status = entry.status ?? 'POSTED';
     if (
-      !effective(entry) ||
+      status === 'CANCELED' ||
       entry.cardId !== cardId ||
       entry.invoiceMonth !== invoiceMonth
     ) {
@@ -199,12 +205,15 @@ export function invoiceTotals(
     }
     if (entry.type === 'EXPENSE') {
       total += entry.amount;
+      if (status === 'PENDING') {
+        scheduled += entry.amount;
+      }
     }
-    if (entry.type === 'CARD_PAYMENT') {
+    if (entry.type === 'CARD_PAYMENT' && status === 'POSTED') {
       paid += entry.amount;
     }
   }
-  return { total, paid };
+  return { total, paid, scheduled };
 }
 
 /** Entries that had happened by the end of `date` (inclusive). */

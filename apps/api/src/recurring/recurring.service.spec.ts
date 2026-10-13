@@ -31,6 +31,8 @@ describe('RecurringService.materialize', () => {
       },
       transaction: {
         createMany: jest.fn<Promise<{ count: number }>, [CreateManyArgs]>(),
+        findMany: jest.fn().mockResolvedValue([]),
+        updateMany: jest.fn(),
       },
     };
     return { db, service: new RecurringService({ db } as never) };
@@ -63,5 +65,33 @@ describe('RecurringService.materialize', () => {
     await service.materialize(userId, current);
 
     expect(db.recurringRule.findMany).toHaveBeenCalledTimes(1);
+    // Settling runs at most once a day per user.
+    expect(db.transaction.findMany).toHaveBeenCalledTimes(1);
+  });
+
+  it('confirms occurrences whose date has come', async () => {
+    const { db, service } = setup();
+    db.transaction.findMany.mockResolvedValue([
+      {
+        id: 'due',
+        date: new Date('2000-01-08T00:00:00.000Z'),
+        invoiceMonth: null,
+        card: null,
+        recurringRule: { createdAt: new Date('1999-12-01T12:00:00.000Z') },
+      },
+      {
+        id: 'before-rule',
+        date: new Date('1999-11-08T00:00:00.000Z'),
+        invoiceMonth: null,
+        card: null,
+        recurringRule: { createdAt: new Date('1999-12-01T12:00:00.000Z') },
+      },
+    ]);
+    await service.settle(userId);
+
+    expect(db.transaction.updateMany).toHaveBeenCalledWith({
+      where: { id: { in: ['due'] }, status: 'PENDING' },
+      data: { status: 'POSTED' },
+    });
   });
 });

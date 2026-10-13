@@ -10,7 +10,7 @@ import {
 import { accountRefSelect, toAccountRef } from '../accounts/account-label';
 import type { TransactionType } from '../generated/prisma/client';
 import { parseBody } from '../common/parse-body';
-import { thisMonth } from '../common/today';
+import { thisMonth, today } from '../common/today';
 import { invoiceDates, invoiceMonthFor, type CardCycle } from '../ledger/cards';
 import { shiftMonth } from '../ledger/month';
 import {
@@ -19,6 +19,7 @@ import {
   occurrenceMonths,
   planEndMonth,
   RECURRING_HORIZON_MONTHS,
+  settlesBy,
 } from '../ledger/recurring';
 import { PrismaService } from '../prisma/prisma.service';
 
@@ -78,6 +79,8 @@ export function occurrenceRow(rule: Rule, occurrence: string) {
 export class RecurringService {
   /** userId → furthest month already materialized by this process. */
   private readonly materialized = new Map<string, string>();
+  /** userId → day scheduled occurrences were last settled. */
+  private readonly settled = new Map<string, string>();
 
   constructor(private readonly prisma: PrismaService) {}
 
@@ -125,7 +128,7 @@ export class RecurringService {
         skipDuplicates: true,
       });
     }
-    this.materialized.delete(userId);
+    this.forget(userId);
     return { id: rule.id };
   }
 
@@ -143,7 +146,7 @@ export class RecurringService {
         data: toData(input, card),
       }),
     ]);
-    this.materialized.delete(userId);
+    this.forget(userId);
     return { id };
   }
 
@@ -159,7 +162,7 @@ export class RecurringService {
       }),
       this.prisma.db.recurringRule.delete({ where: { id } }),
     ]);
-    this.materialized.delete(userId);
+    this.forget(userId);
   }
 
   /**
@@ -173,6 +176,7 @@ export class RecurringService {
     const upTo = month < horizon ? month : horizon;
     const done = this.materialized.get(userId);
     if (done && done >= upTo) {
+      await this.settle(userId);
       return;
     }
 
@@ -199,11 +203,63 @@ export class RecurringService {
       });
     }
     this.materialized.set(userId, upTo);
+    await this.settle(userId);
+  }
+
+  /**
+   * Confirms scheduled occurrences whose moment has come: account ones on
+   * their date, card ones when their invoice closes (see `settlesBy`).
+   */
+  async settle(userId: string): Promise<void> {
+    const now = today();
+    if (this.settled.get(userId) === now) {
+      return;
+    }
+    // Card occurrences are dated on the due date, which can be up to two
+    // months after the closing date that settles them.
+    const window = new Date(`${now}T00:00:00.000Z`);
+    window.setUTCDate(window.getUTCDate() + 62);
+    const pending = await this.prisma.db.transaction.findMany({
+      where: {
+        userId,
+        status: 'PENDING',
+        recurringRuleId: { not: null },
+        date: { lte: window },
+      },
+      select: {
+        id: true,
+        date: true,
+        invoiceMonth: true,
+        card: { select: { closingDay: true, dueDay: true } },
+        recurringRule: { select: { createdAt: true } },
+      },
+    });
+    const due = pending
+      .filter((row) =>
+        settlesBy(
+          {
+            date: row.date.toISOString().slice(0, 10),
+            invoiceMonth: row.invoiceMonth,
+            card: row.card,
+            ruleCreatedOn: today(row.recurringRule?.createdAt ?? new Date(0)),
+          },
+          now,
+        ),
+      )
+      .map((row) => row.id);
+    if (due.length > 0) {
+      await this.prisma.db.transaction.updateMany({
+        where: { id: { in: due }, status: 'PENDING' },
+        data: { status: 'POSTED' },
+      });
+    }
+    this.settled.set(userId, now);
   }
 
   /** Called when an occurrence changes outside this service. */
   forget(userId: string): void {
     this.materialized.delete(userId);
+    this.settled.delete(userId);
   }
 
   private async find(userId: string, id: string) {

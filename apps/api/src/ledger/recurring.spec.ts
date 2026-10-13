@@ -3,6 +3,7 @@ import {
   occurrenceDate,
   occurrenceMonths,
   planEndMonth,
+  settlesBy,
 } from './recurring';
 
 describe('recurring schedules', () => {
@@ -55,5 +56,48 @@ describe('recurring schedules', () => {
       installmentNumber: null,
       installmentCount: null,
     });
+  });
+});
+
+describe('settling scheduled occurrences', () => {
+  const card = { closingDay: 3, dueDay: 13 };
+
+  it('confirms account occurrences on their date', () => {
+    const rent = {
+      date: '2026-10-10',
+      invoiceMonth: null,
+      card: null,
+      ruleCreatedOn: '2026-10-01',
+    };
+    expect(settlesBy(rent, '2026-10-09')).toBe(false);
+    expect(settlesBy(rent, '2026-10-10')).toBe(true);
+  });
+
+  it('confirms card occurrences when their invoice closes', () => {
+    const subscription = {
+      date: '2026-11-13',
+      invoiceMonth: '2026-11',
+      card,
+      ruleCreatedOn: '2026-10-01',
+    };
+    expect(settlesBy(subscription, '2026-11-02')).toBe(false);
+    expect(settlesBy(subscription, '2026-11-03')).toBe(true);
+  });
+
+  it('leaves occurrences from before the rule existed for review', () => {
+    const old = {
+      date: '2026-09-13',
+      invoiceMonth: '2026-09',
+      card,
+      ruleCreatedOn: '2026-10-01',
+    };
+    expect(settlesBy(old, '2026-10-13')).toBe(false);
+    // Registered after the invoice closed but before it is due: still billed.
+    expect(
+      settlesBy(
+        { ...old, date: '2026-10-13', invoiceMonth: '2026-10' },
+        '2026-10-13',
+      ),
+    ).toBe(true);
   });
 });

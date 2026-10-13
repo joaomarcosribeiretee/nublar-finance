@@ -235,6 +235,22 @@ export const confirmOccurrenceSchema = z.object({
   date: calendarDateSchema.optional(),
 });
 
+/**
+ * Editing one occurrence of a recurring rule. It stays part of the rule;
+ * "following" also changes the rule for this and the coming months.
+ */
+export const updateOccurrenceSchema = z.object({
+  amount: positiveMinorAmountSchema,
+  categoryId: z.string().uuid("Escolha uma categoria"),
+  description: z.string().trim().max(200, "Descrição muito longa").optional(),
+  date: calendarDateSchema,
+  /** Account occurrences only; card ones stay on their card. */
+  accountId: z.string().uuid("Escolha uma conta").optional(),
+  scope: z.enum(["one", "following"]).default("one"),
+});
+
+export type UpdateOccurrenceInput = z.infer<typeof updateOccurrenceSchema>;
+
 export const assetClassSchema = z.enum([
   "FIXED_INCOME",
   "STOCK",

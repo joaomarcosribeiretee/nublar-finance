@@ -7,15 +7,11 @@ import {
   calendarMonthSchema,
   confirmOccurrenceSchema,
   createTransactionSchema,
+  updateOccurrenceSchema,
   updateTransactionSchema,
   type CreateTransactionInput,
 } from '@nublar/validation';
 import { CategoryKind } from '../generated/prisma/client';
-import {
-  accountRefSelect,
-  toAccountRef,
-  type accountTypeNames,
-} from '../accounts/account-label';
 import { describeInvoice } from '../cards/cards.service';
 import { parseBody } from '../common/parse-body';
 import { today } from '../common/today';
@@ -30,56 +26,7 @@ import { LedgerService } from '../ledger/ledger.service';
 import { monthRange, shiftMonth } from '../ledger/month';
 import { PrismaService } from '../prisma/prisma.service';
 import { RecurringService } from '../recurring/recurring.service';
-
-const withRelations = {
-  account: { select: accountRefSelect },
-  destinationAccount: { select: accountRefSelect },
-  category: { select: { id: true, name: true, kind: true } },
-  card: { select: { id: true, name: true } },
-  investment: { select: { id: true, name: true } },
-  purchase: {
-    select: {
-      id: true,
-      amount: true,
-      installments: true,
-      date: true,
-      description: true,
-    },
-  },
-} as const;
-
-type AccountRefRow = {
-  id: string;
-  name: string;
-  type: keyof typeof accountTypeNames;
-  institution: { name: string } | null;
-};
-
-type TransactionWithRelations = {
-  id: string;
-  type: string;
-  status: string;
-  amount: bigint;
-  currency: string;
-  description: string;
-  date: Date;
-  invoiceMonth: string | null;
-  installmentNumber: number | null;
-  installmentCount: number | null;
-  recurringRuleId: string | null;
-  account: AccountRefRow | null;
-  destinationAccount: AccountRefRow | null;
-  category: { id: string; name: string; kind: string } | null;
-  card: { id: string; name: string } | null;
-  investment: { id: string; name: string } | null;
-  purchase: {
-    id: string;
-    amount: bigint;
-    installments: number;
-    date: Date;
-    description: string;
-  } | null;
-};
+import { serialize, withRelations } from './serialize';
 
 @Injectable()
 export class TransactionsService {
@@ -100,9 +47,13 @@ export class TransactionsService {
       await this.recurring.materialize(userId, parsed);
       where = {
         ...where,
+        // Anything charged to a card counts in its invoice month.
         OR: [
-          { purchaseId: { not: null }, invoiceMonth: parsed },
-          { purchaseId: null, date: monthRange(parsed) },
+          { cardId: { not: null }, type: 'EXPENSE', invoiceMonth: parsed },
+          {
+            OR: [{ cardId: null }, { type: { not: 'EXPENSE' } }],
+            date: monthRange(parsed),
+          },
         ],
       };
     }
@@ -138,6 +89,11 @@ export class TransactionsService {
     const input = parseBody(updateTransactionSchema, body);
     const existing = await this.find(userId, id);
     assertPlain(existing);
+    if (existing.recurringRuleId) {
+      throw new BadRequestException(
+        'Este lançamento é de uma recorrência: edite pela ocorrência.',
+      );
+    }
     await this.assertOwnership(userId, input);
 
     const transaction = await this.prisma.db.transaction.update({
@@ -158,7 +114,7 @@ export class TransactionsService {
     }
     // Deleting a recurring occurrence would only make it come back:
     // mark it skipped instead.
-    if (existing.recurringRuleId && existing.status === 'PENDING') {
+    if (existing.recurringRuleId) {
       await this.prisma.db.transaction.update({
         where: { id },
         data: { status: 'CANCELED' },
@@ -166,6 +122,99 @@ export class TransactionsService {
       return;
     }
     await this.prisma.db.transaction.delete({ where: { id } });
+  }
+
+  /**
+   * Edits one occurrence of a recurring rule without detaching it. With
+   * scope "following" the rule changes too, and pending occurrences after
+   * this one are regenerated with the new terms.
+   */
+  async updateOccurrence(userId: string, id: string, body: unknown) {
+    const input = parseBody(updateOccurrenceSchema, body);
+    const existing = await this.prisma.db.transaction.findFirst({
+      where: { id, userId },
+      select: {
+        id: true,
+        type: true,
+        cardId: true,
+        occurrence: true,
+        recurringRuleId: true,
+        recurringRule: { select: { installments: true } },
+      },
+    });
+    if (!existing) {
+      throw new NotFoundException('Lançamento não encontrado');
+    }
+    const ruleId = existing.recurringRuleId;
+    if (!ruleId || !existing.occurrence) {
+      throw new BadRequestException('Este lançamento não é de uma recorrência');
+    }
+    const category = await this.prisma.db.category.findFirst({
+      where: { id: input.categoryId, userId },
+      select: { kind: true },
+    });
+    if (!category) {
+      throw new NotFoundException('Categoria não encontrada');
+    }
+    if (category.kind !== existing.type) {
+      throw new BadRequestException(
+        'A categoria não combina com o tipo do lançamento',
+      );
+    }
+    // Card occurrences stay on their card: the account is never set.
+    const accountId = existing.cardId ? undefined : input.accountId;
+    if (accountId) {
+      const account = await this.prisma.db.account.findFirst({
+        where: { id: accountId, userId },
+        select: { id: true },
+      });
+      if (!account) {
+        throw new NotFoundException('Conta não encontrada');
+      }
+    }
+    const description = input.description ?? '';
+    const occurrence = existing.occurrence;
+
+    const transaction = await this.prisma.db.$transaction(async (tx) => {
+      if (input.scope === 'following') {
+        await tx.recurringRule.update({
+          where: { id: ruleId },
+          data: {
+            categoryId: input.categoryId,
+            description,
+            // An installment plan's amount is its total, not a part.
+            amount: existing.recurringRule?.installments
+              ? undefined
+              : input.amount,
+            accountId,
+            dayOfMonth: existing.cardId
+              ? undefined
+              : Number(input.date.slice(8, 10)),
+          },
+        });
+        await tx.transaction.deleteMany({
+          where: {
+            userId,
+            recurringRuleId: ruleId,
+            status: 'PENDING',
+            occurrence: { gt: occurrence },
+          },
+        });
+      }
+      return tx.transaction.update({
+        where: { id },
+        data: {
+          amount: input.amount,
+          categoryId: input.categoryId,
+          description,
+          date: new Date(`${input.date}T00:00:00.000Z`),
+          accountId,
+        },
+        include: withRelations,
+      });
+    });
+    this.recurring.forget(userId);
+    return serialize(transaction);
   }
 
   async confirm(userId: string, id: string, body: unknown) {
@@ -347,35 +396,5 @@ function toData(input: CreateTransactionInput) {
     amount: input.amount,
     description: input.description ?? '',
     date: new Date(`${input.date}T00:00:00.000Z`),
-  };
-}
-
-function serialize(transaction: TransactionWithRelations) {
-  return {
-    id: transaction.id,
-    type: transaction.type,
-    status: transaction.status,
-    amount: transaction.amount.toString(),
-    currency: transaction.currency,
-    description: transaction.description,
-    date: transaction.date.toISOString().slice(0, 10),
-    invoiceMonth: transaction.invoiceMonth,
-    installmentNumber: transaction.installmentNumber,
-    installmentCount: transaction.installmentCount,
-    recurring: transaction.recurringRuleId !== null,
-    account: toAccountRef(transaction.account),
-    destinationAccount: toAccountRef(transaction.destinationAccount),
-    category: transaction.category,
-    card: transaction.card,
-    investment: transaction.investment,
-    purchase: transaction.purchase
-      ? {
-          id: transaction.purchase.id,
-          amount: transaction.purchase.amount.toString(),
-          installments: transaction.purchase.installments,
-          date: transaction.purchase.date.toISOString().slice(0, 10),
-          description: transaction.purchase.description,
-        }
-      : null,
   };
 }

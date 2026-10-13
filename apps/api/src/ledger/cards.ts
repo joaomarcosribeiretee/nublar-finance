@@ -65,7 +65,7 @@ export function invoiceStatus(input: {
   dueDate: string;
 }): InvoiceStatus {
   if (input.total <= 0n) {
-    return 'EMPTY';
+    return input.paid > 0n ? 'PAID' : 'EMPTY';
   }
   if (input.paid >= input.total) {
     return 'PAID';

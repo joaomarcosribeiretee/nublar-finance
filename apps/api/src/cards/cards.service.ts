@@ -11,7 +11,6 @@ import {
   creditCardSchema,
   type CardPurchaseInput,
 } from '@nublar/validation';
-import { accountRefSelect, toAccountRef } from '../accounts/account-label';
 import { parseBody } from '../common/parse-body';
 import { assertInstitution } from '../institutions/assert-institution';
 import { today } from '../common/today';
@@ -26,6 +25,8 @@ import { cardDebt, invoiceTotals, type LedgerEntry } from '../ledger/ledger';
 import { LedgerService } from '../ledger/ledger.service';
 import { shiftMonth } from '../ledger/month';
 import { PrismaService } from '../prisma/prisma.service';
+import { RecurringService } from '../recurring/recurring.service';
+import { serialize, withRelations } from '../transactions/serialize';
 
 export type Card = CardCycle & {
   id: string;
@@ -40,9 +41,14 @@ export class CardsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly ledger: LedgerService,
+    private readonly recurring: RecurringService,
   ) {}
 
   async list(userId: string) {
+    await this.recurring.materialize(
+      userId,
+      shiftMonth(today().slice(0, 7), 2),
+    );
     const [cards, entries] = await Promise.all([
       this.prisma.db.creditCard.findMany({
         where: { userId },
@@ -143,32 +149,39 @@ export class CardsService {
     }
     const month = parsed.data;
     const card = await this.find(userId, id);
+    await this.recurring.materialize(userId, month);
     const [entries, rows] = await Promise.all([
       this.ledger.entries(userId),
       this.prisma.db.transaction.findMany({
-        where: { userId, cardId: id, invoiceMonth: month },
-        orderBy: [{ date: 'desc' }, { createdAt: 'desc' }],
-        include: {
-          account: { select: accountRefSelect },
-          category: { select: { id: true, name: true } },
+        where: {
+          userId,
+          cardId: id,
+          invoiceMonth: month,
+          status: { not: 'CANCELED' },
         },
+        orderBy: [{ date: 'desc' }, { createdAt: 'desc' }],
+        include: withRelations,
       }),
     ]);
 
+    const now = today();
     return {
       card: serializeCard(card),
-      ...describeInvoice(card, month, entries, today()),
+      ...describeInvoice(card, month, entries, now),
+      // Neighbouring invoices, to see how the bill moves over time.
+      timeline: [-3, -2, -1, 0, 1, 2, 3, 4, 5].map((offset) => {
+        const other = describeInvoice(
+          card,
+          shiftMonth(month, offset),
+          entries,
+          now,
+        );
+        return { month: other.month, total: other.total, status: other.status };
+      }),
+      // Same shape as /transactions, so each item opens the usual editor.
       items: rows.map((row) => ({
-        id: row.id,
-        type: row.type,
-        amount: row.amount.toString(),
-        description: row.description,
-        date: row.date.toISOString().slice(0, 10),
+        ...serialize(row),
         purchaseId: row.purchaseId,
-        installmentNumber: row.installmentNumber,
-        installmentCount: row.installmentCount,
-        category: row.category,
-        account: toAccountRef(row.account),
       })),
     };
   }
@@ -177,20 +190,48 @@ export class CardsService {
     const input = parseBody(cardPaymentSchema, body);
     const card = await this.find(userId, id);
     await this.assertAccount(userId, input.accountId);
-    const payment = await this.prisma.db.transaction.create({
-      data: {
-        userId,
-        type: 'CARD_PAYMENT',
-        accountId: input.accountId,
-        cardId: id,
-        invoiceMonth: input.invoiceMonth,
-        amount: input.amount,
-        description: `Fatura ${card.name}`,
-        date: new Date(`${input.date}T00:00:00.000Z`),
-        source: 'MANUAL',
-        status: 'POSTED',
-      },
-    });
+    const totals = invoiceTotals(
+      id,
+      input.invoiceMonth,
+      await this.ledger.entries(userId),
+    );
+    const remaining = totals.total - totals.paid;
+    if (remaining <= 0n) {
+      throw new BadRequestException('Esta fatura já está paga');
+    }
+    if (input.amount > remaining) {
+      throw new BadRequestException(
+        `O valor passa do que falta pagar nesta fatura (${formatReais(remaining)})`,
+      );
+    }
+    // Paying the bill settles everything on it: scheduled charges of that
+    // invoice are confirmed together with the payment.
+    const [payment] = await this.prisma.db.$transaction([
+      this.prisma.db.transaction.create({
+        data: {
+          userId,
+          type: 'CARD_PAYMENT',
+          accountId: input.accountId,
+          cardId: id,
+          invoiceMonth: input.invoiceMonth,
+          amount: input.amount,
+          description: `Fatura ${card.name}`,
+          date: new Date(`${input.date}T00:00:00.000Z`),
+          source: 'MANUAL',
+          status: 'POSTED',
+        },
+      }),
+      this.prisma.db.transaction.updateMany({
+        where: {
+          userId,
+          cardId: id,
+          invoiceMonth: input.invoiceMonth,
+          type: 'EXPENSE',
+          status: 'PENDING',
+        },
+        data: { status: 'POSTED' },
+      }),
+    ]);
     return { id: payment.id };
   }
 
@@ -307,6 +348,11 @@ export class CardsService {
   }
 }
 
+function formatReais(minor: bigint): string {
+  const reais = (minor / 100n).toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+  return `R$ ${reais},${(minor % 100n).toString().padStart(2, '0')}`;
+}
+
 export function describeInvoice(
   card: Card,
   month: string,
@@ -321,6 +367,7 @@ export function describeInvoice(
     ...dates,
     total: totals.total.toString(),
     paid: totals.paid.toString(),
+    scheduled: totals.scheduled.toString(),
     remaining: (remaining > 0n ? remaining : 0n).toString(),
     status: invoiceStatus({ ...totals, ...dates, today: now }),
   };

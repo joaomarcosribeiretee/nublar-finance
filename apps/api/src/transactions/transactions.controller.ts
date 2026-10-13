@@ -41,6 +41,15 @@ export class TransactionsController {
     return this.transactions.update(user.id, id, body);
   }
 
+  @Put('transactions/:id/occurrence')
+  updateOccurrence(
+    @CurrentUser() user: AuthUser,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() body: unknown,
+  ) {
+    return this.transactions.updateOccurrence(user.id, id, body);
+  }
+
   @Delete('transactions/:id')
   @HttpCode(204)
   remove(
