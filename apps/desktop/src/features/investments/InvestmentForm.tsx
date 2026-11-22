@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { Button } from "@/components/Button";
-import { controlClass, Field } from "@/components/Field";
+import { controlClass, DecimalInput, Field, MoneyInput, TextInput } from "@/components/Field";
+import { FormFooter } from "@/components/Modal";
+import { sanitizeTicker } from "@/lib/input";
 import { Icon } from "@/components/Icon";
 import { Segmented } from "@/components/Segmented";
 import { useToast } from "@/components/Toast";
@@ -50,7 +52,7 @@ function parseNonNegative(input: string): string | null {
 }
 
 const chip = (active: boolean) =>
-  `rounded-full border px-3 py-1.5 text-sm transition-all duration-150 ${
+  `rounded-full border px-3 py-1.5 text-sm transition-colors ${
     active
       ? "border-gold/50 bg-gold/15 text-foreground"
       : "border-line text-muted hover:border-line-strong hover:text-foreground"
@@ -119,7 +121,8 @@ export function InvestmentForm({
       assetClass,
       institutionId: institutionId || null,
       ticker: ticker.trim(),
-      quantity: quantity.trim(),
+      // A trailing separator ("10,") is a number still being typed, not a fraction.
+      quantity: quantity.trim().replace(/[.,]$/, ""),
       maturityDate: maturityDate || null,
       product: fixedIncome ? product : null,
       // Without a rate the index says nothing, so neither is saved.
@@ -176,7 +179,13 @@ export function InvestmentForm({
       <Field label="Classe">
         <div className="flex flex-wrap gap-1.5">
           {classes.map((value) => (
-            <button key={value} type="button" className={chip(assetClass === value)} onClick={() => setAssetClass(value)}>
+            <button
+              key={value}
+              type="button"
+              aria-pressed={assetClass === value}
+              className={chip(assetClass === value)}
+              onClick={() => setAssetClass(value)}
+            >
               {assetClassLabels[value]}
             </button>
           ))}
@@ -187,7 +196,13 @@ export function InvestmentForm({
         <Field label="Produto">
           <div className="flex flex-wrap gap-1.5">
             {products.map((value) => (
-              <button key={value} type="button" className={chip(product === value)} onClick={() => chooseProduct(value)}>
+              <button
+                key={value}
+                type="button"
+                aria-pressed={product === value}
+                className={chip(product === value)}
+                onClick={() => chooseProduct(value)}
+              >
                 {productLabels[value]}
               </button>
             ))}
@@ -200,13 +215,11 @@ export function InvestmentForm({
           <span className="text-xs text-muted">Quanto você tem hoje</span>
           <div className="mt-1 flex items-baseline gap-2">
             <span className="text-lg text-muted">R$</span>
-            <input
+            <MoneyInput
               autoFocus
-              inputMode="decimal"
-              placeholder="0,00"
-              className="tabular w-full bg-transparent font-display text-3xl outline-none placeholder:text-faint"
+              className="tabular w-full min-w-0 bg-transparent font-display text-3xl outline-none placeholder:text-faint focus-visible:outline-none"
               value={current}
-              onChange={(event) => setCurrent(event.target.value)}
+              onChange={setCurrent}
             />
           </div>
           <span className="mt-1 block text-[11px] text-faint">
@@ -215,15 +228,9 @@ export function InvestmentForm({
         </label>
       )}
 
-      <div className="grid grid-cols-[1fr_200px] gap-3">
+      <div className="grid gap-3 sm:grid-cols-[1fr_200px]">
         <Field label="Nome (opcional)">
-          <input
-            className={controlClass}
-            placeholder={suggestedName}
-            value={name}
-            maxLength={80}
-            onChange={(event) => setName(event.target.value)}
-          />
+          <TextInput placeholder={suggestedName} value={name} maxLength={80} onChange={setName} />
         </Field>
         <Field label="Instituição">
           <select className={controlClass} value={institutionId} onChange={(event) => setInstitutionId(event.target.value)}>
@@ -240,9 +247,10 @@ export function InvestmentForm({
       {fixedIncome ? (
         <>
           <Field label="Rentabilidade contratada (opcional)">
-            <div className="flex items-center gap-3">
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
               <Segmented
                 size="sm"
+                label="Indexador"
                 value={indexer ?? ""}
                 options={[
                   { value: "", label: "Não sei" },
@@ -258,12 +266,13 @@ export function InvestmentForm({
               />
               {indexer ? (
                 <div className="animate-enter relative w-32">
-                  <input
+                  <DecimalInput
+                    aria-label="Taxa"
                     className={`${controlClass} tabular pr-14`}
-                    inputMode="decimal"
+                    wholeDigits={3}
                     placeholder={indexer === "CDI" ? "92" : indexer === "IPCA" ? "6,5" : indexer === "SELIC" ? "0,1" : "12"}
                     value={rate}
-                    onChange={(event) => setRate(event.target.value)}
+                    onChange={setRate}
                   />
                   <span className="pointer-events-none absolute top-1/2 right-3 -translate-y-1/2 text-xs text-faint">
                     {indexer === "CDI" ? "% CDI" : indexer === "PREFIXED" ? "% a.a." : "%"}
@@ -278,10 +287,11 @@ export function InvestmentForm({
               Só informativo. Está nos detalhes da aplicação no app do banco (ex.: “92% do CDI”).
             </span>
           </Field>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid gap-3 sm:grid-cols-2">
             <Field label="Quando dá para sacar">
               <Segmented
                 size="sm"
+                label="Liquidez"
                 value={liquidity ?? ""}
                 options={[
                   { value: "", label: "Não sei" },
@@ -301,32 +311,23 @@ export function InvestmentForm({
             </Field>
           </div>
         </>
-      ) : (
-        <div className="grid grid-cols-3 gap-3">
-          {listed ? (
-            <>
-              <Field label="Código (opcional)">
-                <input
-                  className={controlClass}
-                  placeholder="PETR4"
-                  value={ticker}
-                  maxLength={20}
-                  onChange={(event) => setTicker(event.target.value.toUpperCase())}
-                />
-              </Field>
-              <Field label="Quantidade (opcional)">
-                <input
-                  className={controlClass}
-                  inputMode="decimal"
-                  placeholder="100"
-                  value={quantity}
-                  onChange={(event) => setQuantity(event.target.value)}
-                />
-              </Field>
-            </>
-          ) : null}
+      ) : listed ? (
+        <div className="grid grid-cols-2 gap-3">
+          <Field label="Código (opcional)">
+            <input
+              className={controlClass}
+              placeholder={assetClass === "CRYPTO" ? "BTC" : "PETR4"}
+              autoCapitalize="characters"
+              autoComplete="off"
+              value={ticker}
+              onChange={(event) => setTicker(sanitizeTicker(event.target.value))}
+            />
+          </Field>
+          <Field label="Quantidade (opcional)">
+            <DecimalInput placeholder="100" decimals={8} wholeDigits={12} value={quantity} onChange={setQuantity} />
+          </Field>
         </div>
-      )}
+      ) : null}
 
       {investment ? null : (
         <div className="rounded-2xl border border-line">
@@ -349,15 +350,9 @@ export function InvestmentForm({
             </span>
           </button>
           {knowsHistory ? (
-            <div className="animate-enter grid grid-cols-2 gap-3 px-4 pb-4 pl-12">
+            <div className="animate-enter grid gap-3 px-4 pb-4 sm:grid-cols-2 sm:pl-12">
               <Field label="Valor aplicado">
-                <input
-                  className={`${controlClass} tabular`}
-                  inputMode="decimal"
-                  placeholder="0,00"
-                  value={applied}
-                  onChange={(event) => setApplied(event.target.value)}
-                />
+                <MoneyInput value={applied} onChange={setApplied} />
               </Field>
               <Field label="Desde">
                 <input
@@ -366,6 +361,7 @@ export function InvestmentForm({
                   value={startDate}
                   max={todayLocal()}
                   onChange={(event) => setStartDate(event.target.value)}
+                  required
                 />
               </Field>
             </div>
@@ -373,8 +369,7 @@ export function InvestmentForm({
         </div>
       )}
 
-      {error ? <p className="text-sm text-negative">{error}</p> : null}
-      <footer className="flex items-center gap-2">
+      <FormFooter error={error}>
         {investment ? (
           <Button
             variant={confirmDelete ? "dangerSolid" : "danger"}
@@ -390,9 +385,9 @@ export function InvestmentForm({
           {investment ? "Voltar" : "Cancelar"}
         </Button>
         <Button variant="primary" type="submit" disabled={create.isPending || update.isPending}>
-          Salvar
+          {create.isPending || update.isPending ? "Salvando…" : "Salvar"}
         </Button>
-      </footer>
+      </FormFooter>
     </form>
   );
 }

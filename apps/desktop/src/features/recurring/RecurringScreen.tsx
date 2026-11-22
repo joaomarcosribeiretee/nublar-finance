@@ -2,11 +2,11 @@ import { useState } from "react";
 import { AccountSelect } from "@/components/AccountSelect";
 import { Button } from "@/components/Button";
 import { EmptyState } from "@/components/EmptyState";
-import { controlClass, Field } from "@/components/Field";
+import { controlClass, Field, IntegerInput, MoneyInput, TextInput } from "@/components/Field";
 import { Icon } from "@/components/Icon";
-import { Modal } from "@/components/Modal";
+import { FormFooter, Modal } from "@/components/Modal";
 import { Money } from "@/components/Money";
-import { PageHeader, Panel } from "@/components/Page";
+import { ErrorNote, Panel } from "@/components/Page";
 import { Segmented } from "@/components/Segmented";
 import { useToast } from "@/components/Toast";
 import { errorMessage } from "@/lib/api";
@@ -42,10 +42,12 @@ function monthlyOf(rule: RecurringRule): bigint {
   return rule.installments ? amount / BigInt(rule.installments) : amount;
 }
 
+/** The rules behind every scheduled entry; lives as a tab of Lançamentos. */
 export function RecurringScreen() {
   const rules = useRecurring();
   const [editing, setEditing] = useState<RecurringRule | "new" | null>(null);
-  const data = rules.data ?? [];
+  const [search, setSearch] = useState("");
+  const data = (rules.data ?? []).filter((rule) => `${rule.description} ${rule.category.name} ${rule.card?.name ?? ""} ${rule.account?.name ?? ""}`.toLocaleLowerCase("pt-BR").includes(search.trim().toLocaleLowerCase("pt-BR")));
   const groups: { title: string; items: RecurringRule[]; tone: "positive" | "plain" }[] = [
     { title: "Receitas fixas", items: data.filter((r) => r.type === "INCOME"), tone: "positive" },
     { title: "Despesas fixas", items: data.filter((r) => r.type === "EXPENSE" && !r.installments), tone: "plain" },
@@ -53,25 +55,28 @@ export function RecurringScreen() {
   ];
 
   return (
-    <section className="animate-enter space-y-6">
-      <PageHeader
-        eyebrow="Salário, aluguel, assinaturas, carnês"
-        title="Recorrentes"
-        actions={
-          <Button variant="primary" onClick={() => setEditing("new")}>
-            <Icon name="plus" size={16} />
-            Nova recorrência
-          </Button>
-        }
-      >
-        Todo mês o Nublar cria o lançamento e confirma sozinho na data (no cartão, quando a fatura fecha). Até lá dá para ajustar ou pular.
-      </PageHeader>
+    <section className="animate-enter space-y-5">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <p className="max-w-xl text-sm text-muted">
+          Salário, aluguel, assinaturas e carnês. Todo mês o Nublar cria o lançamento e confirma sozinho na data (no
+          cartão, quando a fatura fecha). Até lá dá para ajustar ou pular.
+        </p>
+        <Button onClick={() => setEditing("new")}>
+          <Icon name="plus" size={16} />
+          Nova recorrência
+        </Button>
+      </div>
+      {rules.data && rules.data.length > 0 ? <div className="filter-toolbar flex items-center gap-3">
+        <Icon name="search" size={17} className="text-muted" />
+        <input type="search" aria-label="Buscar recorrências" placeholder="Buscar por descrição, categoria ou conta" value={search} onChange={(event) => setSearch(event.target.value)} maxLength={100} className="min-w-0 flex-1 bg-transparent py-2 text-sm outline-none" />
+        <span className="shrink-0 text-xs text-muted">{data.length} itens</span>
+      </div> : null}
 
-      {rules.isError ? <p className="text-sm text-negative">{errorMessage(rules.error)}</p> : null}
-
-      {rules.isPending ? (
+      {rules.isError ? (
+        <ErrorNote>{errorMessage(rules.error)}</ErrorNote>
+      ) : rules.isPending ? (
         <div className="skeleton h-40 rounded-3xl" />
-      ) : data.length === 0 ? (
+      ) : rules.data?.length === 0 ? (
         <EmptyState
           icon="repeat"
           title="Nenhuma recorrência"
@@ -82,7 +87,7 @@ export function RecurringScreen() {
             </Button>
           }
         />
-      ) : (
+      ) : data.length === 0 ? <EmptyState icon="search" title="Nenhuma recorrência encontrada" description="Confira a busca e tente novamente." action={<Button onClick={() => setSearch("")}>Limpar busca</Button>} /> : (
         <div className="space-y-4">
           {groups
             .filter((group) => group.items.length > 0)
@@ -100,7 +105,7 @@ export function RecurringScreen() {
                       <li key={rule.id}>
                         <button
                           type="button"
-                          className="flex w-full items-center gap-3 rounded-2xl px-3 py-2.5 text-left transition-colors hover:bg-white/[0.035]"
+                          className="data-row flex w-full items-center gap-3 rounded-2xl px-3 py-4 text-left transition-colors hover:bg-hover"
                           onClick={() => setEditing(rule)}
                         >
                           <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-surface-2 text-muted">
@@ -110,7 +115,7 @@ export function RecurringScreen() {
                             <span className="block truncate text-sm">{rule.description || rule.category.name}</span>
                             <span className="block truncate text-xs text-muted">{describeRule(rule)}</span>
                           </span>
-                          <span className="text-right">
+                          <span className="shrink-0 text-right">
                             <Money amount={monthlyOf(rule).toString()} tone={group.tone} className="block text-sm" />
                             {rule.installments ? (
                               <span className="text-[11px] text-faint">total {formatMinorUnits(rule.amount)}</span>
@@ -169,11 +174,15 @@ function RecurringForm({ rule, onDone }: { rule: RecurringRule | null; onDone: (
   async function submit(event: React.FormEvent) {
     event.preventDefault();
     if (!parsed) {
-      setError("Informe um valor.");
+      setError("Informe um valor, por exemplo 49,90.");
       return;
     }
     if (!categoryId) {
       setError("Escolha uma categoria.");
+      return;
+    }
+    if (!plan && endMonth && endMonth < startMonth) {
+      setError("O fim precisa ser depois do início.");
       return;
     }
     try {
@@ -218,6 +227,7 @@ function RecurringForm({ rule, onDone }: { rule: RecurringRule | null; onDone: (
     <form onSubmit={(event) => void submit(event)} className="space-y-5">
       <div className="flex flex-wrap items-center gap-3">
         <Segmented
+          label="Tipo"
           value={type}
           options={[
             { value: "EXPENSE", label: "Despesa", activeClass: "text-negative" },
@@ -231,6 +241,7 @@ function RecurringForm({ rule, onDone }: { rule: RecurringRule | null; onDone: (
         {type === "EXPENSE" ? (
           <Segmented
             size="sm"
+            label="Repetição"
             value={mode}
             options={[
               { value: "monthly", label: "Fixo todo mês" },
@@ -241,38 +252,30 @@ function RecurringForm({ rule, onDone }: { rule: RecurringRule | null; onDone: (
         ) : null}
       </div>
 
-      <div className="grid grid-cols-[1fr_170px] gap-3">
+      <div className="grid gap-3 sm:grid-cols-[1fr_170px]">
         <Field label="Descrição">
-          <input
+          <TextInput
             autoFocus
-            className={controlClass}
             placeholder={type === "INCOME" ? "Ex.: Salário" : plan ? "Ex.: Carnê da geladeira" : "Ex.: Netflix"}
             value={description}
             maxLength={200}
-            onChange={(event) => setDescription(event.target.value)}
+            onChange={setDescription}
           />
         </Field>
         <Field label={plan ? "Valor total" : "Valor por mês"}>
-          <input
-            className={`${controlClass} tabular`}
-            inputMode="decimal"
-            placeholder="0,00"
-            value={amount}
-            onChange={(event) => setAmount(event.target.value)}
-          />
+          <MoneyInput value={amount} onChange={setAmount} />
         </Field>
       </div>
 
       {plan ? (
         <Field label="Em quantas vezes">
-          <div className="flex items-center gap-3">
-            <input
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+            <IntegerInput
               className={`${controlClass} !w-24 tabular`}
-              type="number"
               min={2}
               max={120}
               value={installments}
-              onChange={(event) => setInstallments(Math.max(2, Number(event.target.value) || 2))}
+              onChange={setInstallments}
             />
             {parsed ? (
               <span className="text-sm text-muted">
@@ -286,10 +289,11 @@ function RecurringForm({ rule, onDone }: { rule: RecurringRule | null; onDone: (
       <CategoryChips kind={type} categories={categories.data ?? []} value={categoryId} onChange={setCategoryId} />
 
       {type === "EXPENSE" && (cards.data?.length ?? 0) > 0 ? (
-        <div className="flex items-center justify-between">
+        <div className="flex flex-wrap items-center justify-between gap-2">
           <span className="text-xs text-muted">Pagar com</span>
           <Segmented
             size="sm"
+            label="Pagar com"
             value={payWith}
             options={[
               { value: "account", label: "Conta" },
@@ -314,7 +318,7 @@ function RecurringForm({ rule, onDone }: { rule: RecurringRule | null; onDone: (
           </span>
         </Field>
       ) : (
-        <div className="grid grid-cols-[1fr_110px] gap-3">
+        <div className="grid grid-cols-[minmax(0,1fr)_96px] gap-3 sm:grid-cols-[1fr_110px]">
           <AccountSelect label="Conta" accounts={accounts.data ?? []} value={chosenAccount} onChange={setAccountId} />
           <Field label="Todo dia">
             <select className={controlClass} value={dayOfMonth} onChange={(event) => setDayOfMonth(Number(event.target.value))}>
@@ -352,8 +356,7 @@ function RecurringForm({ rule, onDone }: { rule: RecurringRule | null; onDone: (
       </div>
 
       {rule ? <p className="text-xs text-faint">Alterar atualiza os pendentes. O que já foi confirmado não muda.</p> : null}
-      {error ? <p className="text-sm text-negative">{error}</p> : null}
-      <footer className="flex items-center gap-2">
+      <FormFooter error={error}>
         {rule ? (
           <Button
             variant={confirmDelete ? "dangerSolid" : "danger"}
@@ -369,9 +372,9 @@ function RecurringForm({ rule, onDone }: { rule: RecurringRule | null; onDone: (
           Cancelar
         </Button>
         <Button variant="primary" type="submit" disabled={save.isPending}>
-          Salvar
+          {save.isPending ? "Salvando…" : "Salvar"}
         </Button>
-      </footer>
+      </FormFooter>
     </form>
   );
 }

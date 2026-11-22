@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Button } from "@/components/Button";
-import { controlClass, Field } from "@/components/Field";
+import { Field, TextInput } from "@/components/Field";
+import { FormFooter } from "@/components/Modal";
 import { useToast } from "@/components/Toast";
 import { errorMessage } from "@/lib/api";
 import { institutionColors } from "@/lib/institutions";
@@ -9,13 +10,15 @@ import { useDeleteInstitution, useUpdateInstitution, type Institution } from "@/
 export function ColorPicker({ value, onChange }: { value: string; onChange: (color: string) => void }) {
   const colors = institutionColors.includes(value) ? institutionColors : [value, ...institutionColors];
   return (
-    <div className="flex flex-wrap gap-2">
-      {colors.map((color) => (
+    <div role="radiogroup" aria-label="Cor" className="flex flex-wrap gap-2.5">
+      {colors.map((color, index) => (
         <button
           key={color}
           type="button"
-          aria-label={`Cor ${color}`}
-          className={`h-7 w-7 rounded-full transition-transform hover:scale-110 ${value === color ? "ring-2 ring-foreground ring-offset-2 ring-offset-surface" : ""}`}
+          role="radio"
+          aria-checked={value === color}
+          aria-label={`Cor ${index + 1}`}
+          className={`h-8 w-8 rounded-full ring-offset-2 ring-offset-surface transition-shadow hover:ring-2 hover:ring-line-strong ${value === color ? "ring-2 ring-foreground hover:ring-foreground" : ""}`}
           style={{ background: color }}
           onClick={() => onChange(color)}
         />
@@ -36,7 +39,7 @@ export function InstitutionForm({ institution, onDone }: { institution: Institut
   async function submit(event: React.FormEvent) {
     event.preventDefault();
     try {
-      await update.mutateAsync({ id: institution.id, name, color });
+      await update.mutateAsync({ id: institution.id, name: name.trim(), color });
       toast("Instituição atualizada");
       onDone();
     } catch (reason: unknown) {
@@ -62,20 +65,12 @@ export function InstitutionForm({ institution, onDone }: { institution: Institut
   return (
     <form onSubmit={(event) => void submit(event)} className="space-y-5">
       <Field label="Nome">
-        <input
-          autoFocus
-          className={controlClass}
-          value={name}
-          maxLength={80}
-          onChange={(event) => setName(event.target.value)}
-          required
-        />
+        <TextInput autoFocus value={name} maxLength={80} onChange={setName} required />
       </Field>
       <Field label="Cor">
         <ColorPicker value={color} onChange={setColor} />
       </Field>
-      {error ? <p className="text-sm text-negative">{error}</p> : null}
-      <footer className="flex items-center gap-2">
+      <FormFooter error={error}>
         <Button
           variant={confirmDelete ? "dangerSolid" : "danger"}
           onClick={() => void destroy()}
@@ -89,9 +84,9 @@ export function InstitutionForm({ institution, onDone }: { institution: Institut
           Cancelar
         </Button>
         <Button variant="primary" type="submit" disabled={update.isPending}>
-          Salvar
+          {update.isPending ? "Salvando…" : "Salvar"}
         </Button>
-      </footer>
+      </FormFooter>
     </form>
   );
 }

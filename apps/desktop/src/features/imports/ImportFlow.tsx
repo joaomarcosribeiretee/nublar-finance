@@ -3,6 +3,7 @@ import { AccountSelect } from "@/components/AccountSelect";
 import { Button } from "@/components/Button";
 import { controlClass, Field } from "@/components/Field";
 import { Icon } from "@/components/Icon";
+import { FormFooter } from "@/components/Modal";
 import { Money } from "@/components/Money";
 import { useToast } from "@/components/Toast";
 import { errorMessage } from "@/lib/api";
@@ -71,7 +72,21 @@ export function ImportFlow({ onDone }: { onDone: () => void }) {
 
   async function pick(file: File | undefined) {
     if (!file) return;
-    const text = await readText(file);
+    if (!chosenAccount) {
+      setError("Cadastre uma conta antes de importar um extrato.");
+      return;
+    }
+    if (file.size > 5_000_000) {
+      setError("Arquivo grande demais. Exporte um período menor (até 5 MB).");
+      return;
+    }
+    let text: string;
+    try {
+      text = await readText(file);
+    } catch {
+      setError("Não foi possível ler o arquivo. Tente exportar o extrato de novo.");
+      return;
+    }
     const kind = /\.(ofx|qfx)$/i.test(file.name) || /<OFX>/i.test(text) ? "OFX" : "CSV";
     setFileName(file.name);
     setContent(text);
@@ -125,7 +140,7 @@ export function ImportFlow({ onDone }: { onDone: () => void }) {
     <div className="space-y-5">
       {!result || csvNeedsMapping ? (
         <>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid gap-3 sm:grid-cols-2">
             <AccountSelect
               label="Importar para a conta"
               accounts={accounts.data ?? []}
@@ -133,21 +148,26 @@ export function ImportFlow({ onDone }: { onDone: () => void }) {
               onChange={setAccountId}
             />
             <Field label="Arquivo do extrato">
-              <label className="flex h-10 cursor-pointer items-center gap-2 rounded-xl border border-dashed border-line-strong bg-surface-2 px-3 text-sm text-muted transition-colors hover:border-gold/50 hover:text-foreground">
+              <span className="flex h-11 cursor-pointer items-center gap-2 rounded-xl border border-dashed border-line-strong bg-surface-2 px-3 text-sm text-muted transition-colors hover:border-gold/50 hover:text-foreground has-focus-visible:border-gold/60 sm:h-10">
                 <Icon name="upload" size={15} />
                 <span className="truncate">{fileName || "Escolher .ofx ou .csv"}</span>
                 <input
                   type="file"
                   accept=".ofx,.qfx,.csv,.txt"
                   className="sr-only"
-                  onChange={(event) => void pick(event.target.files?.[0])}
+                  onChange={(event) => {
+                    const file = event.target.files?.[0];
+                    // Cleared so picking the same file again still fires a change.
+                    event.target.value = "";
+                    void pick(file);
+                  }}
                 />
-              </label>
+              </span>
             </Field>
           </div>
           <p className="text-xs text-faint">
-            No app ou site do banco, procure “Extrato” → “Exportar” ou “Baixar”. OFX é o mais confiável; CSV também
-            funciona. Nada é salvo antes da revisão.
+            No app ou site do banco, abra o extrato e procure “Exportar” ou “Baixar”. OFX é o mais confiável; CSV
+            também funciona. Nada é salvo antes da revisão.
           </p>
           {preview.isPending ? <div className="skeleton h-24 rounded-2xl" /> : null}
           {csvNeedsMapping && result?.csv ? (
@@ -160,8 +180,8 @@ export function ImportFlow({ onDone }: { onDone: () => void }) {
         </>
       ) : (
         <>
-          <div className="flex items-center justify-between text-sm">
-            <span className="text-muted">
+          <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 text-sm">
+            <span className="min-w-0 text-muted">
               {fileName} · {rows.length} lançamentos ·{" "}
               {rows.filter((r) => r.duplicate).length > 0
                 ? `${rows.filter((r) => r.duplicate).length} parecem já lançados (desmarcados)`
@@ -169,18 +189,19 @@ export function ImportFlow({ onDone }: { onDone: () => void }) {
             </span>
             <button
               type="button"
-              className="text-xs text-gold hover:underline"
+              className="py-1 text-xs text-gold hover:underline"
               onClick={() => {
                 setResult(null);
                 setFileName("");
+                setError(null);
               }}
             >
               Trocar arquivo
             </button>
           </div>
-          <div className="max-h-[52vh] overflow-y-auto rounded-2xl border border-line">
-            <table className="w-full text-sm">
-              <thead className="sticky top-0 bg-surface-2 text-xs text-muted">
+          <div className="overflow-x-auto rounded-2xl border border-line">
+            <table className="w-full min-w-[560px] text-sm">
+              <thead className="bg-surface-2 text-xs text-muted">
                 <tr>
                   <th className="w-8 px-3 py-2" />
                   <th className="px-2 py-2 text-left font-normal">Data</th>
@@ -199,10 +220,10 @@ export function ImportFlow({ onDone }: { onDone: () => void }) {
                       <td className="px-3 py-1.5">
                         <input
                           type="checkbox"
-                          aria-label="Importar"
+                          aria-label={`Importar ${row.description}`}
                           checked={choice?.include ?? false}
                           onChange={(event) => update({ include: event.target.checked })}
-                          className="accent-[var(--gold)]"
+                          className="h-4 w-4 accent-(--gold)"
                         />
                       </td>
                       <td className="px-2 py-1.5 text-xs whitespace-nowrap text-muted">{shortDate(row.date)}</td>
@@ -217,7 +238,8 @@ export function ImportFlow({ onDone }: { onDone: () => void }) {
                       </td>
                       <td className="px-3 py-1.5">
                         <select
-                          className={`${controlClass} h-8 text-xs ${choice?.include && !choice.categoryId ? "border-negative/50" : ""}`}
+                          aria-label={`Categoria de ${row.description}`}
+                          className={`${controlClass} !h-9 min-w-36 !text-xs ${choice?.include && !choice.categoryId ? "!border-negative/50" : ""}`}
                           value={choice?.categoryId ?? ""}
                           onChange={(event) => update({ categoryId: event.target.value })}
                         >
@@ -241,22 +263,28 @@ export function ImportFlow({ onDone }: { onDone: () => void }) {
             As categorias que você escolher viram regras: na próxima importação, lançamentos parecidos já vêm
             categorizados. Transferências entre suas contas: desmarque e lance como transferência.
           </p>
-          <footer className="flex items-center gap-4">
-            <span className="text-sm text-muted">
-              {selected.length} selecionados · entradas <Money amount={totals.income} tone="positive" /> · saídas{" "}
-              <Money amount={totals.expense} />
+          <FormFooter error={error}>
+            <span className="w-full text-sm text-muted sm:w-auto">
+              {selected.length} {selected.length === 1 ? "selecionado" : "selecionados"} · entradas{" "}
+              <Money amount={totals.income} tone="positive" /> · saídas <Money amount={totals.expense} />
             </span>
             <div className="flex-1" />
             <Button variant="ghost" onClick={onDone}>
               Cancelar
             </Button>
-            <Button variant="primary" onClick={() => void save()} disabled={commit.isPending || selected.length === 0}>
-              Importar {selected.length}
-            </Button>
-          </footer>
+            {selected.length > 0 ? (
+              <Button variant="primary" onClick={() => void save()} disabled={commit.isPending}>
+                {commit.isPending ? "Importando…" : `Importar ${selected.length}`}
+              </Button>
+            ) : null}
+          </FormFooter>
         </>
       )}
-      {error ? <p className="text-sm text-negative">{error}</p> : null}
+      {error && (!result || csvNeedsMapping) ? (
+        <p role="alert" className="text-sm text-negative">
+          {error}
+        </p>
+      ) : null}
     </div>
   );
 }
@@ -289,7 +317,7 @@ function CsvMapping({
   return (
     <div className="animate-enter space-y-4 rounded-2xl bg-surface-2 p-4">
       <p className="text-sm">Não reconheci as colunas deste CSV. Diga qual é qual:</p>
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid gap-3 sm:grid-cols-3">
         {select("date", "Data")}
         {select("description", "Descrição")}
         {select("amount", "Valor")}
@@ -299,7 +327,7 @@ function CsvMapping({
           type="checkbox"
           checked={columns.invert ?? false}
           onChange={(event) => setColumns((current) => ({ ...current, invert: event.target.checked }))}
-          className="accent-[var(--gold)]"
+          className="h-4 w-4 shrink-0 accent-(--gold)"
         />
         Gastos aparecem positivos no arquivo (comum em fatura de cartão)
       </label>

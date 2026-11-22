@@ -1,3 +1,4 @@
+import { useId } from "react";
 import { Area, AreaChart, ResponsiveContainer, Tooltip } from "recharts";
 import { TooltipBox } from "@/components/charts";
 import { formatBps, plotValue } from "@/lib/chart";
@@ -8,6 +9,7 @@ import { useAnalytics } from "@/lib/queries";
 /** Last 12 months of net worth, as a quiet trend next to the headline. */
 export function NetWorthSparkline({ month, onOpen }: { month: string; onOpen: () => void }) {
   const analytics = useAnalytics(month, 12);
+  const fill = useId();
   const data = analytics.data;
   if (!data || data.kpis.trackedMonths < 2) {
     return null;
@@ -19,14 +21,14 @@ export function NetWorthSparkline({ month, onOpen }: { month: string; onOpen: ()
     <button
       type="button"
       onClick={onOpen}
-      className="group ml-auto flex items-end gap-3 rounded-2xl px-3 py-2 text-left transition-colors hover:bg-white/[0.03]"
+      className="-mx-3 flex items-end gap-3 rounded-2xl px-3 py-2 text-left transition-colors hover:bg-hover @2xl:mx-0 @2xl:ml-auto"
       aria-label="Ver análises"
     >
       <div className="h-12 w-40">
         <ResponsiveContainer>
           <AreaChart data={rows} margin={{ top: 2, right: 2, bottom: 2, left: 2 }}>
             <defs>
-              <linearGradient id="sparkFill" x1="0" y1="0" x2="0" y2="1">
+              <linearGradient id={fill} x1="0" y1="0" x2="0" y2="1">
                 <stop offset="0%" stopColor="var(--gold)" stopOpacity={0.25} />
                 <stop offset="100%" stopColor="var(--gold)" stopOpacity={0} />
               </linearGradient>
@@ -44,12 +46,12 @@ export function NetWorthSparkline({ month, onOpen }: { month: string; onOpen: ()
                 );
               }}
             />
-            <Area
+            <Area isAnimationActive={false}
               type="monotone"
               dataKey="plot"
               stroke="var(--gold)"
               strokeWidth={1.5}
-              fill="url(#sparkFill)"
+              fill={`url(#${fill})`}
               dot={false}
               activeDot={{ r: 3, stroke: "var(--surface)", strokeWidth: 2, fill: "var(--gold)" }}
             />

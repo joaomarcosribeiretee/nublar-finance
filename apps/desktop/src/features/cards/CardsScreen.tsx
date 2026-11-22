@@ -1,11 +1,11 @@
 import { useState } from "react";
 import { AccountSelect } from "@/components/AccountSelect";
 import { Button } from "@/components/Button";
-import { PageHeader } from "@/components/Page";
+import { ErrorNote, PageHeader, ProgressBar, StatStrip, Stepper } from "@/components/Page";
 import { EmptyState } from "@/components/EmptyState";
-import { controlClass, Field } from "@/components/Field";
+import { controlClass, Field, MoneyInput, TextInput } from "@/components/Field";
 import { Icon } from "@/components/Icon";
-import { Modal } from "@/components/Modal";
+import { FormFooter, Modal } from "@/components/Modal";
 import { Money } from "@/components/Money";
 import { useToast } from "@/components/Toast";
 import { errorMessage } from "@/lib/api";
@@ -25,7 +25,7 @@ import {
 } from "@/lib/queries";
 
 const statusStyle: Record<InvoiceStatus, string> = {
-  EMPTY: "bg-white/5 text-faint",
+  EMPTY: "bg-hover-strong text-muted",
   OPEN: "bg-transfer/10 text-transfer",
   CLOSED: "bg-gold/15 text-gold",
   PAID: "bg-positive/10 text-positive",
@@ -34,7 +34,7 @@ const statusStyle: Record<InvoiceStatus, string> = {
 
 export function StatusPill({ status }: { status: InvoiceStatus }) {
   return (
-    <span className={`rounded-full px-2 py-0.5 text-[11px] font-medium ${statusStyle[status]}`}>
+    <span className={`shrink-0 rounded-full px-2 py-0.5 text-[11px] font-medium ${statusStyle[status]}`}>
       {invoiceStatusLabels[status]}
     </span>
   );
@@ -58,12 +58,17 @@ export function CardsScreen({ onOpenInvoices }: { onOpenInvoices?: (cardId: stri
           </Button>
         }
       />
+      {cards.isSuccess && cards.data.length > 0 ? <div className="mt-6"><StatStrip columns="grid-cols-1 @lg:grid-cols-3" items={[
+        { label: "Comprometido nos cartões", value: <Money amount={cards.data.reduce((sum, card) => sum + BigInt(card.debt), 0n).toString()} /> },
+        { label: "Limite disponível", value: <Money amount={cards.data.reduce((sum, card) => sum + BigInt(card.available), 0n).toString()} /> },
+        { label: "Cartões cadastrados", value: cards.data.length },
+      ]} /></div> : null}
 
       <div className="mt-8">
         {cards.isError ? (
-          <p className="text-sm text-negative">{errorMessage(cards.error)}</p>
+          <ErrorNote>{errorMessage(cards.error)}</ErrorNote>
         ) : cards.isPending ? (
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid gap-4 @2xl:grid-cols-2">
             {[0, 1].map((index) => (
               <div key={index} className="skeleton h-48 rounded-3xl" />
             ))}
@@ -80,7 +85,7 @@ export function CardsScreen({ onOpenInvoices }: { onOpenInvoices?: (cardId: stri
             }
           />
         ) : (
-          <ul className="grid grid-cols-[repeat(auto-fill,minmax(320px,1fr))] gap-4">
+          <ul className="grid grid-cols-[repeat(auto-fill,minmax(min(100%,300px),1fr))] gap-4">
             {cards.data.map((card) => (
               <li key={card.id}>
                 <CardTile card={card} onOpen={() => setOpenId(card.id)} />
@@ -114,13 +119,12 @@ function CardTile({ card, onOpen }: { card: Card; onOpen: () => void }) {
     <button
       type="button"
       onClick={onOpen}
-      className="group relative flex h-48 w-full flex-col overflow-hidden rounded-3xl border border-line bg-gradient-to-br from-raised via-surface-2 to-surface p-5 text-left transition-all duration-200 hover:-translate-y-0.5 hover:border-line-strong"
+      className="credit-card relative flex min-h-60 w-full flex-col overflow-hidden rounded-3xl border border-line-strong bg-surface p-6 text-left transition-colors hover:border-gold/40"
     >
-      <div className="pointer-events-none absolute -top-16 -right-16 h-40 w-40 rounded-full bg-gold/10 blur-2xl transition-opacity group-hover:opacity-80" />
-      <div className="relative flex items-center justify-between">
-        <span className="flex items-center gap-2 text-sm">
+      <div className="relative flex items-center justify-between gap-3">
+        <span className="flex min-w-0 items-center gap-2 text-sm">
           <Icon name="card" size={16} className="text-muted" />
-          {card.name}
+          <span className="truncate">{card.name}</span>
         </span>
         <StatusPill status={invoice.status} />
       </div>
@@ -131,13 +135,10 @@ function CardTile({ card, onOpen }: { card: Card; onOpen: () => void }) {
         <p className="mt-1 font-display text-3xl tracking-tight">
           <Money amount={invoice.status === "PAID" ? invoice.total : invoice.remaining} />
         </p>
-        <div className="mt-4 h-1 overflow-hidden rounded-full bg-black/30">
-          <div
-            className={`h-full rounded-full transition-[width] duration-700 ${used > 90 ? "bg-negative" : "bg-gold"}`}
-            style={{ width: `${Math.min(used, 100)}%` }}
-          />
+        <div className="mt-4">
+          {used <= 100 ? <ProgressBar size="xs" value={used} tone={used > 90 ? "negative" : "gold"} /> : <p className="text-xs text-negative">Limite excedido em <Money amount={(BigInt(card.debt) - BigInt(card.limit)).toString()} /></p>}
         </div>
-        <p className="mt-2 flex justify-between text-[11px] text-faint">
+        <p className="mt-2 flex justify-between gap-3 text-[11px] text-faint">
           <span>
             Disponível <Money amount={card.available} />
           </span>
@@ -164,49 +165,42 @@ function CardDetail({
   const invoice = useInvoice(card.id, month);
   const data = invoice.data;
 
+  // Another bill has another amount due: an open payment form would be stale.
+  function goTo(next: string) {
+    setMonth(next);
+    setView("invoice");
+  }
+
   if (view === "edit") {
     return <CardForm card={card} onDone={() => setView("invoice")} onDeleted={onClose} />;
   }
 
   return (
     <div className="space-y-5">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-1">
-          <button
-            type="button"
-            aria-label="Fatura anterior"
-            className="rounded-lg p-1.5 text-muted hover:bg-white/5 hover:text-foreground"
-            onClick={() => setMonth(shiftMonth(month, -1))}
-          >
-            <Icon name="chevronLeft" size={16} />
-          </button>
-          <span className="w-36 text-center text-sm">Fatura de {monthLabel(month).toLowerCase()}</span>
-          <button
-            type="button"
-            aria-label="Próxima fatura"
-            className="rounded-lg p-1.5 text-muted hover:bg-white/5 hover:text-foreground"
-            onClick={() => setMonth(shiftMonth(month, 1))}
-          >
-            <Icon name="chevronRight" size={16} />
-          </button>
-        </div>
+      <div className="flex items-center justify-between gap-3">
+        <Stepper
+          className="-ml-2"
+          label={monthLabel(month)}
+          previousLabel="Fatura anterior"
+          nextLabel="Próxima fatura"
+          onPrevious={() => goTo(shiftMonth(month, -1))}
+          onNext={() => goTo(shiftMonth(month, 1))}
+        />
         {data ? <StatusPill status={data.status} /> : null}
       </div>
 
-      <div className="grid grid-cols-3 gap-px overflow-hidden rounded-2xl border border-line bg-line">
-        {[
+      {invoice.isError ? <ErrorNote>{errorMessage(invoice.error)}</ErrorNote> : null}
+
+      <StatStrip
+        items={[
           { label: "Total", value: data?.total },
           { label: "Pago", value: data?.paid },
           { label: "Restante", value: data?.remaining },
-        ].map((stat) => (
-          <div key={stat.label} className="bg-surface-2 px-4 py-3">
-            <p className="text-xs text-muted">{stat.label}</p>
-            <p className="mt-1 text-lg">
-              {stat.value === undefined ? <span className="skeleton block h-6 w-20" /> : <Money amount={stat.value} />}
-            </p>
-          </div>
-        ))}
-      </div>
+        ].map((stat) => ({
+          label: stat.label,
+          value: stat.value === undefined ? <span className="skeleton block h-5 w-16" /> : <Money amount={stat.value} />,
+        }))}
+      />
       {data ? (
         <p className="-mt-2 text-xs text-faint">
           Fecha em {shortDate(data.closingDate)} · vence em {shortDate(data.dueDate)}
@@ -216,7 +210,7 @@ function CardDetail({
       {view === "pay" && data ? (
         <PayForm card={card} month={month} remaining={data.remaining} onDone={() => setView("invoice")} />
       ) : (
-        <ul className={`max-h-72 overflow-y-auto transition-opacity ${invoice.isPlaceholderData ? "opacity-50" : ""}`}>
+        <ul className={`-mx-2 transition-opacity duration-(--dur-base) ${invoice.isPlaceholderData ? "opacity-50" : ""}`}>
           {data?.items.length === 0 ? (
             <li className="py-8 text-center text-sm text-faint">Nenhuma compra nesta fatura.</li>
           ) : null}
@@ -250,7 +244,7 @@ function CardDetail({
       )}
 
       {view === "invoice" ? (
-        <footer className="flex items-center gap-2 border-t border-line pt-4">
+        <FormFooter>
           <Button variant="ghost" onClick={() => setView("edit")}>
             <Icon name="pencil" size={14} />
             Editar cartão
@@ -267,16 +261,12 @@ function CardDetail({
               <Icon name="check" size={15} />
               Fatura paga
             </span>
-          ) : (
-            <Button
-              variant="primary"
-              onClick={() => setView("pay")}
-              disabled={!data || BigInt(data.remaining) <= 0n}
-            >
+          ) : data && BigInt(data.remaining) > 0n ? (
+            <Button variant="primary" onClick={() => setView("pay")}>
               Pagar fatura
             </Button>
-          )}
-        </footer>
+          ) : null}
+        </FormFooter>
       ) : null}
     </div>
   );
@@ -306,7 +296,11 @@ export function PayForm({
     event.preventDefault();
     const minor = parseReaisToMinorUnits(amount);
     if (!minor) {
-      setError("Informe um valor válido.");
+      setError("Informe um valor, por exemplo 250,00.");
+      return;
+    }
+    if (!chosen) {
+      setError("Escolha a conta de onde sai o pagamento.");
       return;
     }
     try {
@@ -324,7 +318,7 @@ export function PayForm({
 
   return (
     <form onSubmit={(event) => void submit(event)} className="animate-enter space-y-4 rounded-2xl bg-surface-2 p-4">
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid gap-3 sm:grid-cols-3">
         <AccountSelect
           label="Pagar com"
           accounts={accounts.data ?? []}
@@ -332,29 +326,33 @@ export function PayForm({
           onChange={setAccountId}
         />
         <Field label="Valor">
-          <input
-            autoFocus
-            className={`${controlClass} tabular`}
-            inputMode="decimal"
-            value={amount}
-            onChange={(event) => setAmount(event.target.value)}
-          />
+          <MoneyInput autoFocus value={amount} onChange={setAmount} />
         </Field>
         <Field label="Data">
-          <input className={controlClass} type="date" value={date} onChange={(event) => setDate(event.target.value)} />
+          <input
+            className={controlClass}
+            type="date"
+            value={date}
+            onChange={(event) => setDate(event.target.value)}
+            required
+          />
         </Field>
       </div>
       <p className="text-xs text-faint">
         Sai da conta e abate a dívida do cartão. Não é despesa: as compras já contaram na fatura. As
         cobranças previstas desta fatura são confirmadas junto.
       </p>
-      {error ? <p className="text-sm text-negative">{error}</p> : null}
-      <div className="flex justify-end gap-2">
+      {error ? (
+        <p role="alert" className="text-sm text-negative">
+          {error}
+        </p>
+      ) : null}
+      <div className="flex flex-wrap justify-end gap-2">
         <Button variant="ghost" onClick={onDone}>
           Cancelar
         </Button>
         <Button variant="primary" type="submit" disabled={pay.isPending}>
-          Confirmar pagamento
+          {pay.isPending ? "Registrando…" : "Confirmar pagamento"}
         </Button>
       </div>
     </form>
@@ -399,9 +397,10 @@ export function CardForm({
 
   async function submit(event: React.FormEvent) {
     event.preventDefault();
-    const minor = limit.trim() ? parseReaisToMinorUnits(limit) : "0";
+    // An empty or zeroed limit means "no limit tracked", not a mistake.
+    const minor = /^[0.,\s]*$/.test(limit) ? "0" : parseReaisToMinorUnits(limit);
     if (minor === null) {
-      setError("Limite inválido.");
+      setError("Limite inválido. Use algo como 5.000,00.");
       return;
     }
     try {
@@ -459,29 +458,22 @@ export function CardForm({
           </select>
         </Field>
       )}
-      <div className="grid grid-cols-[1fr_180px] gap-3">
+      <div className="grid gap-3 sm:grid-cols-[1fr_180px]">
         <Field label="Nome do cartão">
-          <input
+          <TextInput
             autoFocus
-            className={controlClass}
             placeholder={institutionName || "Ex.: Nubank"}
             value={name}
             maxLength={80}
-            onChange={(event) => setName(event.target.value)}
+            onChange={setName}
             required={!institutionName}
           />
         </Field>
         <Field label="Limite">
-          <input
-            className={`${controlClass} tabular`}
-            inputMode="decimal"
-            placeholder="0,00"
-            value={limit}
-            onChange={(event) => setLimit(event.target.value)}
-          />
+          <MoneyInput value={limit} onChange={setLimit} />
         </Field>
       </div>
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
         <Field label="Fecha dia">
           <select className={controlClass} value={closingDay} onChange={(event) => setClosingDay(Number(event.target.value))}>
             {days.map((day) => (
@@ -500,20 +492,21 @@ export function CardForm({
             ))}
           </select>
         </Field>
-        <AccountSelect
-          label="Paga com"
-          accounts={accounts.data ?? []}
-          value={paymentAccount}
-          onChange={setPaymentAccountId}
-          allowEmpty="—"
-        />
+        <div className="col-span-2 sm:col-span-1">
+          <AccountSelect
+            label="Paga com"
+            accounts={accounts.data ?? []}
+            value={paymentAccount}
+            onChange={setPaymentAccountId}
+            allowEmpty="Nenhuma"
+          />
+        </div>
       </div>
       <p className="text-xs text-faint">
         Compras no dia do fechamento ou depois entram na fatura seguinte.
         {card ? " Mudar as datas vale para novas compras." : ""}
       </p>
-      {error ? <p className="text-sm text-negative">{error}</p> : null}
-      <footer className="flex items-center gap-2">
+      <FormFooter error={error}>
         {card ? (
           <Button
             variant={confirmDelete ? "dangerSolid" : "danger"}
@@ -529,9 +522,9 @@ export function CardForm({
           {card ? "Voltar" : "Cancelar"}
         </Button>
         <Button variant="primary" type="submit" disabled={save.isPending}>
-          Salvar
+          {save.isPending ? "Salvando…" : "Salvar"}
         </Button>
-      </footer>
+      </FormFooter>
     </form>
   );
 }

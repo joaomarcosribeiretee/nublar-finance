@@ -40,7 +40,8 @@ export function CategoryChips({
           <button
             key={category.id}
             type="button"
-            className={`rounded-full border px-3 py-1.5 text-sm transition-all duration-150 ${
+            aria-pressed={value === category.id}
+            className={`rounded-full border px-3 py-1.5 text-sm transition-colors ${
               value === category.id
                 ? "border-gold/50 bg-gold/15 text-foreground"
                 : "border-line text-muted hover:border-line-strong hover:text-foreground"

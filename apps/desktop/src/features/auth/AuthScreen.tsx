@@ -2,6 +2,8 @@ import { useState } from "react";
 import logo from "../../../../../assets/logo_semfundo.png";
 import { Button } from "@/components/Button";
 import { controlClass, Field } from "@/components/Field";
+import { Icon } from "@/components/Icon";
+import { sanitizeEmail } from "@/lib/input";
 import { Segmented } from "@/components/Segmented";
 import { getSupabase, supabaseConfigError } from "@/lib/supabase";
 
@@ -24,10 +26,15 @@ export function AuthScreen() {
   const [password, setPassword] = useState("");
   const [message, setMessage] = useState<{ text: string; tone: "error" | "info" } | null>(null);
   const [pending, setPending] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   async function submit(event: React.FormEvent) {
     event.preventDefault();
     setMessage(null);
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
+      setMessage({ text: "Digite um email válido, como nome@exemplo.com.", tone: "error" });
+      return;
+    }
     if (password.length < 8) {
       setMessage({ text: "A senha precisa ter pelo menos 8 caracteres.", tone: "error" });
       return;
@@ -68,26 +75,42 @@ export function AuthScreen() {
   }
 
   return (
-    <main className="relative flex h-full flex-col overflow-hidden">
-      <div className="drag h-[var(--titlebar)] shrink-0" />
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_50%_-10%,rgba(76,150,108,0.22),transparent_55%),radial-gradient(circle_at_85%_15%,rgba(201,164,92,0.08),transparent_35%)]" />
+    <main className="relative flex h-full flex-col overflow-x-hidden overflow-y-auto">
+      <div className="drag h-(--titlebar) shrink-0" />
+      <div className="auth-glow pointer-events-none absolute inset-0" />
 
-      <div className="animate-enter relative mx-auto flex w-full max-w-sm flex-1 flex-col justify-center px-6 pb-16">
-        <div className="flex flex-col items-center text-center">
+      <div className="auth-layout animate-enter">
+        <div className="auth-story">
+          <div className="flex items-center gap-3">
           <img src={logo} alt="" className="h-20 w-20 object-contain" />
-          <h1 className="mt-4 font-display text-4xl tracking-tight">Nublar</h1>
-          <p className="mt-2 text-sm text-muted">
-            Onde estou, para onde vai meu dinheiro
-            <br />e para onde minhas finanças caminham.
+          <span className="font-display text-3xl tracking-tight">Nublar</span>
+          </div>
+          <p className="design-eyebrow mt-10">Seu dinheiro, com clareza</p>
+          <h1 className="auth-headline">Mais visão.<br />Mais tranquilidade.</h1>
+          <p className="mt-6 max-w-sm text-base leading-relaxed text-muted">
+            Entenda o presente e planeje o que vem pela frente.
+            Sua vida financeira, em um só lugar.
           </p>
+          <div className="auth-features">
+            <span><Icon name="bank" size={19} /> Contas reunidas</span>
+            <span><Icon name="chart" size={19} /> Gastos à vista</span>
+            <span><Icon name="target" size={19} /> Planos no caminho</span>
+          </div>
         </div>
 
         <form
           onSubmit={(event) => void submit(event)}
-          className="mt-10 space-y-4 rounded-3xl border border-line bg-surface/80 p-6 shadow-2xl shadow-black/30 backdrop-blur"
+          noValidate
+          className="auth-form space-y-5"
         >
+          <div className="mb-7">
+            <h2 className="font-display text-3xl">{mode === "sign-in" ? "Bom ter você aqui." : "Seu próximo começo."}</h2>
+            <p className="mt-2 text-sm text-muted">{mode === "sign-in" ? "Entre para cuidar dos seus planos." : "Crie sua conta e organize suas finanças."}</p>
+          </div>
           <div className="flex">
             <Segmented
+              full
+              label="Entrar ou criar conta"
               value={mode}
               options={[
                 { value: "sign-in", label: "Entrar" },
@@ -103,27 +126,44 @@ export function AuthScreen() {
             <input
               className={controlClass}
               type="email"
+              inputMode="email"
               autoComplete="email"
+              autoCapitalize="none"
+              spellCheck={false}
               autoFocus
+              maxLength={254}
               value={email}
-              onChange={(event) => setEmail(event.target.value)}
+              onChange={(event) => setEmail(sanitizeEmail(event.target.value))}
               required
             />
           </Field>
           <Field label="Senha">
-            <input
-              className={controlClass}
-              type="password"
-              autoComplete={mode === "sign-up" ? "new-password" : "current-password"}
-              placeholder={mode === "sign-up" ? "Mínimo 8 caracteres" : ""}
-              value={password}
-              onChange={(event) => setPassword(event.target.value)}
-              required
-            />
+            <span className="relative block">
+              <input
+                className={`${controlClass} pr-11`}
+                type={showPassword ? "text" : "password"}
+                autoComplete={mode === "sign-up" ? "new-password" : "current-password"}
+                placeholder={mode === "sign-up" ? "Mínimo 8 caracteres" : ""}
+                maxLength={72}
+                value={password}
+                onChange={(event) => setPassword(event.target.value)}
+                required
+              />
+              <button
+                type="button"
+                aria-label={showPassword ? "Ocultar senha" : "Mostrar senha"}
+                aria-pressed={showPassword}
+                className="absolute top-1/2 right-1 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-lg text-faint transition-colors hover:text-foreground"
+                onClick={() => setShowPassword((value) => !value)}
+              >
+                <Icon name={showPassword ? "eyeOff" : "eye"} size={16} />
+              </button>
+            </span>
           </Field>
           {configError ? <p className="text-sm text-gold">{configError}</p> : null}
           {message ? (
             <p
+              role={message.tone === "error" ? "alert" : "status"}
               className={`animate-enter text-sm ${message.tone === "error" ? "text-negative" : "text-positive"}`}
             >
               {message.text}

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Button } from "@/components/Button";
-import { controlClass, Field } from "@/components/Field";
+import { controlClass, Field, MoneyInput } from "@/components/Field";
+import { FormFooter } from "@/components/Modal";
 import { useToast } from "@/components/Toast";
 import { errorMessage } from "@/lib/api";
 import { shortDate, todayLocal } from "@/lib/dates";
@@ -53,9 +54,9 @@ export function BulkValuations({ items, onDone }: { items: InvestmentItem[]; onD
       <p className="text-sm text-muted">
         Copie o valor atual de cada aplicação do app do banco. Só o que mudou é salvo.
       </p>
-      <ul className="max-h-[50vh] space-y-1 overflow-y-auto pr-1">
+      <ul className="space-y-1">
         {items.map((item) => (
-          <li key={item.id} className="flex items-center gap-3 rounded-xl px-2 py-1.5">
+          <li key={item.id} className="flex items-center gap-3 py-1.5">
             <span className="min-w-0 flex-1">
               <span className="block truncate text-sm">{item.name}</span>
               <span className="block truncate text-xs text-faint">
@@ -64,39 +65,40 @@ export function BulkValuations({ items, onDone }: { items: InvestmentItem[]; onD
                 {item.lastValuation ? ` · atualizado ${shortDate(item.lastValuation)}` : ""}
               </span>
             </span>
-            <div className="relative w-40">
+            <div className="relative w-36 shrink-0 sm:w-40">
               <span className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-sm text-faint">R$</span>
-              <input
+              <MoneyInput
+                aria-label={`Valor atual de ${item.name}`}
                 className={`${controlClass} tabular pl-9 text-right`}
-                inputMode="decimal"
                 value={values[item.id] ?? ""}
-                onChange={(event) => setValues((current) => ({ ...current, [item.id]: event.target.value }))}
+                onChange={(value) => setValues((current) => ({ ...current, [item.id]: value }))}
                 onFocus={(event) => event.target.select()}
               />
             </div>
           </li>
         ))}
       </ul>
-      <div className="flex items-end justify-between gap-3 border-t border-line pt-4">
-        <Field label="Valores de" className="w-44">
+      <FormFooter error={error}>
+        <Field label="Valores de" className="w-40">
           <input
             className={controlClass}
             type="date"
             value={date}
             max={todayLocal()}
             onChange={(event) => setDate(event.target.value)}
+            required
           />
         </Field>
-        <div className="flex gap-2">
+        <div className="flex-1" />
+        <div className="flex gap-2 self-end">
           <Button variant="ghost" onClick={onDone}>
             Cancelar
           </Button>
           <Button variant="primary" type="submit" disabled={save.isPending}>
-            Salvar valores
+            {save.isPending ? "Salvando…" : "Salvar valores"}
           </Button>
         </div>
-      </div>
-      {error ? <p className="text-sm text-negative">{error}</p> : null}
+      </FormFooter>
     </form>
   );
 }

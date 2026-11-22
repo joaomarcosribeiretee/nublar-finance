@@ -4,8 +4,8 @@ import { CategoryChips } from "./CategoryChips";
 import { Button } from "@/components/Button";
 import { EmptyState } from "@/components/EmptyState";
 import { Icon } from "@/components/Icon";
-import { controlClass, Field } from "@/components/Field";
-import { Modal } from "@/components/Modal";
+import { controlClass, Field, IntegerInput, MoneyInput, TextInput } from "@/components/Field";
+import { FormFooter, Modal } from "@/components/Modal";
 import { Money } from "@/components/Money";
 import { Segmented } from "@/components/Segmented";
 import { useToast } from "@/components/Toast";
@@ -61,11 +61,11 @@ export function TransactionForm({
         ? "Aporte"
         : editing.type === "REDEMPTION"
           ? "Resgate"
-      : editing.purchase
-        ? "Compra no cartão"
-        : editing.status === "PENDING"
-          ? "Lançamento pendente"
-          : "Editar lançamento";
+          : editing.purchase
+            ? "Compra no cartão"
+            : editing.status === "PENDING"
+              ? "Lançamento pendente"
+              : "Editar lançamento";
 
   return (
     <Modal open={open} onClose={onClose} title={title} width={520}>
@@ -155,7 +155,9 @@ function FormBody({
   // occurrence never turns it into a plan.
   const canRepeat = type !== "TRANSFER" && (!editing || Boolean(purchase));
   const effectiveRepeat: Repeat = canRepeat ? (type === "INCOME" && repeat === "installments" ? "once" : repeat) : "once";
-  const parts = effectiveRepeat === "installments" ? installments : 1;
+  // The card schema stops at 48 parcels; a carnê on an account goes to 120.
+  const maxInstallments = onCard ? 48 : 120;
+  const parts = effectiveRepeat === "installments" ? Math.min(installments, maxInstallments) : 1;
   const sourceId = accountId || accountList[0]?.id || "";
   const destinationId =
     destinationAccountId || accountList.find((account) => account.id !== sourceId)?.id || "";
@@ -243,7 +245,7 @@ function FormBody({
             accountId: sourceId,
             categoryId: chosenCategory,
             amount: parsedAmount,
-            installments,
+            installments: parts,
             description: description.trim(),
             dayOfMonth: Number(date.slice(8, 10)),
             startMonth: date.slice(0, 7),
@@ -251,7 +253,7 @@ function FormBody({
             postFirst: date <= todayLocal(),
           },
         });
-        toast(`Parcelado em ${installments}x`);
+        toast(`Parcelado em ${parts}x`);
         onDone();
         return;
       }
@@ -318,7 +320,11 @@ function FormBody({
   }
 
   async function confirmPending() {
-    if (!editing || !parsedAmount) {
+    if (!editing) {
+      return;
+    }
+    if (!parsedAmount) {
+      setError("Informe um valor, por exemplo 25,90.");
       return;
     }
     try {
@@ -343,6 +349,8 @@ function FormBody({
     <form onSubmit={(event) => void submit(event)} className="space-y-5">
       {!pending && !purchase && !occurrence ? (
         <Segmented
+          full
+          label="Tipo de lançamento"
           value={type}
           options={typeOptions}
           onChange={(next) => {
@@ -358,22 +366,24 @@ function FormBody({
         </span>
         <div className="mt-1 flex items-baseline gap-2">
           <span className={`text-lg ${amountColor}`}>R$</span>
-          <input
-            autoFocus
-            inputMode="decimal"
-            placeholder="0,00"
-            className={`tabular w-full bg-transparent font-display text-3xl outline-none placeholder:text-faint ${amountColor}`}
+          <MoneyInput
+            autoFocus={!editing}
+            className={`tabular w-full min-w-0 bg-transparent font-display text-3xl outline-none placeholder:text-faint focus-visible:outline-none ${amountColor}`}
             value={amount}
-            onChange={(event) => setAmount(event.target.value)}
+            onChange={(value) => {
+              setAmount(value);
+              setError(null);
+            }}
           />
         </div>
       </label>
 
       {type === "EXPENSE" && cardList.length > 0 && !pending && !occurrence ? (
-        <div className="flex items-center justify-between">
+        <div className="flex flex-wrap items-center justify-between gap-2">
           <span className="text-xs text-muted">Pagar com</span>
           <Segmented
             size="sm"
+            label="Pagar com"
             value={payWith}
             options={[
               { value: "account", label: "Conta" },
@@ -385,7 +395,7 @@ function FormBody({
       ) : null}
 
       {type === "TRANSFER" ? (
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid gap-3 sm:grid-cols-2">
           {accountSelect("De", sourceId, setAccountId)}
           {accountSelect("Para", destinationId, setDestinationAccountId)}
         </div>
@@ -420,10 +430,11 @@ function FormBody({
 
       {canRepeat && !pending ? (
         <div className="space-y-3 rounded-2xl border border-line p-3">
-          <div className="flex items-center justify-between gap-3">
+          <div className="flex flex-wrap items-center justify-between gap-2">
             <span className="text-xs text-muted">Repetição</span>
             <Segmented
               size="sm"
+              label="Repetição"
               value={effectiveRepeat}
               options={[
                 { value: "once" as Repeat, label: "Não repete" },
@@ -434,18 +445,17 @@ function FormBody({
             />
           </div>
           {effectiveRepeat === "installments" ? (
-            <div className="animate-enter flex items-center gap-3">
-              <input
+            <div className="animate-enter flex flex-wrap items-center gap-x-3 gap-y-2">
+              <IntegerInput
                 aria-label="Número de parcelas"
                 className={`${controlClass} !w-20 tabular`}
-                type="number"
                 min={2}
-                max={onCard ? 48 : 120}
-                value={installments}
-                onChange={(event) => setInstallments(Math.min(Math.max(Number(event.target.value) || 2, 2), onCard ? 48 : 120))}
+                max={maxInstallments}
+                value={Math.min(installments, maxInstallments)}
+                onChange={setInstallments}
               />
               <span className="text-sm text-muted">vezes</span>
-              {parsedAmount ? <InstallmentPreview total={parsedAmount} count={installments} inline /> : null}
+              {parsedAmount ? <InstallmentPreview total={parsedAmount} count={parts} inline /> : null}
             </div>
           ) : null}
           {effectiveRepeat === "monthly" ? (
@@ -465,13 +475,14 @@ function FormBody({
 
       {occurrence ? (
         <div className="space-y-2 rounded-2xl border border-line p-3">
-          <div className="flex items-center justify-between gap-3">
+          <div className="flex flex-wrap items-center justify-between gap-2">
             <span className="flex items-center gap-1.5 text-xs text-muted">
               <Icon name="repeat" size={13} />
               Recorrência
             </span>
             <Segmented
               size="sm"
+              label="O que esta edição muda"
               value={scope}
               options={[
                 { value: "one" as const, label: "Só este mês" },
@@ -490,14 +501,13 @@ function FormBody({
         </div>
       ) : null}
 
-      <div className="grid grid-cols-[1fr_160px] gap-3">
+      <div className="grid gap-3 sm:grid-cols-[1fr_160px]">
         <Field label="Descrição">
-          <input
-            className={controlClass}
+          <TextInput
             placeholder={type === "TRANSFER" ? "Opcional" : "Ex.: Mercado"}
             value={description}
             maxLength={200}
-            onChange={(event) => setDescription(event.target.value)}
+            onChange={setDescription}
           />
         </Field>
         <Field label={onCard ? "Data da compra" : "Data"}>
@@ -523,9 +533,7 @@ function FormBody({
         </p>
       ) : null}
 
-      {error ? <p className="animate-enter text-sm text-negative">{error}</p> : null}
-
-      <footer className="flex items-center gap-2 pt-1">
+      <FormFooter error={error}>
         {editing ? (
           <Button
             variant={confirmDelete ? "dangerSolid" : "danger"}
@@ -562,7 +570,7 @@ function FormBody({
             </Button>
           </>
         )}
-      </footer>
+      </FormFooter>
     </form>
   );
 }
@@ -640,8 +648,7 @@ function PaymentDetails({ payment, onDone }: { payment: Transaction; onDone: () 
           ? "Pagamentos de fatura não são despesa: as compras já contaram no mês da fatura."
           : "Aportes e resgates só mudam o dinheiro de lugar: não são despesa nem receita."}
       </p>
-      {error ? <p className="text-sm text-negative">{error}</p> : null}
-      <footer className="flex items-center gap-2">
+      <FormFooter error={error}>
         <Button
           variant={confirmDelete ? "dangerSolid" : "danger"}
           onClick={() => void destroy()}
@@ -654,16 +661,16 @@ function PaymentDetails({ payment, onDone }: { payment: Transaction; onDone: () 
         <Button variant="ghost" onClick={onDone}>
           Fechar
         </Button>
-      </footer>
+      </FormFooter>
     </div>
   );
 }
 
 function Row({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <div className="flex items-center justify-between">
-      <dt className="text-muted">{label}</dt>
-      <dd>{children}</dd>
+    <div className="flex items-center justify-between gap-4">
+      <dt className="shrink-0 text-muted">{label}</dt>
+      <dd className="min-w-0 truncate text-right">{children}</dd>
     </div>
   );
 }

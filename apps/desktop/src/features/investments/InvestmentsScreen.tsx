@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Button } from "@/components/Button";
-import { PageHeader } from "@/components/Page";
+import { ErrorNote, PageHeader } from "@/components/Page";
 import { StatTile } from "@/components/charts";
 import { EmptyState } from "@/components/EmptyState";
 import { Icon } from "@/components/Icon";
@@ -25,6 +25,7 @@ export function InvestmentsScreen() {
   const [creating, setCreating] = useState(false);
   const [openId, setOpenId] = useState<string | null>(null);
   const [updating, setUpdating] = useState(false);
+  const [assetFilter, setAssetFilter] = useState<AssetClass | null>(null);
   const data = portfolio.data;
   const totals = data?.totals;
 
@@ -48,9 +49,9 @@ export function InvestmentsScreen() {
         }
       />
 
-      {portfolio.isError ? <p className="text-sm text-negative">{errorMessage(portfolio.error)}</p> : null}
-
-      {data && data.items.length === 0 ? (
+      {portfolio.isError ? (
+        <ErrorNote>{errorMessage(portfolio.error)}</ErrorNote>
+      ) : data && data.items.length === 0 ? (
         <EmptyState
           icon="trend"
           title="Nenhum investimento"
@@ -63,7 +64,7 @@ export function InvestmentsScreen() {
         />
       ) : (
         <>
-          <div className="grid grid-cols-4 gap-3">
+          <div className="grid grid-cols-2 gap-3 @2xl:grid-cols-4">
             <StatTile label="Valor atual" loading={!totals} value={totals ? <Money amount={totals.current} /> : null} />
             <StatTile
               label="Aplicado"
@@ -85,16 +86,21 @@ export function InvestmentsScreen() {
             />
           </div>
 
-          {data && data.allocation.length > 0 ? <AllocationBar data={data.allocation} total={data.totals.current} /> : null}
+          {data && data.allocation.length > 0 && BigInt(data.totals.current) > 0n ? <AllocationBar data={data.allocation} total={data.totals.current} selected={assetFilter} onSelect={setAssetFilter} /> : null}
 
-          {data && data.items.some((item) => item.assetClass === "FIXED_INCOME") ? (
+          {data && (!assetFilter || assetFilter === "FIXED_INCOME") && data.items.some((item) => item.assetClass === "FIXED_INCOME") ? (
             <FixedIncomePanel summary={data.fixedIncome} onOpen={setOpenId} />
           ) : null}
 
           <div className="space-y-4">
+            <div className="flex items-center justify-between gap-3">
+              <h2 className="text-base font-medium">{assetFilter ? assetClassLabels[assetFilter] : "Sua carteira"}</h2>
+              {assetFilter ? <Button variant="ghost" className="h-8 text-xs" onClick={() => setAssetFilter(null)}>Ver todas as classes <Icon name="close" size={13} /></Button> : null}
+            </div>
             {!data
               ? [0, 1].map((i) => <div key={i} className="skeleton h-32 rounded-3xl" />)
               : classOrder.map((assetClass) => {
+                  if (assetFilter && assetFilter !== assetClass) return null;
                   const items = data.items.filter((item) => item.assetClass === assetClass);
                   if (items.length === 0) return null;
                   return (
@@ -132,20 +138,25 @@ export function InvestmentsScreen() {
 function AllocationBar({
   data,
   total,
+  selected,
+  onSelect,
 }: {
   data: { assetClass: AssetClass; name: string; value: string }[];
   total: string;
+  selected: AssetClass | null;
+  onSelect: (value: AssetClass | null) => void;
 }) {
   return (
-    <article className="rounded-3xl border border-line bg-surface p-5">
+    <article className="min-w-0 rounded-3xl border border-line bg-surface p-4 @2xl:p-5">
       <h2 className="text-sm">Distribuição</h2>
       <div className="mt-4 flex h-3 gap-[2px] overflow-hidden rounded-full">
         {data.map((slice) => (
           <div
             key={slice.assetClass}
-            className="h-full transition-[width] duration-700 first:rounded-l-full last:rounded-r-full"
+            className="h-full first:rounded-l-full last:rounded-r-full"
             style={{
-              width: `${Math.max(percentOf(slice.value, total), 1)}%`,
+              width: `${percentOf(slice.value, total)}%`,
+              opacity: selected && selected !== slice.assetClass ? 0.25 : 1,
               background: allocationColors[slice.assetClass],
             }}
             title={`${slice.name}: ${Math.round(percentOf(slice.value, total))}%`}
@@ -154,11 +165,13 @@ function AllocationBar({
       </div>
       <ul className="mt-4 flex flex-wrap gap-x-6 gap-y-2 text-sm">
         {data.map((slice) => (
-          <li key={slice.assetClass} className="flex items-center gap-2">
+          <li key={slice.assetClass}>
+            <button type="button" aria-pressed={selected === slice.assetClass} onClick={() => onSelect(selected === slice.assetClass ? null : slice.assetClass)} className={`flex flex-wrap items-center gap-2 rounded-xl px-3 py-2 text-left transition-colors ${selected === slice.assetClass ? "bg-raised text-foreground" : "text-muted hover:bg-hover"}`}>
             <span className="h-2.5 w-2.5 rounded-[3px]" style={{ background: allocationColors[slice.assetClass] }} />
             {slice.name}
             <span className="text-xs text-faint tabular">{Math.round(percentOf(slice.value, total))}%</span>
             <Money amount={slice.value} className="text-xs text-muted" />
+            </button>
           </li>
         ))}
       </ul>
@@ -177,7 +190,7 @@ function ClassGroup({
 }) {
   const total = items.reduce((sum, item) => sum + BigInt(item.current), 0n).toString();
   return (
-    <article className="rounded-3xl border border-line bg-surface p-3">
+    <article className="min-w-0 rounded-3xl border border-line bg-surface p-2 @2xl:p-3">
       <header className="flex items-center gap-2 px-3 pt-2 pb-2">
         <span className="h-2.5 w-2.5 rounded-[3px]" style={{ background: allocationColors[assetClass] }} />
         <h2 className="text-sm text-muted">{assetClassLabels[assetClass]}</h2>
@@ -189,26 +202,26 @@ function ClassGroup({
             <button
               type="button"
               onClick={() => onOpen(item)}
-              className="flex w-full items-center gap-3 rounded-2xl px-3 py-2.5 text-left transition-colors hover:bg-white/[0.035]"
+              className="flex w-full items-center gap-3 rounded-2xl px-3 py-2.5 text-left transition-colors hover:bg-hover"
             >
               <span className="min-w-0 flex-1">
                 <span className="flex items-center gap-2 text-sm">
                   <span className="truncate">{item.name}</span>
                   {item.ticker ? (
-                    <span className="rounded bg-surface-2 px-1.5 py-0.5 text-[10px] text-muted">{item.ticker}</span>
+                    <span className="shrink-0 rounded bg-surface-2 px-1.5 py-0.5 text-[10px] text-muted">{item.ticker}</span>
                   ) : null}
                 </span>
                 <span className="flex items-center gap-1.5 text-xs text-muted">
                   {item.institution ? (
-                    <>
-                      <span className="h-1.5 w-1.5 rounded-full" style={{ background: item.institution.color }} />
-                      {item.institution.name} ·{" "}
-                    </>
+                    <span className="h-1.5 w-1.5 shrink-0 rounded-full" style={{ background: item.institution.color }} />
                   ) : null}
-                  {describe(item)}
+                  <span className="truncate">
+                    {item.institution ? `${item.institution.name} · ` : ""}
+                    {describe(item)}
+                  </span>
                 </span>
               </span>
-              <span className="text-right">
+              <span className="shrink-0 text-right">
                 <Money amount={item.current} className="block text-sm" />
                 <span className="text-xs">
                   <GainText gain={item.gain} bps={item.gainBps} />
@@ -243,8 +256,8 @@ function FixedIncomePanel({
 }) {
   const unknown = BigInt(summary.unknown);
   return (
-    <article className="grid grid-cols-[1fr_1.2fr] gap-px overflow-hidden rounded-3xl border border-line bg-line">
-      <div className="space-y-4 bg-surface p-5">
+    <article className="grid gap-px overflow-hidden rounded-3xl border border-line bg-line @2xl:grid-cols-[1fr_1.2fr]">
+      <div className="space-y-4 bg-surface p-4 @2xl:p-5">
         <h2 className="text-sm">Renda fixa: quando dá para sacar</h2>
         <div>
           <p className="text-xs text-muted">A qualquer momento</p>
@@ -261,7 +274,7 @@ function FixedIncomePanel({
           </p>
         ) : null}
       </div>
-      <div className="bg-surface p-5">
+      <div className="min-w-0 bg-surface p-4 @2xl:p-5">
         <h2 className="text-sm">Vencimentos nos próximos 12 meses</h2>
         {summary.maturities.length === 0 ? (
           <p className="mt-4 text-sm text-faint">Nada vence nos próximos 12 meses.</p>
@@ -272,7 +285,7 @@ function FixedIncomePanel({
                 <button
                   type="button"
                   onClick={() => onOpen(maturity.id)}
-                  className="flex w-full items-center gap-3 rounded-xl px-2 py-2 text-left transition-colors hover:bg-white/[0.035]"
+                  className="-mx-2 flex w-[calc(100%+16px)] items-center gap-3 rounded-xl px-2 py-2 text-left transition-colors hover:bg-hover"
                 >
                   <span className="w-20 shrink-0 text-xs text-muted">
                     {shortDate(maturity.date)} {maturity.date.slice(2, 4)}
@@ -288,4 +301,3 @@ function FixedIncomePanel({
     </article>
   );
 }
-

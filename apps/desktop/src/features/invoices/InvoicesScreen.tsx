@@ -3,12 +3,12 @@ import { Button } from "@/components/Button";
 import { EmptyState } from "@/components/EmptyState";
 import { Icon } from "@/components/Icon";
 import { Money } from "@/components/Money";
-import { PageHeader, Panel, ProgressBar } from "@/components/Page";
+import { ErrorNote, PageHeader, Panel, ProgressBar, StatStrip, Stepper } from "@/components/Page";
 import { Segmented } from "@/components/Segmented";
 import { PayForm, StatusPill } from "@/features/cards/CardsScreen";
 import { errorMessage } from "@/lib/api";
 import { monthLabel, shiftMonth, shortDate, shortMonthLabel, todayLocal } from "@/lib/dates";
-import { percentOf } from "@/lib/money";
+import { formatMinorUnits, percentOf } from "@/lib/money";
 import {
   useCards,
   useInvoice,
@@ -29,7 +29,8 @@ export function InvoicesScreen({
   cardId: initialCard,
   onEdit,
   onAdd,
-}: { cardId?: string | null } & Actions) {
+  onOpenCards,
+}: { cardId?: string | null; onOpenCards: () => void } & Actions) {
   const cards = useCards();
   const [cardId, setCardId] = useState(initialCard ?? "");
   const list = cards.data ?? [];
@@ -45,13 +46,15 @@ export function InvoicesScreen({
             list.length <= 4 ? (
               <Segmented
                 size="sm"
+                label="Cartão"
                 value={card.id}
                 options={list.map((item) => ({ value: item.id, label: item.name }))}
                 onChange={setCardId}
               />
             ) : (
               <select
-                className="rounded-xl border border-line bg-surface-2 px-3 py-1.5 text-sm"
+                aria-label="Cartão"
+                className="h-10 max-w-full rounded-xl border border-line bg-surface-2 px-3 text-sm outline-none transition-colors hover:border-line-strong focus:border-gold/60"
                 value={card.id}
                 onChange={(event) => setCardId(event.target.value)}
               >
@@ -68,14 +71,19 @@ export function InvoicesScreen({
 
       <div className="mt-8">
         {cards.isError ? (
-          <p className="text-sm text-negative">{errorMessage(cards.error)}</p>
+          <ErrorNote>{errorMessage(cards.error)}</ErrorNote>
         ) : cards.isPending ? (
           <div className="skeleton h-64 rounded-3xl" />
         ) : !card ? (
           <EmptyState
             icon="receipt"
             title="Nenhum cartão"
-            description="Cadastre um cartão em Cartões para acompanhar as faturas aqui."
+            description="Cadastre um cartão para acompanhar as faturas aqui."
+            action={
+              <Button variant="primary" onClick={onOpenCards}>
+                Ir para Cartões
+              </Button>
+            }
           />
         ) : (
           // Remount per card so the month starts at that card's current bill.
@@ -102,35 +110,25 @@ function CardInvoices({ card, onEdit, onAdd }: { card: Card } & Actions) {
   }
 
   return (
-    <div className={`space-y-4 transition-opacity ${invoice.isPlaceholderData ? "opacity-60" : ""}`}>
-      <Panel>
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-1">
-            <button
-              type="button"
-              aria-label="Fatura anterior"
-              className="rounded-lg p-1.5 text-muted hover:bg-white/5 hover:text-foreground"
-              onClick={() => goTo(shiftMonth(month, -1))}
-            >
-              <Icon name="chevronLeft" size={16} />
-            </button>
-            <span className="w-44 text-center text-sm">Fatura de {monthLabel(month).toLowerCase()}</span>
-            <button
-              type="button"
-              aria-label="Próxima fatura"
-              className="rounded-lg p-1.5 text-muted hover:bg-white/5 hover:text-foreground"
-              onClick={() => goTo(shiftMonth(month, 1))}
-            >
-              <Icon name="chevronRight" size={16} />
-            </button>
-          </div>
+    <div className={`space-y-4 transition-opacity duration-(--dur-base) ${invoice.isPlaceholderData ? "opacity-60" : ""}`}>
+      {invoice.isError ? <ErrorNote>{errorMessage(invoice.error)}</ErrorNote> : null}
+      <Panel className="invoice-overview">
+        <div className="flex items-center justify-between gap-3">
+          <Stepper
+            className="-ml-2"
+            label={monthLabel(month)}
+            previousLabel="Fatura anterior"
+            nextLabel="Próxima fatura"
+            onPrevious={() => goTo(shiftMonth(month, -1))}
+            onNext={() => goTo(shiftMonth(month, 1))}
+          />
           {data ? <StatusPill status={data.status} /> : null}
         </div>
 
-        <div className="mt-6 flex items-end justify-between gap-6">
-          <div>
+        <div className="mt-5 flex flex-wrap items-end justify-between gap-x-6 gap-y-4">
+          <div className="min-w-0">
             <p className="text-xs text-muted">{paid ? "Fatura paga" : "A pagar"}</p>
-            <p className={`mt-1 flex items-center gap-2 font-display text-4xl tracking-tight ${paid ? "text-positive" : ""}`}>
+            <p className={`mt-1 flex items-center gap-2 font-display text-3xl tracking-tight @2xl:text-4xl ${paid ? "text-positive" : ""}`}>
               {data ? (
                 <>
                   {paid ? <Icon name="check" size={28} /> : null}
@@ -166,25 +164,22 @@ function CardInvoices({ card, onEdit, onAdd }: { card: Card } & Actions) {
           ) : null}
         </div>
 
-        <dl className="mt-6 grid grid-cols-4 gap-px overflow-hidden rounded-2xl border border-line bg-line">
-          {[
-            { label: "Total", value: data?.total },
-            { label: "Pago", value: data?.paid },
-            { label: "Restante", value: data?.remaining },
-            { label: "Previsto", value: data?.scheduled, hint: "Recorrências ainda não confirmadas" },
-          ].map((stat) => (
-            <div key={stat.label} className="bg-surface-2 px-4 py-3" title={stat.hint}>
-              <dt className="text-xs text-muted">{stat.label}</dt>
-              <dd className="mt-1">
-                {stat.value === undefined ? (
-                  <span className="skeleton block h-5 w-20" />
-                ) : (
-                  <Money amount={stat.value} />
-                )}
-              </dd>
-            </div>
-          ))}
-        </dl>
+        <div className="mt-6">
+          <StatStrip
+            columns="grid-cols-2 @2xl:grid-cols-4"
+            items={[
+              { label: "Total", value: data?.total },
+              { label: "Pago", value: data?.paid },
+              { label: "Restante", value: data?.remaining },
+              { label: "Previsto", value: data?.scheduled, hint: "Recorrências ainda não confirmadas" },
+            ].map((stat) => ({
+              label: stat.label,
+              hint: stat.hint,
+              value:
+                stat.value === undefined ? <span className="skeleton block h-5 w-20" /> : <Money amount={stat.value} />,
+            }))}
+          />
+        </div>
 
         {paying && data ? (
           <div className="mt-4">
@@ -193,8 +188,8 @@ function CardInvoices({ card, onEdit, onAdd }: { card: Card } & Actions) {
         ) : null}
 
         <div className="mt-6 space-y-2">
-          <ProgressBar value={used} tone={used > 90 ? "negative" : "gold"} />
-          <p className="flex justify-between text-[11px] text-faint">
+          {used <= 100 ? <ProgressBar value={used} tone={used > 90 ? "negative" : "gold"} /> : <p className="text-sm text-negative">Limite excedido em <Money amount={(BigInt(card.debt) - BigInt(card.limit)).toString()} /></p>}
+          <p className="flex flex-wrap justify-between gap-x-4 gap-y-1 text-[11px] text-faint">
             <span>
               Usado <Money amount={card.debt} /> · disponível <Money amount={card.available} />
             </span>
@@ -205,13 +200,13 @@ function CardInvoices({ card, onEdit, onAdd }: { card: Card } & Actions) {
         </div>
       </Panel>
 
-      {data ? <Timeline invoice={data} onPick={setMonth} /> : null}
+      {data ? <Timeline invoice={data} onPick={goTo} /> : null}
 
       {data ? (
         <>
-          <div className="flex items-center justify-between px-1">
+          <div className="flex flex-wrap items-center justify-between gap-2 px-1">
             <p className="text-xs text-faint">
-              {data.items.length > 0 ? "Clique em um item para editar." : ""}
+              {data.items.length > 0 ? "Toque em um item para editar." : ""}
             </p>
             <Button
               variant="ghost"
@@ -239,7 +234,7 @@ function Timeline({ invoice, onPick }: { invoice: Invoice; onPick: (month: strin
 
   return (
     <Panel title="Próximas e anteriores" subtitle="Inclui parcelas e recorrências já previstas">
-      <div className="flex h-28 items-end gap-2">
+      <div className="flex h-28 items-end gap-1 @2xl:gap-2">
         {invoice.timeline.map((item) => {
           const height = max > 0n ? Number((BigInt(item.total) * 100n) / max) : 0;
           const active = item.month === invoice.month;
@@ -248,16 +243,17 @@ function Timeline({ invoice, onPick }: { invoice: Invoice; onPick: (month: strin
               key={item.month}
               type="button"
               onClick={() => onPick(item.month)}
-              className="group flex h-full flex-1 flex-col items-center justify-end gap-1.5"
-              title={`${monthLabel(item.month)}`}
+              aria-current={active ? "true" : undefined}
+              className="group flex h-full min-w-0 flex-1 flex-col items-center justify-end gap-1.5"
+              title={`${monthLabel(item.month)}: ${formatMinorUnits(item.total)}`}
             >
               <span
-                className={`w-full rounded-md transition-all duration-500 ${
-                  active ? "bg-gold" : item.status === "PAID" ? "bg-positive/30" : "bg-white/10 group-hover:bg-white/20"
+                className={`w-full rounded-md transition-colors ${
+                  active ? "bg-gold" : item.status === "PAID" ? "bg-positive/30" : "bg-hover-strong group-hover:bg-line-strong"
                 }`}
                 style={{ height: `${Math.max(height, item.total === "0" ? 2 : 6)}%` }}
               />
-              <span className={`text-[11px] ${active ? "text-foreground" : "text-faint"}`}>
+              <span className={`max-w-full truncate text-[11px] ${active ? "text-foreground" : "text-faint"}`}>
                 {shortMonthLabel(item.month)}
               </span>
             </button>
@@ -330,16 +326,18 @@ function Items({ items, onEdit }: { items: InvoiceItem[]; onEdit: Actions["onEdi
                   <button
                     type="button"
                     onClick={() => onEdit(item)}
-                    className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left transition-colors hover:bg-white/[0.035]"
+                    className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left transition-colors hover:bg-hover"
                   >
-                  <span className="w-14 shrink-0 text-xs text-faint">{shortDate(item.date)}</span>
+                  <span className="w-12 shrink-0 text-xs text-faint">{shortDate(item.date)}</span>
                   <span className="min-w-0 flex-1">
-                    <span className="flex items-center gap-2 truncate text-sm">
-                      {item.type === "CARD_PAYMENT"
-                        ? `Pagamento · ${item.account?.name ?? ""}`
-                        : item.description || item.category?.name}
+                    <span className="flex items-center gap-2 text-sm">
+                      <span className="truncate">
+                        {item.type === "CARD_PAYMENT"
+                          ? `Pagamento · ${item.account?.name ?? ""}`
+                          : item.description || item.category?.name}
+                      </span>
                       {item.status === "PENDING" ? (
-                        <span className="rounded-full bg-white/5 px-1.5 py-0.5 text-[10px] text-muted">previsto</span>
+                        <span className="shrink-0 rounded-full bg-hover-strong px-1.5 py-0.5 text-[10px] text-muted">previsto</span>
                       ) : null}
                     </span>
                     {item.type === "EXPENSE" ? (

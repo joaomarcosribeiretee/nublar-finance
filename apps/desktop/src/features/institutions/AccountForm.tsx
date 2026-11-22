@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Button } from "@/components/Button";
-import { controlClass, Field } from "@/components/Field";
+import { controlClass, Field, MoneyInput, TextInput } from "@/components/Field";
+import { FormFooter } from "@/components/Modal";
 import { Money } from "@/components/Money";
 import { useToast } from "@/components/Toast";
 import { errorMessage } from "@/lib/api";
@@ -91,12 +92,13 @@ export function AccountForm({
         </div>
       ) : fixedType ? null : (
         <Field label="Tipo">
-          <div className="grid grid-cols-3 gap-2">
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
             {institutionTypes.map((value) => (
               <button
                 key={value}
                 type="button"
-                className={`rounded-xl border px-3 py-2.5 text-left text-sm transition-all duration-150 ${
+                aria-pressed={type === value}
+                className={`rounded-xl border px-3 py-2.5 text-left text-sm transition-colors ${
                   type === value
                     ? "border-gold/50 bg-gold/10 text-foreground"
                     : "border-line text-muted hover:border-line-strong hover:text-foreground"
@@ -110,18 +112,16 @@ export function AccountForm({
         </Field>
       )}
       <Field label="Apelido (opcional)">
-        <input
+        <TextInput
           autoFocus
-          className={controlClass}
-          placeholder={type === "SAVINGS" ? "Ex.: Reserva de emergência" : accountTypeLabels[type]}
+          placeholder={type === "SAVINGS" ? "Ex.: Caixinha da viagem" : accountTypeLabels[type]}
           value={name}
           maxLength={80}
-          onChange={(event) => setName(event.target.value)}
+          onChange={setName}
         />
       </Field>
       <OpeningBalanceField value={opening} onChange={setOpening} />
-      {error ? <p className="text-sm text-negative">{error}</p> : null}
-      <footer className="flex items-center gap-2">
+      <FormFooter error={error}>
         {account ? (
           <Button
             variant={confirmDelete ? "dangerSolid" : "danger"}
@@ -137,9 +137,9 @@ export function AccountForm({
           Cancelar
         </Button>
         <Button variant="primary" type="submit" disabled={create.isPending || update.isPending}>
-          Salvar
+          {create.isPending || update.isPending ? "Salvando…" : "Salvar"}
         </Button>
-      </footer>
+      </FormFooter>
     </form>
   );
 }
@@ -159,17 +159,12 @@ export function OpeningBalanceField({
         <span className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-sm text-faint">
           R$
         </span>
-        <input
-          className={`${controlClass} tabular pl-9`}
-          inputMode="decimal"
-          placeholder="0,00"
-          value={value}
-          onChange={(event) => onChange(event.target.value)}
-        />
+        <MoneyInput signed className={`${controlClass} tabular pl-9`} value={value} onChange={onChange} />
       </div>
       {compact ? null : (
         <span className="text-[11px] text-faint">
-          Quanto havia quando você começou a usar o Nublar. Não conta como receita.
+          Quanto havia quando você começou a usar o Nublar. Não conta como receita. Use o sinal de menos
+          para conta no negativo.
         </span>
       )}
     </Field>

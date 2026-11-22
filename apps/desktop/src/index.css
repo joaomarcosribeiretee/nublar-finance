@@ -1,5 +1,8 @@
 @import "tailwindcss";
 
+/* Hide-until-hover only where a pointer can hover; touch keeps it visible. */
+@custom-variant hoverable (@media (hover: hover));
+
 :root {
   --background: #0a0f0d;
   --surface: #101714;
@@ -7,14 +10,24 @@
   --raised: #1b2620;
   --foreground: #e8efe9;
   --muted: #8a9a90;
-  --faint: #56655c;
-  --line: rgb(232 239 233 / 7%);
+  --faint: #7e9084;
+  --line: rgb(232 239 233 / 9%);
   --line-strong: rgb(232 239 233 / 13%);
   --gold: #c9a45c;
   --positive: #6cc495;
   --negative: #e58a7c;
   --transfer: #8fa8cc;
+  /* Derived from the palette above, never picked by hand elsewhere. */
+  --hover: rgb(232 239 233 / 4%);
+  --hover-strong: rgb(232 239 233 / 7%);
+  --focus-ring: color-mix(in srgb, var(--gold) 60%, transparent);
+  --selection: color-mix(in srgb, var(--gold) 30%, transparent);
+  --scrim: color-mix(in srgb, var(--background) 76%, transparent);
+  --negative-surface: color-mix(in srgb, var(--negative) 14%, var(--raised));
+  --shadow-panel: 0 8px 30px rgb(0 0 0 / 8%);
+  --shadow-auth: 0 24px 80px rgb(0 0 0 / 20%);
   --titlebar: 40px;
+  --tabbar: 60px;
   /* Chart series: dark steps validated with the dataviz validator against
      --surface (adjacent CVD ΔE >= 8.4, all >= 3:1). Fixed order, never cycled. */
   --series-1: #3987e5;
@@ -26,6 +39,14 @@
   --series-7: #9085e9;
   --series-8: #e66767;
   --grid: rgb(232 239 233 / 6%);
+  /* Motion: the only easings and durations the app uses. */
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+  --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
+  --dur-press: 120ms;
+  --dur-fast: 160ms;
+  --dur-base: 200ms;
+  --dur-slow: 300ms;
   color-scheme: dark;
 }
 
@@ -43,8 +64,15 @@
   --color-positive: var(--positive);
   --color-negative: var(--negative);
   --color-transfer: var(--transfer);
+  --color-warning: var(--series-4);
+  --color-hover: var(--hover);
+  --color-hover-strong: var(--hover-strong);
+  --color-negative-surface: var(--negative-surface);
   --font-sans: "Outfit", ui-sans-serif, system-ui, sans-serif;
   --font-display: "Fraunces", ui-serif, Georgia, serif;
+  /* Every `transition-*` utility picks these up unless it says otherwise. */
+  --default-transition-duration: var(--dur-fast);
+  --default-transition-timing-function: var(--ease-out);
 }
 
 html,
@@ -59,7 +87,9 @@ body {
   color: var(--foreground);
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
+  -webkit-tap-highlight-color: transparent;
   user-select: none;
+  overscroll-behavior: none;
 }
 
 input,
@@ -67,17 +97,23 @@ textarea {
   user-select: text;
 }
 
+/* Tailwind's preflight resets the cursor; anything clickable says so. */
+:is(button, [role="button"], [role="radio"], a[href], select, label[for], summary):not(:disabled) {
+  cursor: pointer;
+}
+
 ::selection {
-  background: rgb(201 164 92 / 30%);
+  background: var(--selection);
 }
 
 :focus-visible {
-  outline: 2px solid rgb(201 164 92 / 60%);
+  outline: 2px solid var(--focus-ring);
   outline-offset: 2px;
 }
 
 ::-webkit-scrollbar {
   width: 10px;
+  height: 10px;
 }
 ::-webkit-scrollbar-thumb {
   background: var(--line-strong);
@@ -86,9 +122,28 @@ textarea {
   background-clip: padding-box;
 }
 
-input[type="date"]::-webkit-calendar-picker-indicator {
+/* Horizontal strips (segmented controls, tabs) scroll without a visible bar. */
+.scroll-quiet {
+  scrollbar-width: none;
+}
+.scroll-quiet::-webkit-scrollbar {
+  display: none;
+}
+
+input[type="date"]::-webkit-calendar-picker-indicator,
+input[type="month"]::-webkit-calendar-picker-indicator {
   filter: invert(0.7);
   cursor: pointer;
+}
+
+/* The steppers add nothing a keyboard does not, and steal width on phones. */
+input[type="number"] {
+  appearance: textfield;
+}
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+  appearance: none;
+  margin: 0;
 }
 
 .drag {
@@ -100,6 +155,10 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 
 .tabular {
   font-variant-numeric: tabular-nums;
+}
+
+.pb-safe {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
 }
 
 @keyframes enter {
@@ -122,28 +181,54 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   }
 }
 
+@keyframes sheet {
+  from {
+    transform: translateY(100%);
+  }
+}
+
 @keyframes shimmer {
   to {
-    background-position: -200% 0;
+    transform: translateX(100%);
   }
 }
 
 .animate-enter {
-  animation: enter 280ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  animation: enter var(--dur-slow) var(--ease-out) both;
 }
 
+/* The highlight slides on transform, so the box itself never repaints. */
 .skeleton {
+  position: relative;
+  overflow: hidden;
   border-radius: 8px;
-  background: linear-gradient(
-    90deg,
-    var(--surface-2) 25%,
-    var(--raised) 50%,
-    var(--surface-2) 75%
-  );
-  background-size: 200% 100%;
+  background: var(--surface-2);
+}
+.skeleton::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(90deg, transparent, var(--raised), transparent);
   animation: shimmer 1.4s linear infinite;
 }
 
+/* Background glow of the sign-in screen, mixed from the palette. */
+.auth-glow {
+  background:
+    radial-gradient(
+      ellipse at 50% -10%,
+      color-mix(in srgb, var(--positive) 20%, transparent),
+      transparent 55%
+    ),
+    radial-gradient(
+      circle at 85% 15%,
+      color-mix(in srgb, var(--gold) 8%, transparent),
+      transparent 35%
+    );
+}
+
+/* Desktop: centered card. Phone: a sheet that rises from the bottom edge. */
 dialog.modal {
   padding: 0;
   border: none;
@@ -151,14 +236,52 @@ dialog.modal {
   color: inherit;
   max-width: none;
   max-height: none;
+  margin: auto;
 }
 dialog.modal[open] {
-  animation: pop 200ms cubic-bezier(0.2, 0.8, 0.2, 1);
+  animation: pop var(--dur-base) var(--ease-out);
 }
 dialog.modal::backdrop {
-  background: rgb(4 7 6 / 72%);
+  background: var(--scrim);
   backdrop-filter: blur(4px);
-  animation: fade 200ms ease;
+  animation: fade var(--dur-base) ease;
+}
+
+@media (max-width: 639px) {
+  dialog.modal {
+    width: 100%;
+    margin: auto 0 0;
+  }
+  dialog.modal[open] {
+    animation: sheet var(--dur-slow) var(--ease-drawer);
+  }
+}
+
+/* Toast stack: a popover, so it sits above open dialogs (see Toast.tsx).
+   On phones it clears the tab bar. */
+.toasts {
+  position: fixed;
+  inset: auto 16px calc(var(--tabbar) + env(safe-area-inset-bottom, 0px) + 12px);
+  width: auto;
+  height: auto;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  overflow: visible;
+  background: transparent;
+  color: inherit;
+  pointer-events: none;
+}
+.toasts:popover-open {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+@media (min-width: 1024px) {
+  .toasts {
+    bottom: 24px;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -169,4 +292,116 @@ dialog.modal::backdrop {
     animation-duration: 1ms !important;
     transition-duration: 1ms !important;
   }
+  .skeleton::after {
+    animation: none;
+  }
+}
+
+/* Visual identity: spacious canvas, architectural navigation and warm emphasis. */
+.design-eyebrow {
+  color: var(--gold);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+.app-shell { background: var(--background); }
+.app-sidebar { background: var(--surface); border-right: 1px solid var(--line); }
+.app-toolbar { background: var(--surface); }
+.nav-item-active { background: color-mix(in srgb, var(--gold) 11%, var(--surface)); }
+.page-heading { padding-bottom: 24px; border-bottom: 1px solid var(--line-strong); }
+.content-panel { box-shadow: var(--shadow-panel); }
+.app-content article > h2,
+.app-content article > header h2 { font-size: 16px; font-weight: 500; }
+.month-hero {
+  display: grid;
+  gap: 28px;
+  padding: clamp(24px, 4vw, 44px);
+  border: 1px solid var(--line-strong);
+  border-radius: 28px;
+  background: linear-gradient(135deg, var(--raised), var(--surface) 70%);
+  box-shadow: var(--shadow-panel);
+}
+.hero-value { font-size: clamp(40px, 7vw, 72px); line-height: 1; overflow-wrap: anywhere; }
+.hero-aside { padding-top: 24px; border-top: 1px solid var(--line-strong); }
+.hero-aside .h-12 { margin-top: 12px; }
+@container (min-width: 42rem) {
+  .month-hero { grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); gap: 56px; }
+  .hero-aside { padding: 0 0 0 48px; border-top: 0; border-left: 1px solid var(--line-strong); align-self: stretch; display: flex; flex-direction: column; justify-content: center; }
+}
+.attention-panel { border-color: color-mix(in srgb, var(--gold) 28%, var(--line)); }
+.onboarding {
+  margin: 20px 0;
+  padding: clamp(24px, 5vw, 56px);
+  border: 1px solid var(--line-strong);
+  border-radius: 28px;
+  background: linear-gradient(120deg, var(--raised), var(--surface));
+}
+.onboarding-steps { display: flex; flex-wrap: wrap; gap: 20px 32px; color: var(--muted); font-size: 13px; }
+.onboarding-steps b { display: block; margin-bottom: 8px; color: var(--gold); font-weight: 400; }
+.auth-layout {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+  align-items: center;
+  gap: clamp(36px, 7vw, 112px);
+  width: 100%;
+  max-width: 1200px;
+  margin: auto;
+  padding: 48px;
+}
+.auth-headline { margin-top: 18px; font-family: var(--font-display); font-size: clamp(40px, 4.6vw, 64px); line-height: 1.12; letter-spacing: -0.04em; }
+.auth-features { display: flex; flex-wrap: wrap; gap: 22px; margin-top: 48px; padding-top: 24px; border-top: 1px solid var(--line-strong); }
+.auth-features span { display: flex; align-items: center; gap: 8px; color: var(--muted); font-size: 12px; }
+.auth-features svg { color: var(--gold); }
+.auth-form { min-width: 0; padding: 36px; border: 1px solid var(--line-strong); border-radius: 24px; background: var(--surface); box-shadow: var(--shadow-auth); }
+.auth-form input { min-height: 48px; }
+.auth-form button[type="submit"] { height: 48px; }
+/* Work surfaces: stable controls and one frame per content group. */
+.page-heading { padding-bottom: 20px; border-bottom-color: var(--line); }
+.page-heading h1 { font-size: clamp(28px, 3vw, 40px); letter-spacing: -0.025em; }
+.page-heading .design-eyebrow { color: var(--muted); letter-spacing: 0.06em; font-size: 11px; }
+.filter-toolbar { padding: 12px 16px; border: 1px solid var(--line); border-radius: 16px; background: var(--surface); }
+.filter-toolbar:focus-within { border-color: var(--line-strong); }
+.metric-tile { border: 0; border-left: 2px solid var(--line-strong); border-radius: 0 16px 16px 0; }
+.metric-tile .tabular, .stat-strip .tabular { white-space: normal; overflow-wrap: anywhere; }
+.metric-link:focus-visible, .category-drill:focus-visible { outline-offset: 4px; }
+.stat-strip { padding: 18px 24px; border-radius: 20px; background: var(--surface); }
+.invoice-overview .stat-strip { padding: 0; border-radius: 0; background: transparent; }
+.invoice-overview, .budget-overview { border-top: 2px solid var(--gold); }
+.institution-panel > header { background: var(--surface-2); padding-bottom: 20px; }
+.credit-card { background: linear-gradient(135deg, var(--raised), var(--surface)); }
+.credit-card > div:last-child { padding-top: 24px; }
+.credit-card:focus-visible { outline-offset: 4px; }
+.goal-card > span:last-child { margin-top: auto; padding-top: 18px; }
+.goal-card > span:nth-last-child(2) { margin-bottom: 22px; }
+.calendar-day { border-color: var(--line); }
+.calendar-day[aria-pressed="true"] { border-color: var(--gold); }
+.day-agenda { min-height: 200px; }
+.modal-heading { margin-bottom: 20px; border-bottom: 1px solid var(--line); }
+.modal-heading + div { scrollbar-gutter: stable; }
+.form-control:focus { box-shadow: 0 0 0 3px var(--selection); }
+.empty-state { border: 1px solid var(--line); }
+.onboarding-steps span { display: flex; align-items: center; gap: 10px; }
+.onboarding-steps svg { color: var(--gold); }
+.data-row:focus-visible { background: var(--hover); outline-offset: -2px; }
+@media (max-width: 639px) {
+  .filter-toolbar { padding: 10px; }
+  .analysis-metrics { display: flex; overflow-x: auto; scroll-snap-type: x proximity; padding-bottom: 10px; scrollbar-width: thin; scrollbar-color: var(--line-strong) transparent; }
+  .analysis-metrics > div { flex: 0 0 210px; scroll-snap-align: start; }
+  .stat-strip { padding: 16px 20px; }
+  .modal-heading { margin-bottom: 16px; }
+  .chart-panel { padding: 16px 12px; }
+  .chart-panel > header { padding-inline: 4px; }
+  .credit-card { min-height: 240px; }
+}
+@media (max-width: 767px) {
+  .auth-layout { grid-template-columns: minmax(0, 1fr); max-width: 480px; gap: 28px; padding: 24px 20px 40px; }
+  .auth-story > div:first-child img { width: 44px; height: 44px; }
+  .auth-story .design-eyebrow { margin-top: 24px; }
+  .auth-headline { font-size: 38px; }
+  .auth-story > p:last-of-type { margin-top: 16px; font-size: 14px; }
+  .auth-features { display: none; }
+  .auth-form { padding: 24px; }
+  .onboarding { margin: 0; }
 }

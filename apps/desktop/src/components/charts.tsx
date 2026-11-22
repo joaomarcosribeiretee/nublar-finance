@@ -18,7 +18,7 @@ export const gridProps = {
   vertical: false,
 } as const;
 /** Hover wash behind the active bar group. */
-export const barCursor = { fill: "rgb(232 239 233 / 4%)" };
+export const barCursor = { fill: "var(--hover)" };
 /** Crosshair for line/area charts. */
 export const lineCursor = { stroke: "var(--line-strong)", strokeWidth: 1 };
 
@@ -39,15 +39,15 @@ export function ChartCard({
   dim?: boolean;
 }) {
   return (
-    <article className={`rounded-3xl border border-line bg-surface p-5 ${className}`}>
-      <header className="mb-4 flex items-start justify-between gap-4">
-        <div>
-          <h2 className="text-sm">{title}</h2>
+    <article aria-busy={dim} className={`content-panel chart-panel min-w-0 rounded-3xl border border-line bg-surface p-5 @2xl:p-6 ${className}`}>
+      <header className="mb-6 flex flex-wrap items-start justify-between gap-x-4 gap-y-2">
+        <div className="min-w-0">
+          <h2 className="text-base font-medium">{title}</h2>
           {subtitle ? <p className="mt-0.5 text-xs text-muted">{subtitle}</p> : null}
         </div>
         {right}
       </header>
-      <div className={`transition-opacity duration-200 ${dim ? "opacity-50" : ""}`}>{children}</div>
+      <div className={`transition-opacity duration-(--dur-base) ${dim ? "opacity-50" : ""}`}>{children}</div>
     </article>
   );
 }
@@ -77,11 +77,11 @@ export type TooltipRow = { label: string; color?: string; value: ReactNode; stro
 /** Values lead, labels follow; rows keyed with a short line of the series color. */
 export function TooltipBox({ title, rows }: { title: string; rows: TooltipRow[] }) {
   return (
-    <div className="min-w-44 rounded-xl border border-line-strong bg-raised/95 px-3 py-2.5 text-xs shadow-xl shadow-black/40 backdrop-blur">
+    <div className="max-w-[min(300px,calc(100vw-40px))] rounded-xl border border-line-strong bg-raised px-3 py-2.5 text-xs shadow-xl shadow-black/40">
       <p className="mb-1.5 text-muted">{title}</p>
       <ul className="space-y-1">
         {rows.map((row) => (
-          <li key={row.label} className="flex items-center gap-2">
+          <li key={row.label} className="flex flex-wrap items-center gap-2">
             {row.color ? (
               <span className="h-0.5 w-2.5 shrink-0 rounded-full" style={{ background: row.color }} />
             ) : (
@@ -111,12 +111,12 @@ export function StatTile({
   loading?: boolean;
 }) {
   return (
-    <div className="rounded-3xl border border-line bg-surface px-5 py-4">
+    <div className="metric-tile min-w-0 rounded-2xl border border-line bg-surface p-5">
       <p className="text-xs text-muted">{label}</p>
-      <div className="mt-1.5 text-xl tracking-tight">
+      <div className="mt-2 break-words text-xl tabular">
         {loading ? <div className="skeleton h-7 w-28" /> : value}
       </div>
-      <div className="mt-1 min-h-4 text-xs text-faint">{loading ? null : detail}</div>
+      <div className="mt-2 min-h-4 text-xs leading-relaxed text-muted">{loading ? null : detail}</div>
     </div>
   );
 }
