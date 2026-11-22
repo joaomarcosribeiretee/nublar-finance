@@ -1,15 +1,16 @@
 import { useState } from "react";
 import { Button } from "@/components/Button";
 import { EmptyState } from "@/components/EmptyState";
-import { controlClass, Field } from "@/components/Field";
+import { controlClass, Field, MoneyInput } from "@/components/Field";
 import { Icon } from "@/components/Icon";
-import { Modal } from "@/components/Modal";
+import { FormFooter, Modal } from "@/components/Modal";
 import { Money } from "@/components/Money";
-import { PageHeader, Panel, ProgressBar } from "@/components/Page";
+import { Segmented } from "@/components/Segmented";
+import { ErrorNote, PageHeader, Panel, ProgressBar } from "@/components/Page";
 import { useToast } from "@/components/Toast";
 import { errorMessage } from "@/lib/api";
 import { formatBps } from "@/lib/chart";
-import { currentMonth, monthLabel, todayLocal } from "@/lib/dates";
+import { monthLabel } from "@/lib/dates";
 import { formatMinorUnits, minorUnitsToInput, parseReaisToMinorUnits } from "@/lib/money";
 import {
   useAnalytics,
@@ -17,24 +18,11 @@ import {
   useCategories,
   useDeleteBudget,
   useSaveBudget,
-  type BudgetStatus,
   type Budgets,
 } from "@/lib/queries";
+import { budgetTone, monthProgress } from "./BudgetOverview";
 
-const tone: Record<BudgetStatus, "positive" | "warning" | "negative"> = {
-  OK: "positive",
-  WARNING: "warning",
-  OVER: "negative",
-};
-
-/** Where in the month we are, 0–100, to compare spending against time. */
-function monthProgress(month: string): number | undefined {
-  if (month !== currentMonth()) return undefined;
-  const today = todayLocal();
-  const [year, monthNumber] = month.split("-").map(Number);
-  const days = new Date(year, monthNumber, 0).getDate();
-  return (Number(today.slice(8, 10)) / days) * 100;
-}
+const tone = budgetTone;
 
 type Item = Budgets["items"][number];
 
@@ -43,6 +31,8 @@ export function BudgetsScreen({ month }: { month: string }) {
   const [editing, setEditing] = useState<Item | "new" | null>(null);
   const data = budgets.data;
   const pace = monthProgress(month);
+  const [filter, setFilter] = useState<"all" | "attention">("all");
+  const visible = data?.items.filter((item) => filter === "all" || item.status !== "OK");
 
   return (
     <section className="animate-enter space-y-6">
@@ -59,9 +49,9 @@ export function BudgetsScreen({ month }: { month: string }) {
         Um limite por categoria, o mesmo todo mês. Compras no cartão contam no mês da fatura.
       </PageHeader>
 
-      {budgets.isError ? <p className="text-sm text-negative">{errorMessage(budgets.error)}</p> : null}
-
-      {data && data.items.length === 0 ? (
+      {budgets.isError ? (
+        <ErrorNote>{errorMessage(budgets.error)}</ErrorNote>
+      ) : data && data.items.length === 0 ? (
         <EmptyState
           icon="gauge"
           title="Nenhum orçamento"
@@ -74,15 +64,15 @@ export function BudgetsScreen({ month }: { month: string }) {
         />
       ) : (
         <>
-          <Panel>
+          <Panel className="budget-overview">
             {!data ? (
               <div className="skeleton h-16" />
             ) : (
               <div className="space-y-3">
-                <div className="flex items-end justify-between gap-6">
+                <div className="flex flex-wrap items-end justify-between gap-x-6 gap-y-2">
                   <div>
                     <p className="text-xs text-muted">Gasto nas categorias com orçamento</p>
-                    <p className="mt-1 text-2xl">
+                    <p className="mt-1 text-xl @2xl:text-2xl">
                       <Money amount={data.totals.spent} />{" "}
                       <span className="text-base text-muted">de {formatMinorUnits(data.totals.limit)}</span>
                     </p>
@@ -99,8 +89,14 @@ export function BudgetsScreen({ month }: { month: string }) {
                     )}
                   </div>
                 </div>
-                <ProgressBar value={data.totals.usedBps / 100} tone={tone[data.totals.status]} marker={pace} />
-                <p className="flex justify-between text-xs text-faint">
+                {data.totals.usedBps <= 10000 ? <ProgressBar
+                  size="md"
+                  value={data.totals.usedBps / 100}
+                  tone={tone[data.totals.status]}
+                  marker={pace}
+                  markerTitle="Quanto do mês já passou"
+                /> : null}
+                <p className="flex flex-wrap justify-between gap-x-4 gap-y-1 text-xs text-faint">
                   <span>{pace !== undefined ? "A marca mostra quanto do mês já passou." : " "}</span>
                   {BigInt(data.totals.unbudgeted) > 0n ? (
                     <span>
@@ -112,27 +108,31 @@ export function BudgetsScreen({ month }: { month: string }) {
             )}
           </Panel>
 
-          <Panel flush>
-            <ul>
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <h2 className="font-medium">Por categoria</h2>
+            <Segmented size="sm" label="Estado do orçamento" value={filter} onChange={setFilter} options={[{ value: "all", label: "Todos" }, { value: "attention", label: "Perto ou acima do limite" }]} />
+          </div>
+          {visible?.length === 0 ? <EmptyState icon="check" title="Tudo dentro dos limites" description="Nenhuma categoria está perto ou acima do orçamento." /> : null}
+            <ul className="grid gap-4 @2xl:grid-cols-2">
               {!data
                 ? [0, 1, 2].map((i) => <li key={i} className="skeleton m-3 h-12" />)
-                : data.items.map((item) => (
-                    <li key={item.id}>
+                : visible?.map((item) => (
+                    <li key={item.id} className="min-w-0">
                       <button
                         type="button"
                         onClick={() => setEditing(item)}
-                        className="w-full space-y-2 rounded-2xl px-3 py-3 text-left transition-colors hover:bg-white/[0.035]"
+                        className="budget-card flex h-full w-full flex-col gap-4 rounded-2xl border border-line bg-surface p-5 text-left transition-colors hover:border-line-strong hover:bg-surface-2"
                       >
-                        <span className="flex items-baseline justify-between gap-3 text-sm">
-                          <span className="truncate">{item.category.name}</span>
-                          <span className="shrink-0">
+                        <span className="flex w-full flex-wrap items-baseline justify-between gap-3 text-sm">
+                          <span className="font-medium">{item.category.name}</span>
+                          <span className="text-lg tabular">
                             <Money amount={item.spent} />
-                            <span className="text-muted"> de {formatMinorUnits(item.limit)}</span>
+                            <span className="block text-xs text-muted"> de {formatMinorUnits(item.limit)}</span>
                           </span>
                         </span>
-                        <ProgressBar value={item.usedBps / 100} tone={tone[item.status]} marker={pace} />
-                        <span className="flex justify-between text-xs">
-                          <span className={item.status === "OVER" ? "text-negative" : item.status === "WARNING" ? "text-[var(--series-4)]" : "text-faint"}>
+                        {item.usedBps <= 10000 ? <div className="w-full"><ProgressBar value={item.usedBps / 100} tone={tone[item.status]} marker={pace} /></div> : null}
+                        <span className="flex w-full flex-wrap justify-between gap-x-4 gap-y-1 text-xs">
+                          <span className={item.status === "OVER" ? "text-negative" : item.status === "WARNING" ? "text-warning" : "text-faint"}>
                             {item.status === "OVER"
                               ? `Passou ${formatMinorUnits(item.remaining.replace("-", ""))}`
                               : `${formatBps(item.usedBps)} usado · restam ${formatMinorUnits(item.remaining)}`}
@@ -145,7 +145,6 @@ export function BudgetsScreen({ month }: { month: string }) {
                     </li>
                   ))}
             </ul>
-          </Panel>
         </>
       )}
 
@@ -196,8 +195,12 @@ function BudgetForm({
   async function submit(event: React.FormEvent) {
     event.preventDefault();
     const minor = parseReaisToMinorUnits(amount);
-    if (!categoryId || !minor) {
-      setError("Escolha a categoria e o limite.");
+    if (!categoryId) {
+      setError("Escolha a categoria.");
+      return;
+    }
+    if (!minor) {
+      setError("Informe o limite, por exemplo 800,00.");
       return;
     }
     try {
@@ -239,26 +242,18 @@ function BudgetForm({
         </Field>
       )}
       <Field label="Limite por mês">
-        <input
-          autoFocus
-          className={`${controlClass} tabular`}
-          inputMode="decimal"
-          placeholder="0,00"
-          value={amount}
-          onChange={(event) => setAmount(event.target.value)}
-        />
+        <MoneyInput autoFocus value={amount} onChange={setAmount} />
         {average && BigInt(average) > 0n ? (
           <button
             type="button"
-            className="self-start text-[11px] text-gold hover:underline"
+            className="self-start py-1 text-left text-xs text-gold hover:underline"
             onClick={() => setAmount(minorUnitsToInput(average))}
           >
             Média dos últimos meses: {formatMinorUnits(average)}. Usar esse valor
           </button>
         ) : null}
       </Field>
-      {error ? <p className="text-sm text-negative">{error}</p> : null}
-      <footer className="flex items-center gap-2">
+      <FormFooter error={error}>
         {item ? (
           <Button
             variant={confirmDelete ? "dangerSolid" : "danger"}
@@ -274,9 +269,9 @@ function BudgetForm({
           Cancelar
         </Button>
         <Button variant="primary" type="submit" disabled={save.isPending}>
-          Salvar
+          {save.isPending ? "Salvando…" : "Salvar"}
         </Button>
-      </footer>
+      </FormFooter>
     </form>
   );
 }

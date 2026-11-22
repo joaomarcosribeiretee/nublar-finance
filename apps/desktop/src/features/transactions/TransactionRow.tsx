@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { Icon, type IconName } from "@/components/Icon";
 import { Money } from "@/components/Money";
 import { useToast } from "@/components/Toast";
@@ -32,18 +33,30 @@ function lookOf(transaction: Transaction): Look {
   return { icon: "arrowUp", badge: "bg-negative/10 text-negative", tone: "plain", sign: "-" };
 }
 
-function subtitleOf(transaction: Transaction): string {
+/** "Nubank [to] Itaú": where the money left and where it landed. */
+function route(from: string | undefined, to: string | undefined): ReactNode {
+  return (
+    <>
+      {from ?? ""}
+      <Icon name="arrowRight" size={11} className="mx-1 inline -translate-y-px" />
+      <span className="sr-only">para </span>
+      {to ?? ""}
+    </>
+  );
+}
+
+function subtitleOf(transaction: Transaction): ReactNode {
   if (transaction.type === "TRANSFER") {
-    return `${transaction.account?.name} → ${transaction.destinationAccount?.name ?? ""}`;
+    return route(transaction.account?.name, transaction.destinationAccount?.name);
   }
   if (transaction.type === "CARD_PAYMENT") {
-    return `${transaction.account?.name} → ${transaction.card?.name}`;
+    return route(transaction.account?.name, transaction.card?.name);
   }
   if (transaction.type === "INVESTMENT") {
-    return `${transaction.account?.name} → ${transaction.investment?.name}`;
+    return route(transaction.account?.name, transaction.investment?.name);
   }
   if (transaction.type === "REDEMPTION") {
-    return `${transaction.investment?.name} → ${transaction.account?.name}`;
+    return route(transaction.investment?.name, transaction.account?.name);
   }
   const category = transaction.category?.name ?? "Sem categoria";
   if (transaction.card) {
@@ -73,7 +86,7 @@ export function TransactionRow({
     <li className="group relative">
       <button
         type="button"
-        className="flex w-full items-center gap-3 rounded-2xl px-3 py-2.5 text-left transition-colors duration-150 hover:bg-white/[0.035]"
+        className="data-row flex w-full items-center gap-3 rounded-2xl px-3 py-3.5 text-left transition-colors hover:bg-hover"
         onClick={() => onOpen(transaction)}
       >
         <span
@@ -82,7 +95,7 @@ export function TransactionRow({
           <Icon name={transaction.recurring && pending ? "repeat" : look.icon} size={16} />
         </span>
         <span className="min-w-0 flex-1">
-          <span className="flex items-center gap-2 truncate text-sm">
+          <span className="flex items-center gap-2 text-sm">
             <span className={`truncate ${pending ? "text-muted" : ""}`}>
               {transaction.description ||
                 transaction.category?.name ||
@@ -115,7 +128,7 @@ export function TransactionRow({
           <Icon
             name="pencil"
             size={14}
-            className="text-faint opacity-0 transition-opacity group-hover:opacity-100"
+            className="hidden text-faint opacity-0 transition-opacity group-hover:opacity-100 hoverable:block"
           />
         ) : null}
       </button>
@@ -150,7 +163,7 @@ function PendingActions({ transaction }: { transaction: Transaction }) {
       <button
         type="button"
         disabled={busy}
-        className="rounded-lg px-2.5 py-1.5 text-xs text-muted transition-colors hover:bg-white/5 hover:text-foreground"
+        className="rounded-lg px-2.5 py-1.5 text-xs text-muted transition-colors hover:bg-hover-strong hover:text-foreground disabled:opacity-50"
         onClick={() => void run("skip")}
       >
         Pular
@@ -158,7 +171,7 @@ function PendingActions({ transaction }: { transaction: Transaction }) {
       <button
         type="button"
         disabled={busy}
-        className="flex items-center gap-1 rounded-lg bg-gold/15 px-2.5 py-1.5 text-xs text-gold transition-colors hover:bg-gold/25"
+        className="flex items-center gap-1 rounded-lg bg-gold/15 px-2.5 py-1.5 text-xs text-gold transition-colors hover:bg-gold/25 disabled:opacity-50"
         onClick={() => void run("confirm")}
       >
         <Icon name="check" size={13} />

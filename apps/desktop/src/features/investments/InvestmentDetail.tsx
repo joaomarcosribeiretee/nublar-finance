@@ -1,11 +1,12 @@
-import { useState } from "react";
+import { useId, useState } from "react";
 import { Area, AreaChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { AccountSelect } from "@/components/AccountSelect";
 import { Button } from "@/components/Button";
 import { axisProps, lineCursor, TooltipBox, yAxisMoney } from "@/components/charts";
-import { controlClass, Field } from "@/components/Field";
+import { controlClass, DecimalInput, Field, MoneyInput } from "@/components/Field";
 import { Icon } from "@/components/Icon";
 import { Money } from "@/components/Money";
+import { ErrorNote, StatStrip } from "@/components/Page";
 import { Segmented } from "@/components/Segmented";
 import { useToast } from "@/components/Toast";
 import { errorMessage } from "@/lib/api";
@@ -34,7 +35,7 @@ export function InvestmentDetail({ id, onClose }: { id: string; onClose: () => v
   const data = investment.data;
 
   if (investment.isError) {
-    return <p className="text-sm text-negative">{errorMessage(investment.error)}</p>;
+    return <ErrorNote>{errorMessage(investment.error)}</ErrorNote>;
   }
   if (!data) {
     return <div className="skeleton h-80 rounded-2xl" />;
@@ -45,19 +46,15 @@ export function InvestmentDetail({ id, onClose }: { id: string; onClose: () => v
 
   return (
     <div className="space-y-5">
-      <div className="grid grid-cols-4 gap-px overflow-hidden rounded-2xl border border-line bg-line">
-        {[
+      <StatStrip
+        columns="grid-cols-2 sm:grid-cols-4"
+        items={[
           { label: "Valor atual", value: <Money amount={data.current} /> },
           { label: "Aplicado", value: <Money amount={data.applied} /> },
           { label: "Ganho", value: <Money amount={data.gain} tone="auto" /> },
           { label: "Rentabilidade", value: <GainText gain={data.gain} bps={data.gainBps} /> },
-        ].map((stat) => (
-          <div key={stat.label} className="bg-surface-2 px-4 py-3">
-            <p className="text-xs text-muted">{stat.label}</p>
-            <p className="mt-1 text-base">{stat.value}</p>
-          </div>
-        ))}
-      </div>
+        ]}
+      />
 
       <FixedIncomeFacts data={data} />
 
@@ -66,7 +63,7 @@ export function InvestmentDetail({ id, onClose }: { id: string; onClose: () => v
       <HistoryChart data={data} />
 
       {action === "none" ? (
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <Button variant="primary" onClick={() => setAction("INVESTMENT")}>
             <Icon name="plus" size={15} />
             Aportar
@@ -76,7 +73,7 @@ export function InvestmentDetail({ id, onClose }: { id: string; onClose: () => v
           <div className="flex-1" />
           <Button variant="ghost" onClick={() => setAction("edit")}>
             <Icon name="pencil" size={14} />
-            Editar
+            Editar dados
           </Button>
         </div>
       ) : action === "value" ? (
@@ -91,6 +88,7 @@ export function InvestmentDetail({ id, onClose }: { id: string; onClose: () => v
 }
 
 function HistoryChart({ data }: { data: Detail }) {
+  const fill = useId();
   const rows = data.history.map((point) => ({ ...point, plot: plotValue(point.value) }));
   if (rows.length < 2) {
     return null;
@@ -100,7 +98,7 @@ function HistoryChart({ data }: { data: Detail }) {
       <ResponsiveContainer>
         <AreaChart data={rows} margin={{ top: 4, right: 4, bottom: 0, left: 0 }}>
           <defs>
-            <linearGradient id="investmentFill" x1="0" y1="0" x2="0" y2="1">
+            <linearGradient id={fill} x1="0" y1="0" x2="0" y2="1">
               <stop offset="0%" stopColor="var(--series-1)" stopOpacity={0.3} />
               <stop offset="100%" stopColor="var(--series-1)" stopOpacity={0} />
             </linearGradient>
@@ -120,13 +118,12 @@ function HistoryChart({ data }: { data: Detail }) {
               );
             }}
           />
-          <Area
+          <Area isAnimationActive={false}
             type="stepAfter"
             dataKey="plot"
-            isAnimationActive={false}
             stroke="var(--series-1)"
             strokeWidth={2}
-            fill="url(#investmentFill)"
+            fill={`url(#${fill})`}
             activeDot={{ r: 4, stroke: "var(--surface)", strokeWidth: 2 }}
           />
         </AreaChart>
@@ -157,7 +154,11 @@ function MovementForm({
     event.preventDefault();
     const minor = parseReaisToMinorUnits(amount);
     if (!minor) {
-      setError("Informe um valor.");
+      setError("Informe um valor, por exemplo 500,00.");
+      return;
+    }
+    if (!chosen) {
+      setError("Cadastre uma conta antes: o dinheiro precisa sair de algum lugar ou voltar para ele.");
       return;
     }
     try {
@@ -172,7 +173,7 @@ function MovementForm({
   return (
     <form onSubmit={(event) => void submit(event)} className="animate-enter space-y-3 rounded-2xl bg-surface-2 p-4">
       <p className="text-sm">{type === "INVESTMENT" ? "Aportar" : "Resgatar"}</p>
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid gap-3 sm:grid-cols-3">
         <AccountSelect
           label={type === "INVESTMENT" ? "Sai de" : "Volta para"}
           accounts={accounts.data ?? []}
@@ -180,27 +181,30 @@ function MovementForm({
           onChange={setAccountId}
         />
         <Field label="Valor">
-          <input
-            autoFocus
-            className={`${controlClass} tabular`}
-            inputMode="decimal"
-            placeholder="0,00"
-            value={amount}
-            onChange={(event) => setAmount(event.target.value)}
-          />
+          <MoneyInput autoFocus value={amount} onChange={setAmount} />
         </Field>
         <Field label="Data">
-          <input className={controlClass} type="date" value={date} onChange={(event) => setDate(event.target.value)} />
+          <input
+            className={controlClass}
+            type="date"
+            value={date}
+            onChange={(event) => setDate(event.target.value)}
+            required
+          />
         </Field>
       </div>
       <p className="text-[11px] text-faint">Só muda o dinheiro de lugar: não é despesa nem receita.</p>
-      {error ? <p className="text-sm text-negative">{error}</p> : null}
-      <div className="flex justify-end gap-2">
+      {error ? (
+        <p role="alert" className="text-sm text-negative">
+          {error}
+        </p>
+      ) : null}
+      <div className="flex flex-wrap justify-end gap-2">
         <Button variant="ghost" onClick={onDone}>
           Cancelar
         </Button>
         <Button variant="primary" type="submit" disabled={move.isPending}>
-          Confirmar
+          {type === "INVESTMENT" ? "Registrar aporte" : "Registrar resgate"}
         </Button>
       </div>
     </form>
@@ -216,9 +220,13 @@ function ValuationForm({ data, onDone }: { data: Detail; onDone: () => void }) {
 
   async function submit(event: React.FormEvent) {
     event.preventDefault();
+    if (!value.trim()) {
+      setError("Informe quanto a aplicação vale na data.");
+      return;
+    }
     const minor = /^[0.,\s]*$/.test(value) ? "0" : parseReaisToMinorUnits(value);
     if (minor === null) {
-      setError("Valor inválido.");
+      setError("Valor inválido. Use algo como 1.250,00.");
       return;
     }
     try {
@@ -233,15 +241,9 @@ function ValuationForm({ data, onDone }: { data: Detail; onDone: () => void }) {
   return (
     <form onSubmit={(event) => void submit(event)} className="animate-enter space-y-3 rounded-2xl bg-surface-2 p-4">
       <p className="text-sm">Quanto vale agora?</p>
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid gap-3 sm:grid-cols-2">
         <Field label="Valor na data">
-          <input
-            autoFocus
-            className={`${controlClass} tabular`}
-            inputMode="decimal"
-            value={value}
-            onChange={(event) => setValue(event.target.value)}
-          />
+          <MoneyInput autoFocus value={value} onChange={setValue} />
         </Field>
         <Field label="Data">
           <input
@@ -250,12 +252,17 @@ function ValuationForm({ data, onDone }: { data: Detail; onDone: () => void }) {
             value={date}
             max={todayLocal()}
             onChange={(event) => setDate(event.target.value)}
+            required
           />
         </Field>
       </div>
       <p className="text-[11px] text-faint">Copie o valor do app do banco ou da corretora. Aportes futuros somam sobre ele.</p>
-      {error ? <p className="text-sm text-negative">{error}</p> : null}
-      <div className="flex justify-end gap-2">
+      {error ? (
+        <p role="alert" className="text-sm text-negative">
+          {error}
+        </p>
+      ) : null}
+      <div className="flex flex-wrap justify-end gap-2">
         <Button variant="ghost" onClick={onDone}>
           Cancelar
         </Button>
@@ -286,6 +293,7 @@ function Timeline({ data }: { data: Detail }) {
     <div>
       <Segmented
         size="sm"
+        label="Histórico"
         value={tab}
         options={[
           { value: "movements", label: `Aportes e resgates (${data.movements.length})` },
@@ -293,7 +301,7 @@ function Timeline({ data }: { data: Detail }) {
         ]}
         onChange={setTab}
       />
-      <ul className="mt-3 max-h-56 overflow-y-auto">
+      <ul className="-mx-2 mt-3">
         {tab === "movements" && data.movements.length === 0 ? (
           <li className="py-6 text-center text-sm text-faint">Nenhum aporte ou resgate ainda.</li>
         ) : null}
@@ -315,7 +323,7 @@ function Timeline({ data }: { data: Detail }) {
           : data.valuations.map((valuation) => (
               <li key={valuation.id} className="group flex items-center gap-3 rounded-xl px-2 py-2">
                 <span className="w-14 shrink-0 text-xs text-faint">{shortDate(valuation.date)}</span>
-                <span className="flex-1 text-sm text-muted">Valia</span>
+                <span className="flex-1 text-sm text-muted">Valor informado</span>
                 <Money amount={valuation.value} className="text-sm" />
                 {data.valuations.length > 1 ? (
                   <DeleteButton
@@ -325,7 +333,7 @@ function Timeline({ data }: { data: Detail }) {
                     }
                   />
                 ) : (
-                  <span className="w-7" />
+                  <span className="w-8" />
                 )}
               </li>
             ))}
@@ -343,10 +351,10 @@ function DeleteButton({ label, onConfirm }: { label: string; onConfirm: () => vo
       aria-label={label}
       onBlur={() => setArmed(false)}
       onClick={() => (armed ? onConfirm() : setArmed(true))}
-      className={`rounded-lg p-1.5 text-xs transition-all ${
+      className={`flex h-8 min-w-8 shrink-0 items-center justify-center rounded-lg px-1.5 text-xs transition-[opacity,color,background-color] ${
         armed
-          ? "bg-negative/15 text-negative opacity-100"
-          : "text-faint opacity-0 group-hover:opacity-100 hover:bg-negative/10 hover:text-negative"
+          ? "bg-negative/15 text-negative"
+          : "text-faint group-hover:opacity-100 hover:bg-negative/10 hover:text-negative focus-visible:opacity-100 hoverable:opacity-0"
       }`}
     >
       {armed ? "Excluir?" : <Icon name="trash" size={14} />}
@@ -410,8 +418,8 @@ function CdiPreview({ data }: { data: Detail }) {
 
   return (
     <div className="rounded-2xl border border-line p-4">
-      <div className="flex items-center justify-between gap-3">
-        <div>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="min-w-0">
           <p className="text-sm">Prévia de rendimento</p>
           <p className="mt-0.5 text-xs text-muted">
             {bpsToPercentInput(percentOfCdi)}% do CDI sobre o valor atual · {exempt ? "isento de IR" : "líquido de IR"}
@@ -419,12 +427,12 @@ function CdiPreview({ data }: { data: Detail }) {
         </div>
         <label className="flex items-center gap-2 text-xs text-muted">
           CDI
-          <input
+          <DecimalInput
             aria-label="CDI anual"
-            className={`${controlClass} !w-20 !py-1 text-right tabular`}
-            inputMode="decimal"
+            className={`${controlClass} !h-9 !w-20 text-right tabular`}
+            wholeDigits={2}
             value={cdiInput}
-            onChange={(event) => setCdiInput(event.target.value)}
+            onChange={setCdiInput}
             onBlur={(event) => commit(event.target.value)}
             onKeyDown={(event) => {
               if (event.key === "Enter") commit(event.currentTarget.value);
@@ -433,7 +441,7 @@ function CdiPreview({ data }: { data: Detail }) {
           % a.a.
         </label>
       </div>
-      <dl className="mt-4 grid grid-cols-4 gap-px overflow-hidden rounded-xl border border-line bg-line">
+      <dl className="mt-4 grid grid-cols-2 gap-px overflow-hidden rounded-xl border border-line bg-line sm:grid-cols-4">
         {horizons.map((horizon) => (
           <div key={horizon.label} className="bg-surface-2 px-3 py-2.5">
             <dt className="text-[11px] text-muted">{horizon.label}</dt>

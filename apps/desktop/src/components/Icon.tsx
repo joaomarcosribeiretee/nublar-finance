@@ -26,6 +26,10 @@ const paths = {
   chart: "M4 20V10M10 20V4M16 20v-7M22 20H2",
   bank: "M3 10 12 4l9 6M5 10v8M9.5 10v8M14.5 10v8M19 10v8M3 20h18",
   calendar: "M4 6a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v14H4zM4 10h16M9 2v4M15 2v4",
+  arrowRight: "M5 12h14M12 5l7 7-7 7",
+  grid: "M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM14 14h6v6h-6z",
+  eye: "M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7zM12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z",
+  eyeOff: "M3 3l18 18M10.6 5.1A10.4 10.4 0 0 1 12 5c6.5 0 10 7 10 7a17 17 0 0 1-3 3.9M6.6 6.6A16.6 16.6 0 0 0 2 12s3.5 7 10 7a10 10 0 0 0 4.2-.9M9.9 9.9a3 3 0 0 0 4.2 4.2",
 } as const;
 
 export type IconName = keyof typeof paths;
@@ -49,7 +53,7 @@ export function Icon({
       strokeWidth={1.7}
       strokeLinecap="round"
       strokeLinejoin="round"
-      className={className}
+      className={`shrink-0 ${className ?? ""}`}
       aria-hidden="true"
     >
       <path d={paths[name]} />

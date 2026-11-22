@@ -11,3 +11,6 @@ coverage
 apps/api/src/generated
 .DS_Store
 Thumbs.db
+
+# Local design skills (reference only, never committed)
+visant-skills-public

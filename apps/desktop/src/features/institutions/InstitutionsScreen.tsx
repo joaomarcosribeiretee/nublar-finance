@@ -1,8 +1,9 @@
 import { useState } from "react";
 import { Button } from "@/components/Button";
-import { PageHeader } from "@/components/Page";
+import { ErrorNote, PageHeader, StatStrip } from "@/components/Page";
 import { EmptyState } from "@/components/EmptyState";
 import { Icon } from "@/components/Icon";
+import { InstitutionMark } from "@/components/InstitutionMark";
 import { Modal } from "@/components/Modal";
 import { Money } from "@/components/Money";
 import { errorMessage } from "@/lib/api";
@@ -55,13 +56,15 @@ export function InstitutionsScreen({
   const loose = (accounts.data ?? []).filter((account) => !account.institution);
   const looseCards = (cards.data ?? []).filter((card) => !card.institutionId);
   const loading = institutions.isPending || accounts.isPending;
+  // Any list failing means the screen cannot be trusted: say so, show nothing.
+  const failure = institutions.error ?? accounts.error ?? cards.error ?? summary.error;
   const empty = !loading && institutions.data?.length === 0 && loose.length === 0 && looseCards.length === 0;
 
   return (
     <section className="animate-enter">
       <PageHeader
         eyebrow="Bancos, corretoras e carteiras"
-        title={summary.data ? <Money amount={summary.data.cash} /> : <span className="skeleton inline-block h-8 w-56" />}
+        title="Instituições"
         actions={
           <>
             <Button variant="ghost" onClick={() => setDialog({ kind: "cash" })}>
@@ -77,14 +80,17 @@ export function InstitutionsScreen({
         Dinheiro em contas, sem contar investimentos.
       </PageHeader>
 
-      <div className="mt-8 space-y-4">
-        {institutions.isError ? (
-          <p className="text-sm text-negative">{errorMessage(institutions.error)}</p>
-        ) : null}
-        {loading ? (
+      {!failure && summary.data ? <div className="mt-6"><StatStrip columns="grid-cols-1 @lg:grid-cols-3" items={[
+        { label: "Disponível em contas", value: <Money amount={summary.data.cash} /> },
+        { label: "Em investimentos", value: <Money amount={summary.data.investments} /> },
+        { label: "Instituições cadastradas", value: institutions.data?.length ?? "—" },
+      ]} /></div> : null}
+      <div className="institution-grid mt-6 grid items-start gap-4 @3xl:grid-cols-2">
+        {failure ? <ErrorNote>{errorMessage(failure)}</ErrorNote> : null}
+        {failure ? null : loading ? (
           [0, 1].map((index) => <div key={index} className="skeleton h-36 rounded-3xl" />)
         ) : empty ? (
-          <EmptyState
+          <div className="col-span-full"><EmptyState
             icon="bank"
             title="Onde está seu dinheiro?"
             description="Adicione seus bancos, corretoras e carteiras. Dentro de cada um você coloca contas, caixinhas e cartões."
@@ -93,7 +99,7 @@ export function InstitutionsScreen({
                 Adicionar instituição
               </Button>
             }
-          />
+          /></div>
         ) : (
           <>
             {institutions.data?.map((institution) => (
@@ -186,33 +192,34 @@ function InstitutionPanel({
   onInvestments?: () => void;
   onAdd?: (what: "account" | "card") => void;
 }) {
-  const color = institution?.color ?? "#56655c";
+  const color = institution?.color ?? "var(--faint)";
 
   return (
-    <article className="overflow-hidden rounded-3xl border border-line bg-surface">
-      <header className="flex items-center gap-3 px-5 pt-5 pb-3">
-        <span
-          className="flex h-9 w-9 items-center justify-center rounded-xl text-sm font-medium text-white"
-          style={{ background: color }}
-        >
-          {institution ? institution.name.slice(0, 1).toUpperCase() : <Icon name="wallet" size={16} />}
-        </span>
+    <article className="institution-panel min-w-0 overflow-hidden rounded-3xl border border-line bg-surface">
+      <header className="flex items-center gap-3 px-4 pt-4 pb-3 @2xl:px-5 @2xl:pt-5">
+        {institution ? (
+          <InstitutionMark name={institution.name} color={institution.color} size="lg" />
+        ) : (
+          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-surface-2 text-muted">
+            <Icon name="wallet" size={18} />
+          </span>
+        )}
         <div className="min-w-0 flex-1">
           <h2 className="truncate">{institution?.name ?? "Fora de instituições"}</h2>
           {institution && BigInt(institution.cardDebt) > 0n ? (
-            <p className="text-xs text-muted">
+            <p className="truncate text-xs text-muted">
               Cartões devem <Money amount={institution.cardDebt} />
             </p>
           ) : null}
         </div>
         {institution ? (
-          <Money amount={institution.total} className="text-xl" />
+          <Money amount={institution.total} className="text-lg @2xl:text-xl" />
         ) : null}
         {onEdit ? (
           <button
             type="button"
             aria-label="Editar instituição"
-            className="rounded-lg p-2 text-faint transition-colors hover:bg-white/5 hover:text-foreground"
+            className="-mr-1 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-faint transition-colors hover:bg-hover hover:text-foreground"
             onClick={onEdit}
           >
             <Icon name="pencil" size={14} />
@@ -226,9 +233,9 @@ function InstitutionPanel({
             <button
               type="button"
               onClick={() => onAccount(account)}
-              className="group flex w-full items-center gap-3 rounded-2xl px-3 py-2.5 text-left transition-colors hover:bg-white/[0.035]"
+              className="flex w-full items-center gap-3 rounded-2xl px-3 py-2.5 text-left transition-colors hover:bg-hover"
             >
-              <span className="h-1.5 w-1.5 rounded-full" style={{ background: color }} />
+              <span className="h-1.5 w-1.5 shrink-0 rounded-full" style={{ background: color }} />
               <span className="min-w-0 flex-1">
                 <span className="block truncate text-sm">
                   {account.name || accountTypeLabels[account.type]}
@@ -250,7 +257,7 @@ function InstitutionPanel({
             <button
               type="button"
               onClick={onInvestments}
-              className="flex w-full items-center gap-3 rounded-2xl px-3 py-2.5 text-left transition-colors hover:bg-white/[0.035]"
+              className="flex w-full items-center gap-3 rounded-2xl px-3 py-2.5 text-left transition-colors hover:bg-hover"
             >
               <Icon name="trend" size={14} className="text-muted" />
               <span className="flex-1 text-sm">Investimentos</span>
@@ -263,7 +270,7 @@ function InstitutionPanel({
             <button
               type="button"
               onClick={onCard}
-              className="flex w-full items-center gap-3 rounded-2xl px-3 py-2.5 text-left transition-colors hover:bg-white/[0.035]"
+              className="flex w-full items-center gap-3 rounded-2xl px-3 py-2.5 text-left transition-colors hover:bg-hover"
             >
               <Icon name="card" size={14} className="text-muted" />
               <span className="min-w-0 flex-1">
@@ -286,7 +293,7 @@ function InstitutionPanel({
           <button
             type="button"
             onClick={() => onAdd("account")}
-            className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs text-muted transition-colors hover:bg-white/5 hover:text-foreground"
+            className="flex items-center gap-1.5 rounded-lg px-2.5 py-2 text-xs text-muted transition-colors hover:bg-hover hover:text-foreground"
           >
             <Icon name="plus" size={13} />
             Conta
@@ -294,7 +301,7 @@ function InstitutionPanel({
           <button
             type="button"
             onClick={() => onAdd("card")}
-            className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs text-muted transition-colors hover:bg-white/5 hover:text-foreground"
+            className="flex items-center gap-1.5 rounded-lg px-2.5 py-2 text-xs text-muted transition-colors hover:bg-hover hover:text-foreground"
           >
             <Icon name="plus" size={13} />
             Cartão

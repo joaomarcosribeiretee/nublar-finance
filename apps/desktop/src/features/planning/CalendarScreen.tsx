@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useId, useMemo, useState } from "react";
 import {
   Area,
   AreaChart,
@@ -13,8 +13,9 @@ import {
 } from "recharts";
 import { axisProps, gridProps, Legend, lineCursor, TooltipBox, yAxisMoney } from "@/components/charts";
 import { Icon, type IconName } from "@/components/Icon";
+import { Button } from "@/components/Button";
 import { Money } from "@/components/Money";
-import { PageHeader, Panel } from "@/components/Page";
+import { ErrorNote, PageHeader, Panel } from "@/components/Page";
 import { Segmented } from "@/components/Segmented";
 import { errorMessage } from "@/lib/api";
 import { plotValue } from "@/lib/chart";
@@ -67,16 +68,14 @@ export function CalendarScreen({ month }: { month: string }) {
 
   return (
     <section className="animate-enter space-y-6">
-      <PageHeader eyebrow="Calendário financeiro" title={monthLabel(month)}>
+      <PageHeader eyebrow={monthLabel(month)} title="Calendário" actions={month === today.slice(0, 7) ? <Button onClick={() => setSelected(today)}>Hoje</Button> : undefined}>
         Dias passados mostram o saldo real; os próximos, o previsto com pendentes e faturas.
       </PageHeader>
 
-      {calendar.isError ? <p className="text-sm text-negative">{errorMessage(calendar.error)}</p> : null}
+      {calendar.isError ? <ErrorNote>{errorMessage(calendar.error)}</ErrorNote> : null}
 
-      <DailyCashChart data={data} today={today} dim={calendar.isPlaceholderData} />
-
-      <div className="grid grid-cols-[1.5fr_1fr] gap-4">
-        <Panel>
+      {!calendar.isError ? <div className="grid items-start gap-4 @2xl:grid-cols-[1.5fr_1fr]">
+        <Panel className="calendar-panel">
           <div className="grid grid-cols-7 gap-1 text-center text-[11px] text-faint uppercase">
             {weekdays.map((day) => (
               <span key={day} className="pb-2">
@@ -84,7 +83,7 @@ export function CalendarScreen({ month }: { month: string }) {
               </span>
             ))}
           </div>
-          <div className={`grid grid-cols-7 gap-1 transition-opacity ${calendar.isPlaceholderData ? "opacity-50" : ""}`}>
+          <div className={`grid grid-cols-7 gap-1 transition-opacity duration-(--dur-base) ${calendar.isPlaceholderData ? "opacity-50" : ""}`}>
             {cells.map((date, index) => {
               if (!date) return <span key={`blank-${index}`} />;
               const events = byDay.get(date) ?? [];
@@ -95,12 +94,11 @@ export function CalendarScreen({ month }: { month: string }) {
                   key={date}
                   type="button"
                   onClick={() => setSelected(date)}
-                  className={`flex h-16 flex-col items-start rounded-xl border px-2 py-1.5 text-left transition-colors ${
-                    isFocus
-                      ? "border-gold/50 bg-gold/10"
-                      : "border-transparent hover:border-line hover:bg-white/[0.03]"
+                  className={`calendar-day flex h-14 min-w-0 flex-col items-start rounded-xl border px-1.5 py-2 text-left transition-colors @2xl:h-20 @2xl:px-3 ${
+                    isFocus ? "border-gold/50 bg-gold/10" : "border-transparent hover:border-line hover:bg-hover"
                   } ${date < today ? "text-muted" : ""}`}
-                  aria-label={`${dayLabel(date)}: ${events.length} itens`}
+                  aria-pressed={isFocus}
+                  aria-label={`${dayLabel(date)}: ${events.length === 0 ? "nada" : events.length === 1 ? "1 item" : `${events.length} itens`}`}
                 >
                   <span className={`text-xs ${isToday ? "rounded-full bg-gold px-1.5 font-medium text-background" : ""}`}>
                     {Number(date.slice(8, 10))}
@@ -129,7 +127,9 @@ export function CalendarScreen({ month }: { month: string }) {
           </div>
         </Panel>
 
-        <Panel flush title={dayLabel(focus)} subtitle={focusEvents.length === 0 ? "Nada neste dia." : undefined}>
+        <Panel flush className="day-agenda" title={dayLabel(focus)} subtitle={data && focusEvents.length === 0 ? "Nenhum compromisso neste dia." : undefined}>
+          {!data ? <div className="skeleton m-3 h-24" /> : null}
+          {data && focusEvents.length === 0 ? <div className="flex items-center gap-3 p-4 text-muted"><Icon name="calendar" size={24} /><p className="text-sm">Escolha um dia marcado para ver os detalhes.</p></div> : null}
           <ul>
             {focusEvents.map((event) => {
               const style = look(event);
@@ -158,7 +158,8 @@ export function CalendarScreen({ month }: { month: string }) {
             })}
           </ul>
         </Panel>
-      </div>
+      </div> : null}
+      {calendar.isError ? null : <DailyCashChart data={data} today={today} dim={calendar.isPlaceholderData} />}
 
       <ProjectionPanel />
     </section>
@@ -204,7 +205,7 @@ function DailyCashChart({
         ) : null
       }
     >
-      <div className={`h-52 transition-opacity ${dim ? "opacity-50" : ""}`}>
+      <div className={`h-52 transition-opacity duration-(--dur-base) ${dim ? "opacity-50" : ""}`}>
         {data ? (
           <ResponsiveContainer>
             <LineChart data={rows} margin={{ top: 8, right: 8, bottom: 0, left: 0 }}>
@@ -231,8 +232,8 @@ function DailyCashChart({
                   );
                 }}
               />
-              <Line type="stepAfter" dataKey="real" stroke="var(--gold)" strokeWidth={2} dot={false} connectNulls={false} isAnimationActive={false} />
-              <Line
+              <Line isAnimationActive={false} type="stepAfter" dataKey="real" stroke="var(--gold)" strokeWidth={2} dot={false} connectNulls={false} />
+              <Line isAnimationActive={false}
                 type="stepAfter"
                 dataKey="forecast"
                 stroke="var(--muted)"
@@ -240,7 +241,6 @@ function DailyCashChart({
                 strokeDasharray="4 4"
                 dot={false}
                 connectNulls={false}
-                isAnimationActive={false}
               />
             </LineChart>
           </ResponsiveContainer>
@@ -254,6 +254,7 @@ function DailyCashChart({
 
 function ProjectionPanel() {
   const [months, setMonths] = useState<6 | 12>(6);
+  const fill = useId();
   const projection = useProjection(months);
   const data = projection.data;
   const rows = data?.months.map((m) => ({ ...m, plot: plotValue(m.projectedCash) })) ?? [];
@@ -270,6 +271,7 @@ function ProjectionPanel() {
       actions={
         <Segmented
           size="sm"
+          label="Horizonte"
           value={String(months) as "6" | "12"}
           options={[
             { value: "6", label: "6 meses" },
@@ -279,14 +281,14 @@ function ProjectionPanel() {
         />
       }
     >
-      {projection.isError ? <p className="text-sm text-negative">{errorMessage(projection.error)}</p> : null}
-      <div className="grid grid-cols-[1.3fr_1fr] gap-6">
-        <div className="h-56">
+      {projection.isError ? <ErrorNote>{errorMessage(projection.error)}</ErrorNote> : null}
+      <div className="grid gap-6 @2xl:grid-cols-[1.3fr_1fr]">
+        <div className="h-56 min-w-0">
           {data ? (
             <ResponsiveContainer>
               <AreaChart data={rows} margin={{ top: 8, right: 8, bottom: 0, left: 0 }}>
                 <defs>
-                  <linearGradient id="projectionFill" x1="0" y1="0" x2="0" y2="1">
+                  <linearGradient id={fill} x1="0" y1="0" x2="0" y2="1">
                     <stop offset="0%" stopColor="var(--series-1)" stopOpacity={0.25} />
                     <stop offset="100%" stopColor="var(--series-1)" stopOpacity={0} />
                   </linearGradient>
@@ -314,14 +316,14 @@ function ProjectionPanel() {
                     );
                   }}
                 />
-                <Area type="linear" dataKey="plot" stroke="var(--series-1)" strokeWidth={2} fill="url(#projectionFill)" isAnimationActive={false} />
+                <Area isAnimationActive={false} type="linear" dataKey="plot" stroke="var(--series-1)" strokeWidth={2} fill={`url(#${fill})`} />
               </AreaChart>
             </ResponsiveContainer>
           ) : (
             <div className="skeleton h-full" />
           )}
         </div>
-        <table className="w-full self-start text-right text-xs tabular">
+        <table className="w-full self-start text-right text-xs whitespace-nowrap tabular">
           <thead className="text-muted">
             <tr>
               <th className="py-1.5 text-left font-normal">Mês</th>

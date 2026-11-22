@@ -1,7 +1,9 @@
 import { useState } from "react";
 import { Button } from "@/components/Button";
-import { controlClass, Field } from "@/components/Field";
+import { controlClass, Field, MoneyInput, TextInput } from "@/components/Field";
+import { FormFooter } from "@/components/Modal";
 import { Icon } from "@/components/Icon";
+import { InstitutionMark } from "@/components/InstitutionMark";
 import { useToast } from "@/components/Toast";
 import { errorMessage } from "@/lib/api";
 import { institutionColors, institutionSuggestions } from "@/lib/institutions";
@@ -33,20 +35,21 @@ export function AddInstitution({ onDone }: { onDone: () => void }) {
   const [name, setName] = useState("");
   const [color, setColor] = useState(institutionColors[0]);
   const [selected, setSelected] = useState<Product[]>(["CHECKING"]);
+  const [nameError, setNameError] = useState<string | null>(null);
 
   const taken = new Set((existing.data ?? []).map((i) => i.name.toLowerCase()));
 
   if (step === "pick") {
     return (
       <div className="space-y-5">
-        <div className="grid grid-cols-3 gap-2">
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
           {institutionSuggestions
             .filter((suggestion) => !taken.has(suggestion.name.toLowerCase()))
             .map((suggestion) => (
               <button
                 key={suggestion.name}
                 type="button"
-                className="flex items-center gap-2.5 rounded-xl border border-line px-3 py-2.5 text-left text-sm transition-all duration-150 hover:-translate-y-0.5 hover:border-line-strong hover:bg-surface-2"
+                className="flex min-w-0 items-center gap-2.5 rounded-xl border border-line px-3 py-2.5 text-left text-sm transition-colors hover:border-line-strong hover:bg-surface-2"
                 onClick={() => {
                   setName(suggestion.name);
                   setColor(suggestion.color);
@@ -54,7 +57,7 @@ export function AddInstitution({ onDone }: { onDone: () => void }) {
                   setStep("products");
                 }}
               >
-                <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ background: suggestion.color }} />
+                <InstitutionMark name={suggestion.name} color={suggestion.color} size="sm" />
                 <span className="truncate">{suggestion.name}</span>
               </button>
             ))}
@@ -63,21 +66,37 @@ export function AddInstitution({ onDone }: { onDone: () => void }) {
           className="space-y-3 border-t border-line pt-5"
           onSubmit={(event) => {
             event.preventDefault();
-            if (name.trim()) setStep("products");
+            if (!name.trim()) {
+              setNameError("Digite o nome da instituição.");
+              return;
+            }
+            if (taken.has(name.trim().toLowerCase())) {
+              setNameError("Você já tem essa instituição. Adicione contas e cartões dentro dela.");
+              return;
+            }
+            setStep("products");
           }}
         >
           <Field label="Outra instituição">
-            <input
-              className={controlClass}
+            <TextInput
               placeholder="Nome do banco, corretora ou carteira"
               value={name}
               maxLength={80}
-              onChange={(event) => setName(event.target.value)}
+              aria-invalid={nameError ? true : undefined}
+              onChange={(value) => {
+                setName(value);
+                setNameError(null);
+              }}
             />
           </Field>
           <ColorPicker value={color} onChange={setColor} />
+          {nameError ? (
+            <p role="alert" className="animate-enter text-sm text-negative">
+              {nameError}
+            </p>
+          ) : null}
           <div className="flex justify-end">
-            <Button variant="primary" type="submit" disabled={!name.trim()}>
+            <Button variant="primary" type="submit">
               Continuar
             </Button>
           </div>
@@ -144,7 +163,7 @@ function ProductsStep({
       }
       parsed.set(type, value);
     }
-    const cardLimit = limit.trim() ? parseReaisToMinorUnits(limit) : "0";
+    const cardLimit = /^[0.,\s]*$/.test(limit) ? "0" : parseReaisToMinorUnits(limit);
     if (selected.includes("CARD") && cardLimit === null) {
       setError("Limite do cartão inválido.");
       return;
@@ -193,13 +212,13 @@ function ProductsStep({
         <button
           type="button"
           aria-label="Voltar"
-          className="-ml-1 rounded-lg p-1.5 text-muted hover:bg-white/5 hover:text-foreground"
+          className="-ml-2 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-muted transition-colors hover:bg-hover hover:text-foreground"
           onClick={onBack}
         >
           <Icon name="chevronLeft" size={16} />
         </button>
-        <span className="h-3 w-3 rounded-full" style={{ background: color }} />
-        <p>
+        <InstitutionMark name={name} color={color} size="sm" />
+        <p className="min-w-0">
           O que você tem no <span className="font-medium">{name}</span>?
         </p>
       </div>
@@ -223,23 +242,17 @@ function ProductsStep({
                 >
                   {on ? <Icon name="check" size={13} /> : null}
                 </span>
-                <span className="flex-1">
+                <span className="min-w-0 flex-1">
                   <span className="block text-sm">{product.label}</span>
                   <span className="block text-xs text-faint">{product.hint}</span>
                 </span>
               </button>
               {on ? (
-                <div className="animate-enter px-4 pb-4 pl-12">
+                <div className="animate-enter px-4 pb-4 sm:pl-12">
                   {product.value === "CARD" ? (
-                    <div className="grid grid-cols-3 gap-3">
-                      <Field label="Limite">
-                        <input
-                          className={`${controlClass} tabular`}
-                          inputMode="decimal"
-                          placeholder="0,00"
-                          value={limit}
-                          onChange={(event) => setLimit(event.target.value)}
-                        />
+                    <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+                      <Field label="Limite" className="col-span-2 sm:col-span-1">
+                        <MoneyInput value={limit} onChange={setLimit} />
                       </Field>
                       <Field label="Fecha dia">
                         <select
@@ -283,18 +296,18 @@ function ProductsStep({
       </ul>
 
       <p className="text-xs text-faint">
-        O saldo de hoje entra no seu patrimônio, não como receita. Investimentos (CDB, ações, FIIs) chegam na
-        próxima fase.
+        O saldo de hoje entra no seu patrimônio, não como receita. Aplicações (CDB, ações, FIIs) são
+        cadastradas depois, em Investimentos.
       </p>
-      {error ? <p className="text-sm text-negative">{error}</p> : null}
-      <footer className="flex justify-end gap-2">
+      <FormFooter error={error}>
+        <div className="flex-1" />
         <Button variant="ghost" onClick={onDone}>
           Cancelar
         </Button>
         <Button variant="primary" type="submit" disabled={saving}>
           {saving ? "Adicionando…" : `Adicionar ${name}`}
         </Button>
-      </footer>
+      </FormFooter>
     </form>
   );
 }

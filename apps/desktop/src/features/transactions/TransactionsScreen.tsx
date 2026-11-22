@@ -1,13 +1,15 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Button } from "@/components/Button";
 import { Modal } from "@/components/Modal";
-import { PageHeader } from "@/components/Page";
+import { ErrorNote, PageHeader } from "@/components/Page";
 import { EmptyState } from "@/components/EmptyState";
 import { Icon } from "@/components/Icon";
 import { Money } from "@/components/Money";
 import { Segmented } from "@/components/Segmented";
 import { errorMessage } from "@/lib/api";
-import { dayLabel, monthLabel, shiftMonth, shortDate } from "@/lib/dates";
+import { compactBRL, plotValue } from "@/lib/chart";
+import { formatMinorUnits } from "@/lib/money";
+import { currentMonth, dayLabel, monthLabel, shiftMonth, shortDate, shortMonthLabel } from "@/lib/dates";
 import {
   useSummariesFor,
   useSummary,
@@ -19,10 +21,12 @@ import {
 } from "@/lib/queries";
 import { TransactionRow } from "./TransactionRow";
 import { ImportFlow } from "@/features/imports/ImportFlow";
+import { RecurringScreen } from "@/features/recurring/RecurringScreen";
 
 type Group = { key: string; date: string; title: string; items: Transaction[]; invoice: boolean };
 
 type Filter = "ALL" | EntryType;
+export type TransactionFilter = { type?: Filter; categoryId?: string | null; categoryName?: string };
 
 const filters: { value: Filter; label: string }[] = [
   { value: "ALL", label: "Todos" },
@@ -31,26 +35,36 @@ const filters: { value: Filter; label: string }[] = [
   { value: "TRANSFER", label: "Transferências" },
 ];
 
+/** What happened, what is coming, and the rules that make what is coming. */
+type View = "month" | "upcoming" | "recurring";
+
 export function TransactionsScreen({
   month,
+  onMonthChange,
   onNew,
   onEdit,
+  initialFilter,
 }: {
   month: string;
+  onMonthChange: (month: string) => void;
   onNew: () => void;
   onEdit: (transaction: Transaction) => void;
+  initialFilter?: TransactionFilter;
 }) {
   const transactions = useTransactions(month);
   const summary = useSummary(month);
-  const [filter, setFilter] = useState<Filter>("ALL");
+  const [filter, setFilter] = useState<Filter>(initialFilter?.type ?? "ALL");
+  const [category, setCategory] = useState(initialFilter);
   const [query, setQuery] = useState("");
   const [importing, setImporting] = useState(false);
 
-  const [view, setView] = useState<"month" | "upcoming">("month");
+  const [view, setView] = useState<View>("month");
 
   const groups = useMemo(
-    () => groupEntries(matching(transactions.data ?? [], filter, query), summary.data?.invoices ?? []),
-    [transactions.data, summary.data, filter, query],
+    () => groupEntries(matching(transactions.data ?? [], filter, query).filter((item) =>
+      category?.categoryId === undefined || (item.category?.id ?? null) === category.categoryId
+    ), category?.categoryId === undefined ? summary.data?.invoices ?? [] : []),
+    [transactions.data, summary.data, filter, query, category],
   );
 
   const hasAny = (transactions.data?.length ?? 0) > 0;
@@ -58,7 +72,6 @@ export function TransactionsScreen({
   return (
     <section className="animate-enter">
       <PageHeader
-        eyebrow={monthLabel(month)}
         title="Lançamentos"
         actions={
           <>
@@ -69,7 +82,7 @@ export function TransactionsScreen({
             <Button variant="primary" onClick={onNew}>
               <Icon name="plus" size={16} />
               Novo
-              <kbd className="ml-1 rounded bg-black/15 px-1.5 text-[10px]">N</kbd>
+              <kbd className="ml-1 hidden rounded bg-black/15 px-1.5 text-[10px] hoverable:inline">N</kbd>
             </Button>
           </>
         }
@@ -77,47 +90,68 @@ export function TransactionsScreen({
 
       <div className="mt-6">
         <Segmented
-          size="sm"
+          label="O que ver"
           value={view}
           options={[
-            { value: "month" as const, label: monthLabel(month) },
+            { value: "month" as const, label: "Por mês" },
             { value: "upcoming" as const, label: "Próximos meses" },
+            { value: "recurring" as const, label: "Recorrentes" },
           ]}
-          onChange={setView}
+          onChange={(next) => { setView(next); if (next !== "month") setCategory(undefined); }}
         />
       </div>
 
-      {view === "month" ? (
-        <div className="mt-4 grid grid-cols-3 gap-px overflow-hidden rounded-2xl border border-line bg-line">
-          <MiniStat label="Receitas" amount={summary.data?.income} tone="positive" />
-          <MiniStat label="Despesas" amount={summary.data?.expense} tone="negative" />
-          <MiniStat label="Resultado" amount={summary.data?.result} tone="auto" />
+      {view === "recurring" ? (
+        <div className="mt-6">
+          <RecurringScreen />
         </div>
       ) : null}
 
-      <div className="mt-6 flex items-center gap-3">
-        <Segmented size="sm" value={filter} options={filters} onChange={setFilter} />
-        <div className="relative ml-auto w-64">
+      {view === "month" ? (
+        <>
+          <MonthStrip month={month} onChange={onMonthChange} />
+          <div className="mt-4 grid gap-px overflow-hidden rounded-2xl border border-line bg-line @lg:grid-cols-3">
+            <MiniStat label="Receitas" amount={summary.data?.income} tone="positive" />
+            <MiniStat label="Despesas" amount={summary.data?.expense} tone="negative" />
+            <MiniStat label="Resultado" amount={summary.data?.result} tone="auto" />
+          </div>
+        </>
+      ) : null}
+
+      {view === "recurring" ? null : (
+      <div className="filter-toolbar mt-6 flex flex-wrap items-center gap-3">
+        <Segmented size="sm" label="Tipo" value={filter} options={filters} onChange={setFilter} />
+        <div className="relative w-full @lg:ml-auto @lg:w-64">
           <Icon
             name="search"
             size={15}
             className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-faint"
           />
           <input
-            className="h-9 w-full rounded-xl border border-line bg-surface-2 pr-3 pl-9 text-sm outline-none transition-colors placeholder:text-faint focus:border-gold/60"
+            type="search"
+            aria-label="Buscar lançamentos"
+            className="h-10 w-full rounded-xl border border-line bg-surface-2 pr-3 pl-9 text-base outline-none transition-colors placeholder:text-faint hover:border-line-strong focus:border-gold/60 sm:h-9 sm:text-sm"
             placeholder="Buscar"
             value={query}
+            maxLength={80}
             onChange={(event) => setQuery(event.target.value)}
           />
         </div>
       </div>
+      )}
+      {category?.categoryId !== undefined ? (
+        <div className="mt-3 flex items-center gap-2 text-sm text-muted">
+          Categoria: {category.categoryName ?? "Sem categoria"}
+          <Button variant="ghost" className="h-8 px-2 text-xs" onClick={() => setCategory(undefined)}>Limpar filtro <Icon name="close" size={13} /></Button>
+        </div>
+      ) : null}
 
-      {view === "upcoming" ? (
-        <UpcomingMonths from={month} filter={filter} query={query} onEdit={onEdit} />
+      {view === "recurring" ? null : view === "upcoming" ? (
+        <UpcomingMonths from={currentMonth()} filter={filter} query={query} onEdit={onEdit} />
       ) : (
         <div className="mt-6">
           {transactions.isError ? (
-            <p className="text-sm text-negative">{errorMessage(transactions.error)}</p>
+            <ErrorNote>{errorMessage(transactions.error)}</ErrorNote>
           ) : transactions.isPending ? (
             <ListSkeleton />
           ) : !hasAny ? (
@@ -214,18 +248,18 @@ function GroupList({
   includePending?: boolean;
 }) {
   return (
-    <div className={`space-y-5 transition-opacity ${dim ? "opacity-50" : ""}`}>
+    <div className={`space-y-5 transition-opacity duration-(--dur-base) ${dim ? "opacity-50" : ""}`}>
       {groups.map((group) => (
         <div
           key={group.key}
           className={group.invoice ? "rounded-2xl border border-line bg-surface/50 py-2" : ""}
         >
-          <div className="flex items-center justify-between px-3 pb-1">
-            <h3 className="flex items-center gap-1.5 text-xs font-medium tracking-wide text-muted uppercase">
+          <div className="flex items-center justify-between gap-3 px-3 pb-1">
+            <h3 className="flex min-w-0 items-center gap-1.5 text-xs font-medium tracking-wide text-muted uppercase">
               {group.invoice ? <Icon name="receipt" size={13} /> : null}
-              {group.title}
+              <span className="truncate">{group.title}</span>
             </h3>
-            <Money amount={dayNet(group.items, includePending)} tone="auto" className="text-xs" />
+            <DayNet amount={dayNet(group.items, includePending)} />
           </div>
           <ul>
             {group.items.map((transaction) => (
@@ -276,34 +310,37 @@ function UpcomingMonths({
             <button
               type="button"
               onClick={() => setOpen(expanded ? null : month)}
-              className="flex w-full items-center gap-4 px-5 py-4 text-left"
+              aria-expanded={expanded}
+              className="flex w-full items-center gap-3 px-4 py-4 text-left @2xl:gap-4 @2xl:px-5"
             >
               <Icon
                 name="chevronRight"
                 size={15}
                 className={`text-muted transition-transform ${expanded ? "rotate-90" : ""}`}
               />
-              <span className="flex-1 text-sm">{monthLabel(month)}</span>
+              <span className="flex-1 truncate text-sm">{monthLabel(month)}</span>
               {totals ? (
                 <span className="flex items-center gap-5 text-xs">
-                  <span className="text-muted">
+                  <span className="hidden text-muted @2xl:inline">
                     Receitas <Money amount={totals.income} tone="positive" />
                   </span>
-                  <span className="text-muted">
+                  <span className="hidden text-muted @2xl:inline">
                     Despesas <Money amount={totals.expense} />
                   </span>
-                  <span className="w-28 text-right">
+                  <span className="text-right @2xl:w-28">
                     <Money amount={totals.result} tone="auto" />
                   </span>
                 </span>
               ) : (
-                <span className="skeleton h-4 w-48" />
+                <span className="skeleton h-4 w-24 @2xl:w-48" />
               )}
             </button>
             {expanded ? (
               <div className="animate-enter border-t border-line px-2 pt-4 pb-3">
                 {lists[index].isError ? (
-                  <p className="px-3 text-sm text-negative">{errorMessage(lists[index].error)}</p>
+                  <div className="px-3">
+                    <ErrorNote>{errorMessage(lists[index].error)}</ErrorNote>
+                  </div>
                 ) : !list ? (
                   <ListSkeleton rows={3} />
                 ) : groups.length === 0 ? (
@@ -352,6 +389,105 @@ function dayNet(items: Transaction[], includePending = false): string {
   return total.toString();
 }
 
+/** A day of transfers only nets to nothing, and zero is not worth a line. */
+function DayNet({ amount }: { amount: string }) {
+  return amount === "0" ? null : <Money amount={amount} tone="auto" className="shrink-0 text-xs" />;
+}
+
+/** How many months the strip shows at once. */
+const STRIP_MONTHS = 6;
+
+/**
+ * Recent months side by side, each with how it ended, so going back is one
+ * tap and a bad month is visible before opening it. The arrows page the
+ * window; the future lives in "Próximos meses".
+ */
+function MonthStrip({ month, onChange }: { month: string; onChange: (month: string) => void }) {
+  const today = currentMonth();
+  const [last, setEnd] = useState(() => (month > today ? month : today));
+  // A month chosen elsewhere (the top bar, Análises) that falls outside the
+  // window brings the window along; paging with the arrows does not.
+  const [seen, setSeen] = useState(month);
+  if (month !== seen) {
+    setSeen(month);
+    if (month > last || month <= shiftMonth(last, -STRIP_MONTHS)) setEnd(month);
+  }
+  const months = Array.from({ length: STRIP_MONTHS }, (_, index) => shiftMonth(last, index - STRIP_MONTHS + 1));
+  const summaries = useSummariesFor(months);
+  const selected = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    selected.current?.scrollIntoView({ block: "nearest", inline: "nearest" });
+  }, [month]);
+
+  const arrow =
+    "flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-muted transition-colors hover:bg-hover hover:text-foreground";
+
+  return (
+    <div className="mt-4 flex items-center gap-1">
+      <button type="button" aria-label="Meses anteriores" className={arrow} onClick={() => setEnd(shiftMonth(last, -STRIP_MONTHS))}>
+        <Icon name="chevronLeft" size={16} />
+      </button>
+      <div role="group" aria-label="Escolher mês" className="scroll-quiet flex min-w-0 flex-1 gap-1 overflow-x-auto">
+        {months.map((item, index) => {
+          const active = item === month;
+          const result = summaries[index].data?.result;
+          // A year label where it changes, so "jan" never reads as this year's.
+          const showYear = index === 0 || item.endsWith("-01");
+          return (
+            <button
+              key={item}
+              ref={active ? selected : undefined}
+              type="button"
+              aria-pressed={active}
+              onClick={() => onChange(item)}
+              className={`flex min-w-[4.75rem] flex-1 flex-col items-center gap-0.5 rounded-xl border px-2 py-2 transition-colors ${
+                active ? "border-gold/50 bg-gold/10" : "border-transparent hover:bg-hover"
+              }`}
+            >
+              <span className={`text-sm ${active ? "text-foreground" : "text-muted"}`}>
+                {shortMonthLabel(item)}
+                {showYear ? <span className="text-faint"> {item.slice(2, 4)}</span> : null}
+                {item === today ? <span className="sr-only"> (mês atual)</span> : null}
+              </span>
+              {result === undefined ? (
+                summaries[index].isError ? (
+                  <span className="text-[11px] text-faint">—</span>
+                ) : (
+                  <span className="skeleton h-3 w-14" />
+                )
+              ) : result === "0" ? (
+                <span className="text-[11px] text-faint">sem dados</span>
+              ) : (
+                // Short form: the exact number is in the totals right below.
+                <span
+                  title={formatMinorUnits(result)}
+                  className={`text-[11px] whitespace-nowrap tabular ${result.startsWith("-") ? "text-negative" : "text-positive"}`}
+                >
+                  {result.startsWith("-") ? "−" : "+"}
+                  {compactBRL(Math.abs(plotValue(result)))}
+                </span>
+              )}
+            </button>
+          );
+        })}
+      </div>
+      {last < today ? (
+        <button type="button" aria-label="Meses seguintes" className={arrow} onClick={() => setEnd(shiftMonth(last, STRIP_MONTHS) > today ? today : shiftMonth(last, STRIP_MONTHS))}>
+          <Icon name="chevronRight" size={16} />
+        </button>
+      ) : (
+        <span className="w-9 shrink-0" />
+      )}
+      {month !== today ? (
+        <Button variant="ghost" className="h-9 px-3 text-xs text-gold" onClick={() => { setEnd(today); onChange(today); }}>
+          Mês atual
+        </Button>
+      ) : null}
+    </div>
+  );
+}
+
 function MiniStat({
   label,
   amount,
@@ -362,11 +498,11 @@ function MiniStat({
   tone: "positive" | "negative" | "auto";
 }) {
   return (
-    <div className="bg-surface px-5 py-4">
+    <div className="flex items-center justify-between gap-3 bg-surface px-4 py-3 @lg:block @lg:px-5 @lg:py-4">
       <p className="text-xs text-muted">{label}</p>
-      <div className="mt-1 text-lg">
+      <div className="text-base @lg:mt-1 @lg:text-lg">
         {amount === undefined ? (
-          <div className="skeleton mt-1 h-6 w-28" />
+          <div className="skeleton h-6 w-28" />
         ) : (
           <Money amount={amount} tone={tone} />
         )}
@@ -380,8 +516,8 @@ export function ListSkeleton({ rows = 5 }: { rows?: number }) {
     <div className="space-y-2 px-3">
       {Array.from({ length: rows }, (_, index) => (
         <div key={index} className="flex items-center gap-3 py-2">
-          <div className="skeleton h-9 w-9 rounded-xl" />
-          <div className="flex-1 space-y-2">
+          <div className="skeleton h-9 w-9 shrink-0 rounded-xl" />
+          <div className="min-w-0 flex-1 space-y-2">
             <div className="skeleton h-3 w-40" />
             <div className="skeleton h-2.5 w-24" />
           </div>
