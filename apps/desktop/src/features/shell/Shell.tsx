@@ -6,6 +6,7 @@ import { Modal } from "@/components/Modal";
 import { MonthPicker } from "@/components/MonthPicker";
 import { currentMonth } from "@/lib/dates";
 import { getSupabase } from "@/lib/supabase";
+import { usePreferences } from "@/hooks/usePreferences";
 import type { Transaction } from "@/lib/queries";
 import { InstitutionsScreen } from "@/features/institutions/InstitutionsScreen";
 import { AnalyticsScreen } from "@/features/analytics/AnalyticsScreen";
@@ -54,6 +55,8 @@ const tabs: Screen[] = ["home", "transactions", "invoices"];
 const monthly: Screen[] = ["home", "analytics", "budgets", "calendar"];
 
 export function Shell({ email }: { email: string }) {
+  // Loads the saved theme and language and keeps them applied.
+  usePreferences();
   const [screen, setScreen] = useState<Screen>("home");
   const [month, setMonth] = useState(currentMonth);
   const [form, setForm] = useState<{

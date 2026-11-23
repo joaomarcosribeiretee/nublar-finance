@@ -5,6 +5,9 @@ import {
   recurringRuleSchema,
   moneyAmountSchema,
   serviceHealthSchema,
+  DEFAULT_PREFERENCES,
+  preferencesSchema,
+  updatePreferencesSchema,
 } from "./index";
 
 describe("moneyAmountSchema", () => {
@@ -147,5 +150,37 @@ describe("phase 2 schemas", () => {
         endMonth: "2026-09",
       }).success,
     ).toBe(false);
+  });
+});
+
+describe("preferences", () => {
+  it("keeps defaults valid", () => {
+    expect(preferencesSchema.parse(DEFAULT_PREFERENCES)).toEqual(
+      DEFAULT_PREFERENCES,
+    );
+  });
+
+  it("accepts a partial update", () => {
+    expect(updatePreferencesSchema.parse({ theme: "LIGHT" })).toEqual({
+      theme: "LIGHT",
+    });
+  });
+
+  it("rejects a month start past day 28", () => {
+    expect(
+      updatePreferencesSchema.safeParse({ monthStartDay: 29 }).success,
+    ).toBe(false);
+  });
+
+  it("rejects an unknown locale", () => {
+    expect(updatePreferencesSchema.safeParse({ locale: "fr" }).success).toBe(
+      false,
+    );
+  });
+
+  it("collapses repeated tips", () => {
+    expect(
+      updatePreferencesSchema.parse({ tipsSeen: ["a", "b", "a"] }).tipsSeen,
+    ).toEqual(["a", "b"]);
   });
 });

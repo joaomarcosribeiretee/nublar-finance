@@ -410,6 +410,57 @@ export type CardPaymentInput = z.infer<typeof cardPaymentSchema>;
 export type RecurringRuleInput = z.infer<typeof recurringRuleSchema>;
 export type CreateTransactionInput = z.infer<typeof createTransactionSchema>;
 
+export const themeSchema = z.enum(["DARK", "LIGHT", "SYSTEM"]);
+
+export const localeSchema = z.enum(["pt-BR", "en"]);
+
+export const onboardingStateSchema = z.object({
+  completed: z.boolean(),
+  /** Free-form id of the current step; null before it starts or once done. */
+  step: z.string().trim().min(1).max(40).nullable(),
+  skipped: z.boolean(),
+});
+
+/** Ids of tips already dismissed; repeated ids collapse into one. */
+const tipsSeenSchema = z
+  .array(z.string().trim().min(1).max(64))
+  .max(200, "Dicas demais")
+  .transform((ids) => [...new Set(ids)]);
+
+export const preferencesSchema = z.object({
+  theme: themeSchema,
+  locale: localeSchema,
+  currency: currencyCodeSchema,
+  /** Day the "financial month" starts. Capped at 28 so every month has it. */
+  monthStartDay: z
+    .number({ error: "Informe um dia entre 1 e 28" })
+    .int("Informe um dia entre 1 e 28")
+    .min(1, "Informe um dia entre 1 e 28")
+    .max(28, "Informe um dia entre 1 e 28"),
+  hideValues: z.boolean(),
+  onboardingState: onboardingStateSchema,
+  tipsSeen: tipsSeenSchema,
+});
+
+/** Only the fields sent change; each one is replaced as a whole. */
+export const updatePreferencesSchema = preferencesSchema.partial();
+
+export type Theme = z.infer<typeof themeSchema>;
+export type Locale = z.infer<typeof localeSchema>;
+export type OnboardingState = z.infer<typeof onboardingStateSchema>;
+export type Preferences = z.infer<typeof preferencesSchema>;
+export type UpdatePreferencesInput = z.infer<typeof updatePreferencesSchema>;
+
+export const DEFAULT_PREFERENCES: Preferences = {
+  theme: "DARK",
+  locale: "pt-BR",
+  currency: INITIAL_CURRENCY,
+  monthStartDay: 1,
+  hideValues: false,
+  onboardingState: { completed: false, step: null, skipped: false },
+  tipsSeen: [],
+};
+
 export const serviceHealthSchema = z.object({
   status: z.enum(["ok", "degraded"]),
   service: z.literal("nublar-api"),

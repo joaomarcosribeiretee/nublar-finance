@@ -9,6 +9,7 @@ import { AnalyticsModule } from './analytics/analytics.module';
 import { PlanningModule } from './planning/planning.module';
 import { ImportsModule } from './imports/imports.module';
 import { HealthController } from './health/health.controller';
+import { PreferencesModule } from './preferences/preferences.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { RecurringModule } from './recurring/recurring.module';
 import { TransactionsModule } from './transactions/transactions.module';
@@ -29,6 +30,7 @@ import { TransactionsModule } from './transactions/transactions.module';
     PlanningModule,
     ImportsModule,
     RecurringModule,
+    PreferencesModule,
   ],
   controllers: [HealthController],
 })

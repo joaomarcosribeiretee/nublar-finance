@@ -4,6 +4,18 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Nublar</title>
+    <script>
+      // Paint the saved theme and language before the app loads (no flash).
+      // Same rules as applyPreferences in src/lib/preferences.ts.
+      try {
+        var p = JSON.parse(localStorage.getItem("nublar.preferences") || "{}");
+        var light =
+          p.theme === "LIGHT" ||
+          (p.theme === "SYSTEM" && matchMedia("(prefers-color-scheme: light)").matches);
+        document.documentElement.dataset.theme = light ? "light" : "dark";
+        if (p.locale === "en") document.documentElement.lang = "en";
+      } catch (e) {}
+    </script>
   </head>
   <body>
     <div id="root"></div>
