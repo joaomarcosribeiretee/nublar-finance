@@ -48,7 +48,7 @@ const colors = {
   installments: "var(--series-2)",
   variable: "var(--series-3)",
   savings: "var(--series-3)",
-  worth: "var(--gold)",
+  worth: "var(--accent)",
 };
 
 /** "out" or "jan 26" at year boundaries. */
@@ -200,8 +200,8 @@ function NetWorthChart({ data, dim }: { data: Analytics | undefined; dim: boolea
             <AreaChart data={rows} margin={{ top: 8, right: 8, bottom: 0, left: 0 }}>
               <defs>
                 <linearGradient id={fill} x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="var(--gold)" stopOpacity={0.28} />
-                  <stop offset="100%" stopColor="var(--gold)" stopOpacity={0} />
+                  <stop offset="0%" stopColor="var(--accent)" stopOpacity={0.28} />
+                  <stop offset="100%" stopColor="var(--accent)" stopOpacity={0} />
                 </linearGradient>
               </defs>
               <CartesianGrid {...gridProps} />
@@ -228,10 +228,10 @@ function NetWorthChart({ data, dim }: { data: Analytics | undefined; dim: boolea
               <Area isAnimationActive={false}
                 type="monotone"
                 dataKey="plot"
-                stroke="var(--gold)"
+                stroke="var(--accent)"
                 strokeWidth={2}
                 fill={`url(#${fill})`}
-                activeDot={{ r: 4, stroke: "var(--surface)", strokeWidth: 2, fill: "var(--gold)" }}
+                activeDot={{ r: 4, stroke: "var(--surface)", strokeWidth: 2, fill: "var(--accent)" }}
               />
             </AreaChart>
           </ResponsiveContainer>
@@ -543,7 +543,7 @@ function MonthlyTable({ data, onInspectMonth }: { data: Analytics | undefined; o
             <tbody>
               {[...activeSeries(data.series)].reverse().map((p) => (
                 <tr key={p.month} className="border-t border-line">
-                  <td className="px-3 py-2 text-left"><button type="button" className="rounded-md py-1 text-gold hover:underline" onClick={() => onInspectMonth(p.month)} aria-label={`Ver lançamentos de ${monthLabel(p.month)}`}>{monthLabel(p.month)}</button></td>
+                  <td className="px-3 py-2 text-left"><button type="button" className="rounded-md py-1 text-accent hover:underline" onClick={() => onInspectMonth(p.month)} aria-label={`Ver lançamentos de ${monthLabel(p.month)}`}>{monthLabel(p.month)}</button></td>
                   <td className="px-3 py-2">{formatMinorUnits(p.income)}</td>
                   <td className="px-3 py-2">{formatMinorUnits(p.expense)}</td>
                   <td className="px-3 py-2">{formatMinorUnits(p.result)}</td>

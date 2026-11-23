@@ -63,9 +63,9 @@ export function Panel({
 }
 
 const meterColors = {
-  gold: "var(--gold)",
+  accent: "var(--accent)",
   positive: "var(--positive)",
-  warning: "var(--series-4)",
+  warning: "var(--warning)",
   negative: "var(--negative)",
   series: "var(--series-1)",
 };
@@ -76,7 +76,7 @@ const meterColors = {
  */
 export function ProgressBar({
   value,
-  tone = "gold",
+  tone = "accent",
   color,
   marker,
   markerTitle,

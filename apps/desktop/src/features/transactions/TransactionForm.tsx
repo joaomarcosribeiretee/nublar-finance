@@ -360,7 +360,7 @@ function FormBody({
         />
       ) : null}
 
-      <label className="block rounded-2xl border border-line bg-surface-2 px-4 py-3 transition-colors focus-within:border-gold/60">
+      <label className="block rounded-2xl border border-line bg-surface-2 px-4 py-3 transition-colors focus-within:border-accent/60">
         <span className="text-xs text-muted">
           {effectiveRepeat === "installments" ? "Valor total" : effectiveRepeat === "monthly" ? "Valor por mês" : "Valor"}
         </span>

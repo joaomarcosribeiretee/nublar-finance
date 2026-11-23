@@ -54,7 +54,7 @@ export function HomeScreen({
     return (
       <section className="onboarding animate-enter">
         <p className="design-eyebrow">Um começo simples</p>
-        <h1 className="mt-4 max-w-xl font-display text-4xl @2xl:text-5xl">Sua vida financeira.<br /><span className="text-gold">Agora, por inteiro.</span></h1>
+        <h1 className="mt-4 max-w-xl font-display text-4xl @2xl:text-5xl">Sua vida financeira.<br /><span className="text-accent">Agora, por inteiro.</span></h1>
         <p className="mt-5 max-w-md text-muted">
           Comece pelos lugares onde seu dinheiro está: bancos, corretoras, carteiras.
         </p>
@@ -166,7 +166,7 @@ export function HomeScreen({
           ) : (transactions.data?.length ?? 0) === 0 ? (
             <p className="px-3 py-6 text-sm text-faint">
               Nenhum lançamento neste mês.{" "}
-              <button type="button" className="text-gold hover:underline" onClick={onNew}>Registrar agora</button>
+              <button type="button" className="text-accent hover:underline" onClick={onNew}>Registrar agora</button>
             </p>
           ) : (
             <ul>{transactions.data?.slice(0, 5).map((transaction) => <TransactionRow key={transaction.id} transaction={transaction} onOpen={onEdit} />)}</ul>
@@ -231,7 +231,7 @@ function Attention({
               onClick={() => onCards(invoice.card.id)}
               className="flex w-full items-center gap-3 rounded-2xl px-3 py-2.5 text-left transition-colors hover:bg-hover"
             >
-              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gold/10 text-gold">
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-accent/10 text-accent">
                 <Icon name="card" size={16} />
               </span>
               <span className="min-w-0 flex-1">

@@ -49,7 +49,7 @@ export function Segmented<T extends string>({
             tabIndex={active ? 0 : -1}
             className={`shrink-0 rounded-lg whitespace-nowrap transition-[background-color,color,box-shadow] ${size === "sm" ? "px-3 py-2 text-xs" : "flex-1 px-3.5 py-2 text-sm"} ${
               active
-                ? `bg-raised shadow-sm ${option.activeClass ?? "text-gold"}`
+                ? `bg-raised shadow-sm ${option.activeClass ?? "text-accent"}`
                 : "text-muted hover:text-foreground"
             }`}
             onClick={() => onChange(option.value)}

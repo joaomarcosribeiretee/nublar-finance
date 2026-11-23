@@ -1,0 +1,84 @@
+/*
+ * Design tokens: the only place colors are picked by hand.
+ *
+ * Components use the semantic names (bg-surface, text-muted, var(--accent)…),
+ * never a hex value or a Tailwind palette color. A theme is a block that
+ * redefines the "Palette" section under its own [data-theme] selector; every
+ * derived token below follows automatically.
+ *
+ * Exceptions, on purpose: institution brand colors (lib/institutions.ts,
+ * lib/bankMarks.ts) and the white plate behind bank logos.
+ */
+
+/* ── Dark (default and brand identity) ─────────────────────────────── */
+:root,
+:root[data-theme="dark"] {
+  /* Palette */
+  --background: #0a0f0d;
+  --surface: #101714;
+  --surface-2: #151e1a;
+  --raised: #1b2620;
+  --foreground: #e8efe9;
+  --muted: #8a9a90;
+  --faint: #7e9084;
+  --line: rgb(232 239 233 / 9%);
+  --line-strong: rgb(232 239 233 / 13%);
+  --accent: #c9a45c;
+  --accent-fg: var(--background);
+  --positive: #6cc495;
+  --negative: #e58a7c;
+  --warning: #c98500;
+  --transfer: #8fa8cc;
+  --shadow-color: #000;
+  --hover: rgb(232 239 233 / 4%);
+  --hover-strong: rgb(232 239 233 / 7%);
+  --grid: rgb(232 239 233 / 6%);
+  /* Native date/month picker icon, tinted to read on the surface. */
+  --picker-icon-filter: invert(0.7);
+
+  /* Chart series: dark steps validated with the dataviz validator against
+     --surface (adjacent CVD ΔE >= 8.4, all >= 3:1). Fixed order, never cycled. */
+  --series-1: #3987e5;
+  --series-2: #d95926;
+  --series-3: #199e70;
+  --series-4: #c98500;
+  --series-5: #d55181;
+  --series-6: #008300;
+  --series-7: #9085e9;
+  --series-8: #e66767;
+
+  color-scheme: dark;
+}
+
+/* ── Derived (shared by every theme; never picked by hand) ──────────── */
+:root {
+  --focus-ring: color-mix(in srgb, var(--accent) 60%, transparent);
+  --selection: color-mix(in srgb, var(--accent) 30%, transparent);
+  --scrim: color-mix(in srgb, var(--background) 76%, transparent);
+  --negative-surface: color-mix(in srgb, var(--negative) 14%, var(--raised));
+  --shadow-panel: 0 8px 30px color-mix(in srgb, var(--shadow-color) 8%, transparent);
+  --shadow-auth: 0 24px 80px color-mix(in srgb, var(--shadow-color) 20%, transparent);
+}
+
+/* Tailwind utilities (bg-surface, text-accent, border-line…) read the tokens. */
+@theme inline {
+  --color-background: var(--background);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-raised: var(--raised);
+  --color-foreground: var(--foreground);
+  --color-muted: var(--muted);
+  --color-faint: var(--faint);
+  --color-line: var(--line);
+  --color-line-strong: var(--line-strong);
+  --color-accent: var(--accent);
+  --color-accent-fg: var(--accent-fg);
+  --color-positive: var(--positive);
+  --color-negative: var(--negative);
+  --color-warning: var(--warning);
+  --color-transfer: var(--transfer);
+  --color-shadow: var(--shadow-color);
+  --color-hover: var(--hover);
+  --color-hover-strong: var(--hover-strong);
+  --color-negative-surface: var(--negative-surface);
+}

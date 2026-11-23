@@ -61,7 +61,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
           <div
             key={toast.id}
             role={toast.tone === "error" ? "alert" : "status"}
-            className={`animate-enter max-w-md rounded-2xl border px-4 py-2.5 text-center text-sm shadow-xl shadow-black/40 ${
+            className={`animate-enter max-w-md rounded-2xl border px-4 py-2.5 text-center text-sm shadow-xl shadow-shadow/40 ${
               toast.tone === "error"
                 ? "border-negative/30 bg-negative-surface text-negative"
                 : "border-line-strong bg-raised text-foreground"

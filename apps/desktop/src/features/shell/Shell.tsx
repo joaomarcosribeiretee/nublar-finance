@@ -126,12 +126,12 @@ export function Shell({ email }: { email: string }) {
               type="button"
               aria-current={active ? "page" : undefined}
               className={`nav-item relative flex shrink-0 items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm transition-colors ${
-                active ? "nav-item-active text-gold" : "text-muted hover:bg-hover hover:text-foreground"
+                active ? "nav-item-active text-accent" : "text-muted hover:bg-hover hover:text-foreground"
               }`}
               onClick={() => go(item)}
             >
               <span
-                className={`absolute top-1/2 left-0 h-4 w-0.5 -translate-y-1/2 rounded-full bg-gold transition-opacity ${active ? "opacity-100" : "opacity-0"}`}
+                className={`absolute top-1/2 left-0 h-4 w-0.5 -translate-y-1/2 rounded-full bg-accent transition-opacity ${active ? "opacity-100" : "opacity-0"}`}
               />
               <Icon name={screens[item].icon} size={17} />
               {screens[item].label}
@@ -177,7 +177,7 @@ export function Shell({ email }: { email: string }) {
         {/* Desktop: the window's drag strip. Phone: the app bar. */}
         <div className="app-toolbar drag flex h-14 shrink-0 items-center gap-2 border-b border-line px-4 lg:h-16 lg:px-10 lg:pr-40">
           <img src={logo} alt="" className="h-7 w-7 object-contain lg:hidden" />
-          <span className="hidden items-center gap-2 text-xs text-muted lg:flex"><span className="h-1.5 w-1.5 rounded-full bg-gold" />Meu espaço<span className="px-2 text-faint">/</span><span className="text-foreground">{screens[screen].label}</span></span>
+          <span className="hidden items-center gap-2 text-xs text-muted lg:flex"><span className="h-1.5 w-1.5 rounded-full bg-accent" />Meu espaço<span className="px-2 text-faint">/</span><span className="text-foreground">{screens[screen].label}</span></span>
           {monthly.includes(screen) ? (
             <div className="ml-auto">
               <MonthPicker month={month} onChange={setMonth} />
@@ -271,7 +271,7 @@ export function Shell({ email }: { email: string }) {
           <button
             type="button"
             aria-label="Novo lançamento"
-            className="mx-auto flex h-11 w-11 items-center justify-center rounded-2xl bg-gold text-background shadow-lg shadow-black/40 transition-[filter,scale] active:scale-95 active:brightness-95"
+            className="mx-auto flex h-11 w-11 items-center justify-center rounded-2xl bg-accent text-accent-fg shadow-lg shadow-shadow/40 transition-[filter,scale] active:scale-95 active:brightness-95"
             onClick={openNew}
           >
             <Icon name="plus" size={20} />
@@ -339,7 +339,7 @@ function Tab({
       type="button"
       aria-current={active ? "page" : undefined}
       className={`flex h-full min-w-0 flex-col items-center justify-center gap-1 text-[10px] transition-colors ${
-        active ? "text-gold" : "text-muted"
+        active ? "text-accent" : "text-muted"
       }`}
       onClick={onClick}
     >

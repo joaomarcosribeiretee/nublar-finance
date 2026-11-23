@@ -246,7 +246,7 @@ function BudgetForm({
         {average && BigInt(average) > 0n ? (
           <button
             type="button"
-            className="self-start py-1 text-left text-xs text-gold hover:underline"
+            className="self-start py-1 text-left text-xs text-accent hover:underline"
             onClick={() => setAmount(minorUnitsToInput(average))}
           >
             Média dos últimos meses: {formatMinorUnits(average)}. Usar esse valor

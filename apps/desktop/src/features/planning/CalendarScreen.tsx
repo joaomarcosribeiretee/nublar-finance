@@ -32,7 +32,7 @@ function look(event: CalendarEvent): { icon: IconName; dot: string; sign: "+" | 
     case "REDEMPTION":
       return { icon: "arrowDown", dot: "bg-positive", sign: "+" };
     case "INVOICE":
-      return { icon: "card", dot: "bg-gold", sign: "-" };
+      return { icon: "card", dot: "bg-accent", sign: "-" };
     case "MATURITY":
       return { icon: "trend", dot: "bg-transfer", sign: null };
     case "TRANSFER":
@@ -95,12 +95,12 @@ export function CalendarScreen({ month }: { month: string }) {
                   type="button"
                   onClick={() => setSelected(date)}
                   className={`calendar-day flex h-14 min-w-0 flex-col items-start rounded-xl border px-1.5 py-2 text-left transition-colors @2xl:h-20 @2xl:px-3 ${
-                    isFocus ? "border-gold/50 bg-gold/10" : "border-transparent hover:border-line hover:bg-hover"
+                    isFocus ? "border-accent/50 bg-accent/10" : "border-transparent hover:border-line hover:bg-hover"
                   } ${date < today ? "text-muted" : ""}`}
                   aria-pressed={isFocus}
                   aria-label={`${dayLabel(date)}: ${events.length === 0 ? "nada" : events.length === 1 ? "1 item" : `${events.length} itens`}`}
                 >
-                  <span className={`text-xs ${isToday ? "rounded-full bg-gold px-1.5 font-medium text-background" : ""}`}>
+                  <span className={`text-xs ${isToday ? "rounded-full bg-accent px-1.5 font-medium text-accent-fg" : ""}`}>
                     {Number(date.slice(8, 10))}
                   </span>
                   <span className="mt-auto flex flex-wrap gap-0.5">
@@ -120,7 +120,7 @@ export function CalendarScreen({ month }: { month: string }) {
               items={[
                 { label: "Entrada", color: "var(--positive)" },
                 { label: "Saída", color: "var(--negative)" },
-                { label: "Fatura", color: "var(--gold)" },
+                { label: "Fatura", color: "var(--accent)" },
                 { label: "Vencimento / transferência", color: "var(--transfer)" },
               ]}
             />
@@ -198,7 +198,7 @@ function DailyCashChart({
         hasProjection ? (
           <Legend
             items={[
-              { label: "Real", color: "var(--gold)", shape: "line" },
+              { label: "Real", color: "var(--accent)", shape: "line" },
               { label: "Previsto", color: "var(--muted)", shape: "line" },
             ]}
           />
@@ -224,7 +224,7 @@ function DailyCashChart({
                       rows={[
                         {
                           label: day.projected ? "Previsto" : "Saldo",
-                          color: day.projected ? "var(--muted)" : "var(--gold)",
+                          color: day.projected ? "var(--muted)" : "var(--accent)",
                           value: formatMinorUnits(day.cash),
                         },
                       ]}
@@ -232,7 +232,7 @@ function DailyCashChart({
                   );
                 }}
               />
-              <Line isAnimationActive={false} type="stepAfter" dataKey="real" stroke="var(--gold)" strokeWidth={2} dot={false} connectNulls={false} />
+              <Line isAnimationActive={false} type="stepAfter" dataKey="real" stroke="var(--accent)" strokeWidth={2} dot={false} connectNulls={false} />
               <Line isAnimationActive={false}
                 type="stepAfter"
                 dataKey="forecast"

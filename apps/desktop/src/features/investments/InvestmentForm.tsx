@@ -54,7 +54,7 @@ function parseNonNegative(input: string): string | null {
 const chip = (active: boolean) =>
   `rounded-full border px-3 py-1.5 text-sm transition-colors ${
     active
-      ? "border-gold/50 bg-gold/15 text-foreground"
+      ? "border-accent/50 bg-accent/15 text-foreground"
       : "border-line text-muted hover:border-line-strong hover:text-foreground"
   }`;
 
@@ -211,7 +211,7 @@ export function InvestmentForm({
       ) : null}
 
       {investment ? null : (
-        <label className="block rounded-2xl border border-line bg-surface-2 px-4 py-3 transition-colors focus-within:border-gold/60">
+        <label className="block rounded-2xl border border-line bg-surface-2 px-4 py-3 transition-colors focus-within:border-accent/60">
           <span className="text-xs text-muted">Quanto você tem hoje</span>
           <div className="mt-1 flex items-baseline gap-2">
             <span className="text-lg text-muted">R$</span>
@@ -338,7 +338,7 @@ export function InvestmentForm({
             aria-expanded={knowsHistory}
           >
             <span
-              className={`flex h-5 w-5 items-center justify-center rounded-md border transition-colors ${knowsHistory ? "border-gold bg-gold text-background" : "border-line-strong"}`}
+              className={`flex h-5 w-5 items-center justify-center rounded-md border transition-colors ${knowsHistory ? "border-accent bg-accent text-accent-fg" : "border-line-strong"}`}
             >
               {knowsHistory ? <Icon name="check" size={13} /> : null}
             </span>

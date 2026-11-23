@@ -77,7 +77,7 @@ export type TooltipRow = { label: string; color?: string; value: ReactNode; stro
 /** Values lead, labels follow; rows keyed with a short line of the series color. */
 export function TooltipBox({ title, rows }: { title: string; rows: TooltipRow[] }) {
   return (
-    <div className="max-w-[min(300px,calc(100vw-40px))] rounded-xl border border-line-strong bg-raised px-3 py-2.5 text-xs shadow-xl shadow-black/40">
+    <div className="max-w-[min(300px,calc(100vw-40px))] rounded-xl border border-line-strong bg-raised px-3 py-2.5 text-xs shadow-xl shadow-shadow/40">
       <p className="mb-1.5 text-muted">{title}</p>
       <ul className="space-y-1">
         {rows.map((row) => (

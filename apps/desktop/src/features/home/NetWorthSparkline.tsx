@@ -29,8 +29,8 @@ export function NetWorthSparkline({ month, onOpen }: { month: string; onOpen: ()
           <AreaChart data={rows} margin={{ top: 2, right: 2, bottom: 2, left: 2 }}>
             <defs>
               <linearGradient id={fill} x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="var(--gold)" stopOpacity={0.25} />
-                <stop offset="100%" stopColor="var(--gold)" stopOpacity={0} />
+                <stop offset="0%" stopColor="var(--accent)" stopOpacity={0.25} />
+                <stop offset="100%" stopColor="var(--accent)" stopOpacity={0} />
               </linearGradient>
             </defs>
             <Tooltip
@@ -41,7 +41,7 @@ export function NetWorthSparkline({ month, onOpen }: { month: string; onOpen: ()
                 return (
                   <TooltipBox
                     title={monthLabel(point.month)}
-                    rows={[{ label: "Patrimônio", color: "var(--gold)", value: formatMinorUnits(point.netWorth) }]}
+                    rows={[{ label: "Patrimônio", color: "var(--accent)", value: formatMinorUnits(point.netWorth) }]}
                   />
                 );
               }}
@@ -49,11 +49,11 @@ export function NetWorthSparkline({ month, onOpen }: { month: string; onOpen: ()
             <Area isAnimationActive={false}
               type="monotone"
               dataKey="plot"
-              stroke="var(--gold)"
+              stroke="var(--accent)"
               strokeWidth={1.5}
               fill={`url(#${fill})`}
               dot={false}
-              activeDot={{ r: 3, stroke: "var(--surface)", strokeWidth: 2, fill: "var(--gold)" }}
+              activeDot={{ r: 3, stroke: "var(--surface)", strokeWidth: 2, fill: "var(--accent)" }}
             />
           </AreaChart>
         </ResponsiveContainer>
