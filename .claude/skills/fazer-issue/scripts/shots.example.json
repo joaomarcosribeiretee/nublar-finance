@@ -1,0 +1,13 @@
+{
+  "main": "http://localhost:4174",
+  "branch": "http://localhost:4173",
+  "viewport": { "width": 1240, "height": 820 },
+  "shots": [
+    { "name": "01-login", "path": "/" },
+    {
+      "name": "02-login-criar-conta",
+      "path": "/",
+      "script": "[...document.querySelectorAll('button')].find(b => b.textContent.trim() === 'Criar conta')?.click()"
+    }
+  ]
+}
