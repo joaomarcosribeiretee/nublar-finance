@@ -200,7 +200,7 @@ function GoalForm({ goal, onDone }: { goal: Goal | null; onDone: () => void }) {
   }
 
   const checkbox = (checked: boolean) =>
-    `flex h-4 w-4 shrink-0 items-center justify-center rounded border transition-colors ${checked ? "border-gold bg-gold text-background" : "border-line-strong"}`;
+    `flex h-4 w-4 shrink-0 items-center justify-center rounded border transition-colors ${checked ? "border-accent bg-accent text-accent-fg" : "border-line-strong"}`;
 
   return (
     <form onSubmit={(event) => void submit(event)} className="space-y-5">

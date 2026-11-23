@@ -148,7 +148,7 @@ export function ImportFlow({ onDone }: { onDone: () => void }) {
               onChange={setAccountId}
             />
             <Field label="Arquivo do extrato">
-              <span className="flex h-11 cursor-pointer items-center gap-2 rounded-xl border border-dashed border-line-strong bg-surface-2 px-3 text-sm text-muted transition-colors hover:border-gold/50 hover:text-foreground has-focus-visible:border-gold/60 sm:h-10">
+              <span className="flex h-11 cursor-pointer items-center gap-2 rounded-xl border border-dashed border-line-strong bg-surface-2 px-3 text-sm text-muted transition-colors hover:border-accent/50 hover:text-foreground has-focus-visible:border-accent/60 sm:h-10">
                 <Icon name="upload" size={15} />
                 <span className="truncate">{fileName || "Escolher .ofx ou .csv"}</span>
                 <input
@@ -189,7 +189,7 @@ export function ImportFlow({ onDone }: { onDone: () => void }) {
             </span>
             <button
               type="button"
-              className="py-1 text-xs text-gold hover:underline"
+              className="py-1 text-xs text-accent hover:underline"
               onClick={() => {
                 setResult(null);
                 setFileName("");
@@ -223,7 +223,7 @@ export function ImportFlow({ onDone }: { onDone: () => void }) {
                           aria-label={`Importar ${row.description}`}
                           checked={choice?.include ?? false}
                           onChange={(event) => update({ include: event.target.checked })}
-                          className="h-4 w-4 accent-(--gold)"
+                          className="h-4 w-4 accent-(--accent)"
                         />
                       </td>
                       <td className="px-2 py-1.5 text-xs whitespace-nowrap text-muted">{shortDate(row.date)}</td>
@@ -231,7 +231,7 @@ export function ImportFlow({ onDone }: { onDone: () => void }) {
                         <span className="block truncate" title={row.description}>
                           {row.description}
                         </span>
-                        {row.duplicate ? <span className="text-[10px] text-gold uppercase">Já lançado?</span> : null}
+                        {row.duplicate ? <span className="text-[10px] text-accent uppercase">Já lançado?</span> : null}
                       </td>
                       <td className="px-2 py-1.5 text-right">
                         <Money amount={row.amount} tone={row.amount.startsWith("-") ? "plain" : "positive"} />
@@ -327,7 +327,7 @@ function CsvMapping({
           type="checkbox"
           checked={columns.invert ?? false}
           onChange={(event) => setColumns((current) => ({ ...current, invert: event.target.checked }))}
-          className="h-4 w-4 shrink-0 accent-(--gold)"
+          className="h-4 w-4 shrink-0 accent-(--accent)"
         />
         Gastos aparecem positivos no arquivo (comum em fatura de cartão)
       </label>

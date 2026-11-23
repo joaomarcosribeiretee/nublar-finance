@@ -100,7 +100,7 @@ export function AccountForm({
                 aria-pressed={type === value}
                 className={`rounded-xl border px-3 py-2.5 text-left text-sm transition-colors ${
                   type === value
-                    ? "border-gold/50 bg-gold/10 text-foreground"
+                    ? "border-accent/50 bg-accent/10 text-foreground"
                     : "border-line text-muted hover:border-line-strong hover:text-foreground"
                 }`}
                 onClick={() => setType(value)}

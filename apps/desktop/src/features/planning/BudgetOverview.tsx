@@ -76,7 +76,7 @@ export function BudgetOverview({
         <button
           type="button"
           onClick={onManage}
-          className="flex w-full items-center gap-3 rounded-2xl border border-dashed border-line-strong px-4 py-4 text-left transition-colors hover:border-gold/50"
+          className="flex w-full items-center gap-3 rounded-2xl border border-dashed border-line-strong px-4 py-4 text-left transition-colors hover:border-accent/50"
         >
           <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-surface-2 text-muted">
             <Icon name="gauge" size={16} />
@@ -134,7 +134,7 @@ export function BudgetOverview({
           </ul>
 
           {hidden > 0 ? (
-            <button type="button" onClick={onManage} className="flex items-center gap-1 text-xs text-gold hover:underline">
+            <button type="button" onClick={onManage} className="flex items-center gap-1 text-xs text-accent hover:underline">
               Ver {hidden === 1 ? "mais 1 categoria" : `mais ${hidden} categorias`}
               <Icon name="chevronRight" size={13} />
             </button>

@@ -2,7 +2,7 @@ import type { ButtonHTMLAttributes } from "react";
 
 const variants = {
   primary:
-    "bg-gold text-background hover:brightness-110 active:brightness-95 font-medium",
+    "bg-accent text-accent-fg hover:brightness-110 active:brightness-95 font-medium",
   secondary:
     "border border-line-strong bg-surface-2 text-foreground hover:bg-raised",
   ghost: "text-muted hover:bg-hover hover:text-foreground",

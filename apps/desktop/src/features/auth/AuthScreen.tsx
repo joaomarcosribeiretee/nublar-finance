@@ -160,7 +160,7 @@ export function AuthScreen() {
               </button>
             </span>
           </Field>
-          {configError ? <p className="text-sm text-gold">{configError}</p> : null}
+          {configError ? <p className="text-sm text-accent">{configError}</p> : null}
           {message ? (
             <p
               role={message.tone === "error" ? "alert" : "status"}

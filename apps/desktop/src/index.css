@@ -1,44 +1,13 @@
 @import "tailwindcss";
+@import "./styles/tokens.css";
 
 /* Hide-until-hover only where a pointer can hover; touch keeps it visible. */
 @custom-variant hoverable (@media (hover: hover));
 
+/* Layout and motion: the same in every theme. Colors live in styles/tokens.css. */
 :root {
-  --background: #0a0f0d;
-  --surface: #101714;
-  --surface-2: #151e1a;
-  --raised: #1b2620;
-  --foreground: #e8efe9;
-  --muted: #8a9a90;
-  --faint: #7e9084;
-  --line: rgb(232 239 233 / 9%);
-  --line-strong: rgb(232 239 233 / 13%);
-  --gold: #c9a45c;
-  --positive: #6cc495;
-  --negative: #e58a7c;
-  --transfer: #8fa8cc;
-  /* Derived from the palette above, never picked by hand elsewhere. */
-  --hover: rgb(232 239 233 / 4%);
-  --hover-strong: rgb(232 239 233 / 7%);
-  --focus-ring: color-mix(in srgb, var(--gold) 60%, transparent);
-  --selection: color-mix(in srgb, var(--gold) 30%, transparent);
-  --scrim: color-mix(in srgb, var(--background) 76%, transparent);
-  --negative-surface: color-mix(in srgb, var(--negative) 14%, var(--raised));
-  --shadow-panel: 0 8px 30px rgb(0 0 0 / 8%);
-  --shadow-auth: 0 24px 80px rgb(0 0 0 / 20%);
   --titlebar: 40px;
   --tabbar: 60px;
-  /* Chart series: dark steps validated with the dataviz validator against
-     --surface (adjacent CVD ΔE >= 8.4, all >= 3:1). Fixed order, never cycled. */
-  --series-1: #3987e5;
-  --series-2: #d95926;
-  --series-3: #199e70;
-  --series-4: #c98500;
-  --series-5: #d55181;
-  --series-6: #008300;
-  --series-7: #9085e9;
-  --series-8: #e66767;
-  --grid: rgb(232 239 233 / 6%);
   /* Motion: the only easings and durations the app uses. */
   --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
   --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
@@ -47,27 +16,9 @@
   --dur-fast: 160ms;
   --dur-base: 200ms;
   --dur-slow: 300ms;
-  color-scheme: dark;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-surface: var(--surface);
-  --color-surface-2: var(--surface-2);
-  --color-raised: var(--raised);
-  --color-foreground: var(--foreground);
-  --color-muted: var(--muted);
-  --color-faint: var(--faint);
-  --color-line: var(--line);
-  --color-line-strong: var(--line-strong);
-  --color-gold: var(--gold);
-  --color-positive: var(--positive);
-  --color-negative: var(--negative);
-  --color-transfer: var(--transfer);
-  --color-warning: var(--series-4);
-  --color-hover: var(--hover);
-  --color-hover-strong: var(--hover-strong);
-  --color-negative-surface: var(--negative-surface);
   --font-sans: "Outfit", ui-sans-serif, system-ui, sans-serif;
   --font-display: "Fraunces", ui-serif, Georgia, serif;
   /* Every `transition-*` utility picks these up unless it says otherwise. */
@@ -132,7 +83,7 @@ textarea {
 
 input[type="date"]::-webkit-calendar-picker-indicator,
 input[type="month"]::-webkit-calendar-picker-indicator {
-  filter: invert(0.7);
+  filter: var(--picker-icon-filter);
   cursor: pointer;
 }
 
@@ -223,7 +174,7 @@ input[type="number"]::-webkit-inner-spin-button {
     ),
     radial-gradient(
       circle at 85% 15%,
-      color-mix(in srgb, var(--gold) 8%, transparent),
+      color-mix(in srgb, var(--accent) 8%, transparent),
       transparent 35%
     );
 }
@@ -299,7 +250,7 @@ dialog.modal::backdrop {
 
 /* Visual identity: spacious canvas, architectural navigation and warm emphasis. */
 .design-eyebrow {
-  color: var(--gold);
+  color: var(--accent);
   font-size: 11px;
   font-weight: 500;
   letter-spacing: 0.16em;
@@ -308,7 +259,7 @@ dialog.modal::backdrop {
 .app-shell { background: var(--background); }
 .app-sidebar { background: var(--surface); border-right: 1px solid var(--line); }
 .app-toolbar { background: var(--surface); }
-.nav-item-active { background: color-mix(in srgb, var(--gold) 11%, var(--surface)); }
+.nav-item-active { background: color-mix(in srgb, var(--accent) 11%, var(--surface)); }
 .page-heading { padding-bottom: 24px; border-bottom: 1px solid var(--line-strong); }
 .content-panel { box-shadow: var(--shadow-panel); }
 .app-content article > h2,
@@ -329,7 +280,7 @@ dialog.modal::backdrop {
   .month-hero { grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); gap: 56px; }
   .hero-aside { padding: 0 0 0 48px; border-top: 0; border-left: 1px solid var(--line-strong); align-self: stretch; display: flex; flex-direction: column; justify-content: center; }
 }
-.attention-panel { border-color: color-mix(in srgb, var(--gold) 28%, var(--line)); }
+.attention-panel { border-color: color-mix(in srgb, var(--accent) 28%, var(--line)); }
 .onboarding {
   margin: 20px 0;
   padding: clamp(24px, 5vw, 56px);
@@ -338,7 +289,7 @@ dialog.modal::backdrop {
   background: linear-gradient(120deg, var(--raised), var(--surface));
 }
 .onboarding-steps { display: flex; flex-wrap: wrap; gap: 20px 32px; color: var(--muted); font-size: 13px; }
-.onboarding-steps b { display: block; margin-bottom: 8px; color: var(--gold); font-weight: 400; }
+.onboarding-steps b { display: block; margin-bottom: 8px; color: var(--accent); font-weight: 400; }
 .auth-layout {
   position: relative;
   display: grid;
@@ -353,7 +304,7 @@ dialog.modal::backdrop {
 .auth-headline { margin-top: 18px; font-family: var(--font-display); font-size: clamp(40px, 4.6vw, 64px); line-height: 1.12; letter-spacing: -0.04em; }
 .auth-features { display: flex; flex-wrap: wrap; gap: 22px; margin-top: 48px; padding-top: 24px; border-top: 1px solid var(--line-strong); }
 .auth-features span { display: flex; align-items: center; gap: 8px; color: var(--muted); font-size: 12px; }
-.auth-features svg { color: var(--gold); }
+.auth-features svg { color: var(--accent); }
 .auth-form { min-width: 0; padding: 36px; border: 1px solid var(--line-strong); border-radius: 24px; background: var(--surface); box-shadow: var(--shadow-auth); }
 .auth-form input { min-height: 48px; }
 .auth-form button[type="submit"] { height: 48px; }
@@ -368,7 +319,7 @@ dialog.modal::backdrop {
 .metric-link:focus-visible, .category-drill:focus-visible { outline-offset: 4px; }
 .stat-strip { padding: 18px 24px; border-radius: 20px; background: var(--surface); }
 .invoice-overview .stat-strip { padding: 0; border-radius: 0; background: transparent; }
-.invoice-overview, .budget-overview { border-top: 2px solid var(--gold); }
+.invoice-overview, .budget-overview { border-top: 2px solid var(--accent); }
 .institution-panel > header { background: var(--surface-2); padding-bottom: 20px; }
 .credit-card { background: linear-gradient(135deg, var(--raised), var(--surface)); }
 .credit-card > div:last-child { padding-top: 24px; }
@@ -376,14 +327,14 @@ dialog.modal::backdrop {
 .goal-card > span:last-child { margin-top: auto; padding-top: 18px; }
 .goal-card > span:nth-last-child(2) { margin-bottom: 22px; }
 .calendar-day { border-color: var(--line); }
-.calendar-day[aria-pressed="true"] { border-color: var(--gold); }
+.calendar-day[aria-pressed="true"] { border-color: var(--accent); }
 .day-agenda { min-height: 200px; }
 .modal-heading { margin-bottom: 20px; border-bottom: 1px solid var(--line); }
 .modal-heading + div { scrollbar-gutter: stable; }
 .form-control:focus { box-shadow: 0 0 0 3px var(--selection); }
 .empty-state { border: 1px solid var(--line); }
 .onboarding-steps span { display: flex; align-items: center; gap: 10px; }
-.onboarding-steps svg { color: var(--gold); }
+.onboarding-steps svg { color: var(--accent); }
 .data-row:focus-visible { background: var(--hover); outline-offset: -2px; }
 @media (max-width: 639px) {
   .filter-toolbar { padding: 10px; }

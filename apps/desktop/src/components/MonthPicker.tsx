@@ -31,7 +31,7 @@ export function MonthPicker({
       </button>
       <button
         type="button"
-        className={`ml-1 rounded-lg px-2.5 py-1.5 text-xs text-gold transition-[opacity,background-color] hover:bg-gold/10 ${isCurrent ? "pointer-events-none opacity-0" : "opacity-100"}`}
+        className={`ml-1 rounded-lg px-2.5 py-1.5 text-xs text-accent transition-[opacity,background-color] hover:bg-accent/10 ${isCurrent ? "pointer-events-none opacity-0" : "opacity-100"}`}
         onClick={() => onChange(currentMonth())}
         tabIndex={isCurrent ? -1 : 0}
       >

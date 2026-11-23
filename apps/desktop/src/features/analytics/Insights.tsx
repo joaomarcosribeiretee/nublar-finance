@@ -62,7 +62,7 @@ export function SpendingPace({ month }: { month: string }) {
         reading?.usual != null ? (
           <Legend
             items={[
-              { label: "Este mês", color: "var(--gold)", shape: "line" },
+              { label: "Este mês", color: "var(--accent)", shape: "line" },
               { label: "Normal", color: "var(--muted)", shape: "line" },
             ]}
           />
@@ -115,7 +115,7 @@ export function SpendingPace({ month }: { month: string }) {
                         title={`Até o dia ${row.day}`}
                         rows={[
                           ...(row.spent !== null
-                            ? [{ label: "Este mês", color: "var(--gold)", value: formatMinorUnits(row.spent.toString()) }]
+                            ? [{ label: "Este mês", color: "var(--accent)", value: formatMinorUnits(row.spent.toString()) }]
                             : []),
                           ...(row.usual !== null
                             ? [{ label: "Normal", color: "var(--muted)", value: formatMinorUnits(row.usual.toString()), strong: false }]
@@ -137,11 +137,11 @@ export function SpendingPace({ month }: { month: string }) {
                 <Line
                   type="stepAfter"
                   dataKey="spentPlot"
-                  stroke="var(--gold)"
+                  stroke="var(--accent)"
                   strokeWidth={2}
                   dot={false}
                   connectNulls={false}
-                  activeDot={{ r: 4, stroke: "var(--surface)", strokeWidth: 2, fill: "var(--gold)" }}
+                  activeDot={{ r: 4, stroke: "var(--surface)", strokeWidth: 2, fill: "var(--accent)" }}
                   isAnimationActive={false}
                 />
               </LineChart>
@@ -235,7 +235,7 @@ const splitLook: Record<SplitPart["key"], { label: string; color: string }> = {
   fixed: { label: "Fixos", color: "var(--series-1)" },
   installments: { label: "Parcelas", color: "var(--series-2)" },
   variable: { label: "Dia a dia", color: "var(--series-3)" },
-  invested: { label: "Investido", color: "var(--gold)" },
+  invested: { label: "Investido", color: "var(--accent)" },
   left: { label: "Ficou na conta", color: "var(--line-strong)" },
 };
 

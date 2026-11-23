@@ -27,7 +27,7 @@ import {
 const statusStyle: Record<InvoiceStatus, string> = {
   EMPTY: "bg-hover-strong text-muted",
   OPEN: "bg-transfer/10 text-transfer",
-  CLOSED: "bg-gold/15 text-gold",
+  CLOSED: "bg-accent/15 text-accent",
   PAID: "bg-positive/10 text-positive",
   OVERDUE: "bg-negative/15 text-negative",
 };
@@ -119,7 +119,7 @@ function CardTile({ card, onOpen }: { card: Card; onOpen: () => void }) {
     <button
       type="button"
       onClick={onOpen}
-      className="credit-card relative flex min-h-60 w-full flex-col overflow-hidden rounded-3xl border border-line-strong bg-surface p-6 text-left transition-colors hover:border-gold/40"
+      className="credit-card relative flex min-h-60 w-full flex-col overflow-hidden rounded-3xl border border-line-strong bg-surface p-6 text-left transition-colors hover:border-accent/40"
     >
       <div className="relative flex items-center justify-between gap-3">
         <span className="flex min-w-0 items-center gap-2 text-sm">
@@ -136,7 +136,7 @@ function CardTile({ card, onOpen }: { card: Card; onOpen: () => void }) {
           <Money amount={invoice.status === "PAID" ? invoice.total : invoice.remaining} />
         </p>
         <div className="mt-4">
-          {used <= 100 ? <ProgressBar size="xs" value={used} tone={used > 90 ? "negative" : "gold"} /> : <p className="text-xs text-negative">Limite excedido em <Money amount={(BigInt(card.debt) - BigInt(card.limit)).toString()} /></p>}
+          {used <= 100 ? <ProgressBar size="xs" value={used} tone={used > 90 ? "negative" : "accent"} /> : <p className="text-xs text-negative">Limite excedido em <Money amount={(BigInt(card.debt) - BigInt(card.limit)).toString()} /></p>}
         </div>
         <p className="mt-2 flex justify-between gap-3 text-[11px] text-faint">
           <span>

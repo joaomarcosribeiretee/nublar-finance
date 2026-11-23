@@ -82,7 +82,7 @@ export function TransactionsScreen({
             <Button variant="primary" onClick={onNew}>
               <Icon name="plus" size={16} />
               Novo
-              <kbd className="ml-1 hidden rounded bg-black/15 px-1.5 text-[10px] hoverable:inline">N</kbd>
+              <kbd className="ml-1 hidden rounded bg-accent-fg/15 px-1.5 text-[10px] hoverable:inline">N</kbd>
             </Button>
           </>
         }
@@ -130,7 +130,7 @@ export function TransactionsScreen({
           <input
             type="search"
             aria-label="Buscar lançamentos"
-            className="h-10 w-full rounded-xl border border-line bg-surface-2 pr-3 pl-9 text-base outline-none transition-colors placeholder:text-faint hover:border-line-strong focus:border-gold/60 sm:h-9 sm:text-sm"
+            className="h-10 w-full rounded-xl border border-line bg-surface-2 pr-3 pl-9 text-base outline-none transition-colors placeholder:text-faint hover:border-line-strong focus:border-accent/60 sm:h-9 sm:text-sm"
             placeholder="Buscar"
             value={query}
             maxLength={80}
@@ -442,7 +442,7 @@ function MonthStrip({ month, onChange }: { month: string; onChange: (month: stri
               aria-pressed={active}
               onClick={() => onChange(item)}
               className={`flex min-w-[4.75rem] flex-1 flex-col items-center gap-0.5 rounded-xl border px-2 py-2 transition-colors ${
-                active ? "border-gold/50 bg-gold/10" : "border-transparent hover:bg-hover"
+                active ? "border-accent/50 bg-accent/10" : "border-transparent hover:bg-hover"
               }`}
             >
               <span className={`text-sm ${active ? "text-foreground" : "text-muted"}`}>
@@ -480,7 +480,7 @@ function MonthStrip({ month, onChange }: { month: string; onChange: (month: stri
         <span className="w-9 shrink-0" />
       )}
       {month !== today ? (
-        <Button variant="ghost" className="h-9 px-3 text-xs text-gold" onClick={() => { setEnd(today); onChange(today); }}>
+        <Button variant="ghost" className="h-9 px-3 text-xs text-accent" onClick={() => { setEnd(today); onChange(today); }}>
           Mês atual
         </Button>
       ) : null}

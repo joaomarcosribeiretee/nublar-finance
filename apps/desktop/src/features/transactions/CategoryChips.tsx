@@ -43,7 +43,7 @@ export function CategoryChips({
             aria-pressed={value === category.id}
             className={`rounded-full border px-3 py-1.5 text-sm transition-colors ${
               value === category.id
-                ? "border-gold/50 bg-gold/15 text-foreground"
+                ? "border-accent/50 bg-accent/15 text-foreground"
                 : "border-line text-muted hover:border-line-strong hover:text-foreground"
             }`}
             onClick={() => onChange(category.id)}
@@ -54,7 +54,7 @@ export function CategoryChips({
         {list.length > VISIBLE ? (
           <button
             type="button"
-            className="rounded-full px-3 py-1.5 text-sm text-gold transition-colors hover:bg-gold/10"
+            className="rounded-full px-3 py-1.5 text-sm text-accent transition-colors hover:bg-accent/10"
             onClick={() => setExpanded((current) => !current)}
           >
             {expanded ? "Menos" : `Mais ${list.length - VISIBLE}`}

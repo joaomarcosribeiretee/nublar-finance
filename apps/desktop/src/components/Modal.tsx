@@ -59,7 +59,7 @@ export function Modal({
     >
       {open ? (
         <div
-          className="pb-safe flex max-h-[92dvh] w-full flex-col rounded-t-3xl border border-line-strong bg-surface shadow-2xl shadow-black/50 sm:max-h-[calc(100dvh-48px)] sm:w-[min(var(--modal-width),calc(100vw-32px))] sm:rounded-3xl"
+          className="pb-safe flex max-h-[92dvh] w-full flex-col rounded-t-3xl border border-line-strong bg-surface shadow-2xl shadow-shadow/50 sm:max-h-[calc(100dvh-48px)] sm:w-[min(var(--modal-width),calc(100vw-32px))] sm:rounded-3xl"
           style={{ "--modal-width": `${width}px` } as React.CSSProperties}
         >
           <header className="modal-heading flex shrink-0 items-center justify-between gap-3 px-5 py-5 sm:px-6">

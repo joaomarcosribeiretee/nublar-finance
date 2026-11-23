@@ -11,6 +11,8 @@ function createWindow() {
     height: 820,
     minWidth: 1024,
     minHeight: 680,
+    // Keep in sync with --background in src/styles/tokens.css (the main
+    // process cannot read CSS). Theme switching will set these at runtime.
     backgroundColor: "#0a0f0d",
     // Frameless look: the app draws its own top bar (see .drag in index.css)
     // and Windows/Linux keep native window controls through the overlay.

@@ -20,7 +20,7 @@ export function Field({
 
 /** 16px on phones keeps iOS from zooming the page when a field gets focus. */
 export const controlClass =
-  "form-control h-11 w-full min-w-0 rounded-xl border border-line-strong bg-surface-2 px-3 text-base text-foreground outline-none transition-colors placeholder:text-faint hover:border-line-strong focus:border-gold/60 focus-visible:outline-none disabled:opacity-60 sm:text-sm";
+  "form-control h-11 w-full min-w-0 rounded-xl border border-line-strong bg-surface-2 px-3 text-base text-foreground outline-none transition-colors placeholder:text-faint hover:border-line-strong focus:border-accent/60 focus-visible:outline-none disabled:opacity-60 sm:text-sm";
 
 type TextProps = Omit<InputHTMLAttributes<HTMLInputElement>, "value" | "onChange" | "type"> & {
   value: string;

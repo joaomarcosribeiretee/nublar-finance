@@ -229,7 +229,7 @@ function ProductsStep({
           return (
             <li
               key={product.value}
-              className={`rounded-2xl border transition-colors duration-150 ${on ? "border-gold/40 bg-gold/[0.04]" : "border-line"}`}
+              className={`rounded-2xl border transition-colors duration-150 ${on ? "border-accent/40 bg-accent/[0.04]" : "border-line"}`}
             >
               <button
                 type="button"
@@ -238,7 +238,7 @@ function ProductsStep({
                 aria-pressed={on}
               >
                 <span
-                  className={`flex h-5 w-5 items-center justify-center rounded-md border transition-colors ${on ? "border-gold bg-gold text-background" : "border-line-strong"}`}
+                  className={`flex h-5 w-5 items-center justify-center rounded-md border transition-colors ${on ? "border-accent bg-accent text-accent-fg" : "border-line-strong"}`}
                 >
                   {on ? <Icon name="check" size={13} /> : null}
                 </span>

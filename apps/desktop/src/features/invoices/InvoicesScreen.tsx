@@ -54,7 +54,7 @@ export function InvoicesScreen({
             ) : (
               <select
                 aria-label="Cartão"
-                className="h-10 max-w-full rounded-xl border border-line bg-surface-2 px-3 text-sm outline-none transition-colors hover:border-line-strong focus:border-gold/60"
+                className="h-10 max-w-full rounded-xl border border-line bg-surface-2 px-3 text-sm outline-none transition-colors hover:border-line-strong focus:border-accent/60"
                 value={card.id}
                 onChange={(event) => setCardId(event.target.value)}
               >
@@ -146,7 +146,7 @@ function CardInvoices({ card, onEdit, onAdd }: { card: Card } & Actions) {
               </p>
             ) : null}
             {partlyPaid ? (
-              <p className="mt-1 text-xs text-gold">
+              <p className="mt-1 text-xs text-accent">
                 Já pago <Money amount={data.paid} /> de <Money amount={data.total} />
               </p>
             ) : null}
@@ -188,7 +188,7 @@ function CardInvoices({ card, onEdit, onAdd }: { card: Card } & Actions) {
         ) : null}
 
         <div className="mt-6 space-y-2">
-          {used <= 100 ? <ProgressBar value={used} tone={used > 90 ? "negative" : "gold"} /> : <p className="text-sm text-negative">Limite excedido em <Money amount={(BigInt(card.debt) - BigInt(card.limit)).toString()} /></p>}
+          {used <= 100 ? <ProgressBar value={used} tone={used > 90 ? "negative" : "accent"} /> : <p className="text-sm text-negative">Limite excedido em <Money amount={(BigInt(card.debt) - BigInt(card.limit)).toString()} /></p>}
           <p className="flex flex-wrap justify-between gap-x-4 gap-y-1 text-[11px] text-faint">
             <span>
               Usado <Money amount={card.debt} /> · disponível <Money amount={card.available} />
@@ -249,7 +249,7 @@ function Timeline({ invoice, onPick }: { invoice: Invoice; onPick: (month: strin
             >
               <span
                 className={`w-full rounded-md transition-colors ${
-                  active ? "bg-gold" : item.status === "PAID" ? "bg-positive/30" : "bg-hover-strong group-hover:bg-line-strong"
+                  active ? "bg-accent" : item.status === "PAID" ? "bg-positive/30" : "bg-hover-strong group-hover:bg-line-strong"
                 }`}
                 style={{ height: `${Math.max(height, item.total === "0" ? 2 : 6)}%` }}
               />

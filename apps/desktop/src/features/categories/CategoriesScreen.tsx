@@ -142,7 +142,7 @@ function CategoryColumn({
       {!loading && visible.length === 0 ? <p className="py-6 text-sm text-muted">{search ? "Nenhuma categoria com esse nome." : "Adicione sua primeira categoria."}</p> : null}
       <form
         onSubmit={(event) => void add(event)}
-        className="mt-3 flex items-center gap-2 rounded-xl border border-line pr-1 pl-3 transition-colors focus-within:border-gold/60"
+        className="mt-3 flex items-center gap-2 rounded-xl border border-line pr-1 pl-3 transition-colors focus-within:border-accent/60"
       >
         <Icon name="plus" size={15} className="text-faint" />
         <input
@@ -158,7 +158,7 @@ function CategoryColumn({
           <button
             type="submit"
             disabled={create.isPending}
-            className="animate-enter rounded-lg px-2.5 py-1.5 text-xs text-gold transition-colors hover:bg-gold/10 disabled:opacity-50"
+            className="animate-enter rounded-lg px-2.5 py-1.5 text-xs text-accent transition-colors hover:bg-accent/10 disabled:opacity-50"
           >
             Adicionar
           </button>

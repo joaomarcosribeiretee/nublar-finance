@@ -25,7 +25,7 @@ function lookOf(transaction: Transaction): Look {
     return { icon: "card", badge: "bg-transfer/10 text-transfer", tone: "transfer" };
   }
   if (transaction.type === "INVESTMENT" || transaction.type === "REDEMPTION") {
-    return { icon: "trend", badge: "bg-gold/10 text-gold", tone: "transfer" };
+    return { icon: "trend", badge: "bg-accent/10 text-accent", tone: "transfer" };
   }
   if (transaction.card) {
     return { icon: "card", badge: "bg-negative/10 text-negative", tone: "plain", sign: "-" };
@@ -108,7 +108,7 @@ export function TransactionRow({
                       : entryTypeLabels[transaction.type])}
             </span>
             {pending ? (
-              <span className="shrink-0 rounded-full bg-gold/10 px-2 py-0.5 text-[10px] font-medium tracking-wide text-gold uppercase">
+              <span className="shrink-0 rounded-full bg-accent/10 px-2 py-0.5 text-[10px] font-medium tracking-wide text-accent uppercase">
                 Pendente
               </span>
             ) : null}
@@ -171,7 +171,7 @@ function PendingActions({ transaction }: { transaction: Transaction }) {
       <button
         type="button"
         disabled={busy}
-        className="flex items-center gap-1 rounded-lg bg-gold/15 px-2.5 py-1.5 text-xs text-gold transition-colors hover:bg-gold/25 disabled:opacity-50"
+        className="flex items-center gap-1 rounded-lg bg-accent/15 px-2.5 py-1.5 text-xs text-accent transition-colors hover:bg-accent/25 disabled:opacity-50"
         onClick={() => void run("confirm")}
       >
         <Icon name="check" size={13} />
