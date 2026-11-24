@@ -25,7 +25,7 @@ Antes de `pnpm dev`, preencha `apps/api/.env` e `apps/desktop/.env`:
 
 `.env` só é lido quando a API sobe: depois de alterá-lo, reinicie `pnpm dev`.
 
-Atalho no app: `N` abre um novo lançamento de qualquer tela.
+Atalhos no app: `N` abre um novo lançamento de qualquer tela; `Ctrl+,` (`Cmd+,` no macOS) abre Configurações.
 
 - O app abre numa janela desktop
 - API: http://localhost:3333/health

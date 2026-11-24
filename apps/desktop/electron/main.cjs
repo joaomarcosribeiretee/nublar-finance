@@ -1,4 +1,4 @@
-const { app, BrowserWindow } = require("electron");
+const { app, BrowserWindow, shell } = require("electron");
 const path = require("node:path");
 
 const logoPath = path.resolve(__dirname, "../../../assets/logo.png");
@@ -41,6 +41,15 @@ function createWindow() {
   mainWindow.once("ready-to-show", () => {
     mainWindow.show();
     mainWindow.focus();
+  });
+
+  // Links such as "Ver no GitHub" open in the user's browser, never inside
+  // the app window.
+  mainWindow.webContents.setWindowOpenHandler(({ url }) => {
+    if (/^https:\/\//.test(url)) {
+      void shell.openExternal(url);
+    }
+    return { action: "deny" };
   });
 
   mainWindow.on("closed", () => {

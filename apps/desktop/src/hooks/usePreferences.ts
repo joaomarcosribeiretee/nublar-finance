@@ -56,6 +56,8 @@ export function usePreferences() {
   return {
     preferences,
     update: mutation.mutate,
+    /** Same as update, but resolves or rejects with this one change. */
+    updateAsync: mutation.mutateAsync,
     isSaving: mutation.isPending,
     error: query.error ?? mutation.error,
   };

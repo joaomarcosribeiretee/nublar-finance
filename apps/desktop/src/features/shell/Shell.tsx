@@ -5,6 +5,7 @@ import { Button } from "@/components/Button";
 import { Modal } from "@/components/Modal";
 import { MonthPicker } from "@/components/MonthPicker";
 import { currentMonth } from "@/lib/dates";
+import { isSettingsShortcut } from "@/lib/shortcuts";
 import { getSupabase } from "@/lib/supabase";
 import { usePreferences } from "@/hooks/usePreferences";
 import type { Transaction } from "@/lib/queries";
@@ -17,6 +18,7 @@ import { CalendarScreen } from "@/features/planning/CalendarScreen";
 import { GoalsScreen } from "@/features/planning/GoalsScreen";
 import { InvestmentsScreen } from "@/features/investments/InvestmentsScreen";
 import { CategoriesScreen } from "@/features/categories/CategoriesScreen";
+import { SettingsScreen } from "@/features/settings/SettingsScreen";
 import { HomeScreen } from "@/features/home/HomeScreen";
 import { TransactionForm, type FormPreset } from "@/features/transactions/TransactionForm";
 import { TransactionsScreen, type TransactionFilter } from "@/features/transactions/TransactionsScreen";
@@ -33,6 +35,7 @@ const screens = {
   goals: { label: "Metas", icon: "target" },
   calendar: { label: "Calendário", icon: "calendar" },
   categories: { label: "Categorias", icon: "tag" },
+  settings: { label: "Configurações", icon: "settings" },
 } as const satisfies Record<string, { label: string; icon: IconName }>;
 
 type Screen = keyof typeof screens;
@@ -53,6 +56,9 @@ const tabs: Screen[] = ["home", "transactions", "invoices"];
  * its month in the page itself, so the top bar does not repeat it there.
  */
 const monthly: Screen[] = ["home", "analytics", "budgets", "calendar"];
+
+/** The settings shortcut as the keyboard prints it. */
+const settingsKeys = window.nublar?.platform === "darwin" ? "⌘ ," : "Ctrl ,";
 
 export function Shell({ email }: { email: string }) {
   // Loads the saved theme and language and keeps them applied.
@@ -86,12 +92,19 @@ export function Shell({ email }: { email: string }) {
 
   useEffect(() => {
     function onKey(event: KeyboardEvent) {
+      if (document.querySelector("dialog[open]")) {
+        return;
+      }
+      // Ctrl+, types nothing, so it works even from inside a field.
+      if (isSettingsShortcut(event)) {
+        event.preventDefault();
+        setScreen("settings");
+        main.current?.scrollTo({ top: 0 });
+        return;
+      }
       const target = event.target as HTMLElement;
       const typing = ["INPUT", "SELECT", "TEXTAREA"].includes(target.tagName) || target.isContentEditable;
       if (typing || event.metaKey || event.ctrlKey || event.altKey) {
-        return;
-      }
-      if (document.querySelector("dialog[open]")) {
         return;
       }
       if (event.key === "n" || event.key === "N") {
@@ -109,6 +122,26 @@ export function Shell({ email }: { email: string }) {
   }
 
   const signOut = () => void getSupabase().auth.signOut();
+
+  const settingsActive = screen === "settings";
+  const settingsItem = (
+    <button
+      type="button"
+      aria-current={settingsActive ? "page" : undefined}
+      aria-keyshortcuts="Control+Comma"
+      className={`nav-item relative flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm transition-colors ${
+        settingsActive ? "nav-item-active text-accent" : "text-muted hover:bg-hover hover:text-foreground"
+      }`}
+      onClick={() => go("settings")}
+    >
+      <span
+        className={`absolute top-1/2 left-0 h-4 w-0.5 -translate-y-1/2 rounded-full bg-accent transition-opacity ${settingsActive ? "opacity-100" : "opacity-0"}`}
+      />
+      <Icon name="settings" size={17} />
+      {screens.settings.label}
+      <kbd className="ml-auto hidden text-xs text-faint lg:inline">{settingsKeys}</kbd>
+    </button>
+  );
 
   const navList = (
     <>
@@ -162,7 +195,8 @@ export function Shell({ email }: { email: string }) {
         </nav>
 
         <div className="no-drag mt-auto shrink-0 border-t border-line pt-4">
-          <p className="truncate px-3 text-xs text-faint" title={email}>
+          {settingsItem}
+          <p className="mt-3 truncate px-3 text-xs text-faint" title={email}>
             {email}
           </p>
           <button
@@ -253,6 +287,7 @@ export function Shell({ email }: { email: string }) {
               />
             ) : null}
             {screen === "categories" ? <CategoriesScreen /> : null}
+            {screen === "settings" ? <SettingsScreen email={email} onSignOut={signOut} /> : null}
           </div>
         </main>
       </div>
@@ -302,7 +337,8 @@ export function Shell({ email }: { email: string }) {
           {navList}
         </nav>
         <div className="mt-5 border-t border-line pt-4">
-          <p className="truncate px-3 text-xs text-faint">{email}</p>
+          {settingsItem}
+          <p className="mt-3 truncate px-3 text-xs text-faint">{email}</p>
           <button
             className="mt-1 flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm text-muted transition-colors hover:bg-hover hover:text-foreground"
             type="button"
