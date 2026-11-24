@@ -4,7 +4,14 @@
  * Components use the semantic names (bg-surface, text-muted, var(--accent)…),
  * never a hex value or a Tailwind palette color. A theme is a block that
  * redefines the "Palette" section under its own [data-theme] selector; every
- * derived token below follows automatically.
+ * derived token below follows automatically. The selectors are not tied to
+ * :root, so any element can preview a theme with data-theme="light|dark".
+ *
+ * Contrast (checked by contrast.test.ts): text tokens reach 4.5:1 on every
+ * surface, chart series 3:1 on --surface, in both themes.
+ *
+ * The Electron main process keeps a copy of --background and --muted for the
+ * window and title bar (electron/main.cjs): change them there too.
  *
  * Exceptions, on purpose: institution brand colors (lib/institutions.ts,
  * lib/bankMarks.ts) and the white plate behind bank logos.
@@ -12,7 +19,7 @@
 
 /* ── Dark (default and brand identity) ─────────────────────────────── */
 :root,
-:root[data-theme="dark"] {
+[data-theme="dark"] {
   /* Palette */
   --background: #0a0f0d;
   --surface: #101714;
@@ -50,8 +57,49 @@
   color-scheme: dark;
 }
 
+/* ── Light ─────────────────────────────────────────────────────────── */
+/* Warm off-white paper, never flat white; deep green ink keeps the brand. */
+[data-theme="light"] {
+  /* Palette */
+  --background: #f3f1ea;
+  --surface: #faf9f5;
+  --surface-2: #eeebe3;
+  --raised: #fdfcf8;
+  --foreground: #16201b;
+  --muted: #56635b;
+  --faint: #5f6c64;
+  --line: rgb(22 32 27 / 10%);
+  --line-strong: rgb(22 32 27 / 16%);
+  --accent: #866424;
+  --accent-fg: var(--surface);
+  --positive: #1f7548;
+  --negative: #ad4334;
+  --warning: #8a5c00;
+  --transfer: #456791;
+  --shadow-color: #1b2620;
+  --hover: rgb(22 32 27 / 4%);
+  --hover-strong: rgb(22 32 27 / 7%);
+  --grid: rgb(22 32 27 / 8%);
+  --picker-icon-filter: none;
+
+  /* Chart series: light steps of the same eight hues, in the same order,
+     validated against --surface (adjacent CVD ΔE >= 9.7, all >= 3:1). */
+  --series-1: #2a78d6;
+  --series-2: #e0602b;
+  --series-3: #129376;
+  --series-4: #b37a00;
+  --series-5: #cf4f80;
+  --series-6: #007a00;
+  --series-7: #6250d6;
+  --series-8: #d63e3d;
+
+  color-scheme: light;
+}
+
 /* ── Derived (shared by every theme; never picked by hand) ──────────── */
-:root {
+/* Recomputed wherever a theme is set, so a preview gets its own mixes. */
+:root,
+[data-theme] {
   --focus-ring: color-mix(in srgb, var(--accent) 60%, transparent);
   --selection: color-mix(in srgb, var(--accent) 30%, transparent);
   --scrim: color-mix(in srgb, var(--background) 76%, transparent);

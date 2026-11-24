@@ -2,6 +2,7 @@ import { DEFAULT_PREFERENCES } from "@nublar/validation";
 import { describe, expect, it } from "vitest";
 import {
   cachePreferences,
+  nativeThemeSource,
   PREFERENCES_STORAGE_KEY,
   readCachedPreferences,
   resolveTheme,
@@ -50,5 +51,13 @@ describe("resolveTheme", () => {
   it("follows the OS on SYSTEM", () => {
     expect(resolveTheme("SYSTEM", true)).toBe("light");
     expect(resolveTheme("SYSTEM", false)).toBe("dark");
+  });
+});
+
+describe("nativeThemeSource", () => {
+  it("maps each choice to Electron's themeSource", () => {
+    expect(nativeThemeSource("DARK")).toBe("dark");
+    expect(nativeThemeSource("LIGHT")).toBe("light");
+    expect(nativeThemeSource("SYSTEM")).toBe("system");
   });
 });
