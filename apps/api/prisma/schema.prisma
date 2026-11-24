@@ -27,6 +27,7 @@ model User {
   goals          Goal[]
   cardPurchases  CardPurchase[]
   recurringRules RecurringRule[]
+  preferences    UserPreferences?
 }
 
 /// Bank, broker or digital wallet that groups accounts and cards.
@@ -375,4 +376,28 @@ model CategoryRule {
   category   Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
 
   @@unique([userId, keyword])
+}
+
+enum ThemePreference {
+  DARK
+  LIGHT
+  SYSTEM
+}
+
+/// One row per user, created with the defaults on first read.
+model UserPreferences {
+  userId          String          @id @db.Uuid
+  theme           ThemePreference @default(DARK)
+  /// "pt-BR" | "en"; validated by @nublar/validation.
+  locale          String          @default("pt-BR")
+  currency        String          @default("BRL")
+  /// 1–28: day the "financial month" starts.
+  monthStartDay   Int             @default(1)
+  hideValues      Boolean         @default(false)
+  /// { completed, step, skipped }
+  onboardingState Json            @default("{\"completed\":false,\"step\":null,\"skipped\":false}")
+  tipsSeen        String[]        @default([])
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+  user            User            @relation(fields: [userId], references: [id], onDelete: Cascade)
 }

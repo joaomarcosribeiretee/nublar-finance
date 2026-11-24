@@ -8,10 +8,14 @@ export default defineConfig({
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "src"),
+      // Bundle the shared packages from source: Rollup cannot see every named
+      // export of their CommonJS build.
+      "@nublar/validation": path.resolve(__dirname, "../../packages/validation/src/index.ts"),
+      "@nublar/types": path.resolve(__dirname, "../../packages/types/src/index.ts"),
     },
   },
   optimizeDeps: {
-    include: ["@nublar/validation", "@supabase/supabase-js"],
+    include: ["@supabase/supabase-js"],
   },
   server: {
     port: 5173,

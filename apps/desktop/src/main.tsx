@@ -4,7 +4,10 @@ import "@fontsource/fraunces/500.css";
 import "@fontsource/outfit/400.css";
 import "@fontsource/outfit/500.css";
 import { App } from "./App";
+import { followSystemTheme } from "./lib/preferences";
 import "./index.css";
+
+followSystemTheme();
 
 const root = document.getElementById("root");
 
