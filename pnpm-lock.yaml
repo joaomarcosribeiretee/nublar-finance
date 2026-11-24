@@ -153,12 +153,18 @@ importers:
       '@tanstack/react-query':
         specifier: ^5.104.0
         version: 5.104.0(react@19.3.0)
+      i18next:
+        specifier: ^27.2.7
+        version: 27.2.7(typescript@5.9.3)
       react:
         specifier: ^19.3.0
         version: 19.3.0
       react-dom:
         specifier: ^19.3.0
         version: 19.3.0(react@19.3.0)
+      react-i18next:
+        specifier: ^18.0.3
+        version: 18.0.3(@types/react@19.3.0)(i18next@27.2.7(typescript@5.9.3))(react@19.3.0)(typescript@5.9.3)
       recharts:
         specifier: ^3.10.1
         version: 3.10.1(@types/react@19.3.0)(react-dom@19.3.0(react@19.3.0))(react-is@19.3.0)(react@19.3.0)(redux@5.0.1)
@@ -193,6 +199,9 @@ importers:
       eslint:
         specifier: ^9.18.0
         version: 9.39.5(jiti@2.7.0)
+      eslint-plugin-i18next:
+        specifier: ^6.1.5
+        version: 6.1.5
       tailwindcss:
         specifier: ^4.3.3
         version: 4.3.3
@@ -2826,6 +2835,10 @@ packages:
     peerDependencies:
       eslint: '>=7.0.0'
 
+  eslint-plugin-i18next@6.1.5:
+    resolution: {integrity: sha512-xCTfstbK9ZpQ6UFT5S1s6zbZMhKn2o2jRSQYiU2UkV7wt8y1m3WjkUYGkGlipgRdFInYI9+LAqE+JQU/L73HmA==}
+    engines: {node: '>=18.10.0'}
+
   eslint-plugin-prettier@5.5.6:
     resolution: {integrity: sha512-ifetmTcxWfz+4qRW3pH/ujdTq2jQIj59AxJMIN26K5avYgU8dxycUETQonWiW+wPrYXA0j3Try0l1CnwVQtDqQ==}
     engines: {node: ^14.18.0 || >=16.0.0}
@@ -3185,6 +3198,9 @@ packages:
   html-escaper@2.0.2:
     resolution: {integrity: sha512-H2iMtd0I4Mt5eYiapRdIDjp+XzelXQ0tFE4JS7YFwFevXXMmOp9myNrUvCg0D6ws8iqkRPBfKHgbwig1SmlLfg==}
 
+  html-parse-stringify@4.0.1:
+    resolution: {integrity: sha512-0zHsZJrK7S3K2aucXWL6ycoYJ/iNtIcFHC/nYQgFklPtrv5LpJctIiSCroWZWeuoXvuyFdzp6KzjJQ+OT5MfFw==}
+
   http-cache-semantics@4.2.0:
     resolution: {integrity: sha512-dTxcvPXqPvXBQpq5dUr6mEMJX4oIEFv6bwom3FDwKRDsuIjjJGANqhBuoAn9c1RQJIdAKav33ED65E2ys+87QQ==}
 
@@ -3203,6 +3219,15 @@ packages:
   human-signals@2.1.0:
     resolution: {integrity: sha512-B4FFZ6q/T2jhhksgkbEW3HBvWIfDW85snkQgawt07S7J5QXTk6BkNV+0yAeZrM5QpMAdYlocGoljn0sJ/WQkFw==}
     engines: {node: '>=10.17.0'}
+
+  i18next@27.2.7:
+    resolution: {integrity: sha512-q3XlM8YSo6Nmomd+MQ4JPGJGvhgHwfCRXNeFrM8l0F4TuIuoJBqhCxQrdGDHNMjObRuw5O0ReuU968ZeMVlfnw==}
+    engines: {node: '>=22'}
+    peerDependencies:
+      typescript: ^5 || ^6 || ^7
+    peerDependenciesMeta:
+      typescript:
+        optional: true
 
   iceberg-js@0.8.1:
     resolution: {integrity: sha512-1dhVQZXhcHje7798IVM+xoo/1ZdVfzOMIc8/rgVSijRK38EDqOJoGula9N/8ZI5RD8QTxNQtK/Gozpr+qUqRRA==}
@@ -4081,6 +4106,20 @@ packages:
     peerDependencies:
       react: ^19.3.0
 
+  react-i18next@18.0.3:
+    resolution: {integrity: sha512-S84rtVuaKuiRtoCOspbGEaDlFjka+KvK/A5YCOr4LQ41XF3iJOrJ5rqQTD/jJHFVUf6X1i4ZMN5PGGgpz8NN6g==}
+    engines: {node: '>=22'}
+    peerDependencies:
+      '@types/react': '*'
+      i18next: '>= 27.0.1'
+      react: '>= 18.0.0'
+      typescript: ^5 || ^6 || ^7
+    peerDependenciesMeta:
+      '@types/react':
+        optional: true
+      typescript:
+        optional: true
+
   react-is@18.3.1:
     resolution: {integrity: sha512-/LLMVyas0ljjAtoYiPqYiL8VWXzUUdThrmU5+n20DZv+a+ClRoevUzw5JxU+Ieh5/c87ytoTBV9G1FiKfNJdmg==}
 
@@ -4148,6 +4187,10 @@ packages:
   require-from-string@2.0.2:
     resolution: {integrity: sha512-Xf0nWe6RseziFMu+Ap9biiUbmplq6S9/p+7w7YXP/JBHhrUDDUhwa+vANyubuqfZWTveU//DYVGsDG7RKL/vEw==}
     engines: {node: '>=0.10.0'}
+
+  requireindex@1.1.0:
+    resolution: {integrity: sha512-LBnkqsDE7BZKvqylbmn7lTIVdpx4K/QCduRATpO5R+wtPmky/a8pN1bO2D6wXppn1497AJF9mNjqAXr6bdl9jg==}
+    engines: {node: '>=0.10.5'}
 
   reselect@5.2.0:
     resolution: {integrity: sha512-AgZ3UOZm3YndfrJ4OYjgrT7bmCm/1iqkjvEfH/oYjzh6PD2qw4QuT3jjnXIrpdt4MTpMXclMT3lXbmRY+XRakw==}
@@ -7575,6 +7618,10 @@ snapshots:
     dependencies:
       eslint: 9.39.5(jiti@2.7.0)
 
+  eslint-plugin-i18next@6.1.5:
+    dependencies:
+      requireindex: 1.1.0
+
   eslint-plugin-prettier@5.5.6(@types/eslint@9.6.1)(eslint-config-prettier@10.1.8(eslint@9.39.5(jiti@2.7.0)))(eslint@9.39.5(jiti@2.7.0))(prettier@3.9.9):
     dependencies:
       eslint: 9.39.5(jiti@2.7.0)
@@ -8015,6 +8062,8 @@ snapshots:
 
   html-escaper@2.0.2: {}
 
+  html-parse-stringify@4.0.1: {}
+
   http-cache-semantics@4.2.0: {}
 
   http-errors@2.0.1:
@@ -8038,6 +8087,10 @@ snapshots:
       - supports-color
 
   human-signals@2.1.0: {}
+
+  i18next@27.2.7(typescript@5.9.3):
+    optionalDependencies:
+      typescript: 5.9.3
 
   iceberg-js@0.8.1: {}
 
@@ -8997,6 +9050,15 @@ snapshots:
       react: 19.3.0
       scheduler: 0.28.0
 
+  react-i18next@18.0.3(@types/react@19.3.0)(i18next@27.2.7(typescript@5.9.3))(react@19.3.0)(typescript@5.9.3):
+    dependencies:
+      html-parse-stringify: 4.0.1
+      i18next: 27.2.7(typescript@5.9.3)
+      react: 19.3.0
+    optionalDependencies:
+      '@types/react': 19.3.0
+      typescript: 5.9.3
+
   react-is@18.3.1: {}
 
   react-is@19.3.0: {}
@@ -9057,6 +9119,8 @@ snapshots:
   require-directory@2.1.1: {}
 
   require-from-string@2.0.2: {}
+
+  requireindex@1.1.0: {}
 
   reselect@5.2.0: {}
 

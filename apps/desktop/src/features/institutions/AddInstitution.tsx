@@ -1,4 +1,6 @@
 import { useState } from "react";
+import { Trans, useTranslation } from "react-i18next";
+import type { TranslationKey } from "@/i18n";
 import { Button } from "@/components/Button";
 import { controlClass, Field, MoneyInput, TextInput } from "@/components/Field";
 import { FormFooter } from "@/components/Modal";
@@ -21,15 +23,16 @@ import { ColorPicker } from "./InstitutionForm";
 
 type Product = "CARD" | Exclude<AccountType, "CASH" | "OTHER">;
 
-const products: { value: Product; label: string; hint: string }[] = [
-  { value: "CHECKING", label: accountTypeLabels.CHECKING, hint: "Onde o salário cai e as contas saem" },
-  { value: "SAVINGS", label: accountTypeLabels.SAVINGS, hint: "Reserva, caixinhas, cofrinhos" },
-  { value: "CARD", label: "Cartão de crédito", hint: "Faturas, parcelas e limite" },
-  { value: "BROKERAGE", label: accountTypeLabels.BROKERAGE, hint: "Dinheiro parado na corretora" },
-  { value: "CRYPTO", label: accountTypeLabels.CRYPTO, hint: "Saldo em exchange ou carteira" },
+const products: { value: Product; label: TranslationKey; hint: TranslationKey }[] = [
+  { value: "CHECKING", label: accountTypeLabels.CHECKING, hint: "institutions.add.hints.checking" },
+  { value: "SAVINGS", label: accountTypeLabels.SAVINGS, hint: "institutions.add.hints.savings" },
+  { value: "CARD", label: "transactions.form.payWith.card", hint: "institutions.add.hints.card" },
+  { value: "BROKERAGE", label: accountTypeLabels.BROKERAGE, hint: "institutions.add.hints.brokerage" },
+  { value: "CRYPTO", label: accountTypeLabels.CRYPTO, hint: "institutions.add.hints.crypto" },
 ];
 
 export function AddInstitution({ onDone }: { onDone: () => void }) {
+  const { t } = useTranslation();
   const existing = useInstitutions();
   const [step, setStep] = useState<"pick" | "products">("pick");
   const [name, setName] = useState("");
@@ -67,19 +70,19 @@ export function AddInstitution({ onDone }: { onDone: () => void }) {
           onSubmit={(event) => {
             event.preventDefault();
             if (!name.trim()) {
-              setNameError("Digite o nome da instituição.");
+              setNameError(t("institutions.add.errors.nameRequired"));
               return;
             }
             if (taken.has(name.trim().toLowerCase())) {
-              setNameError("Você já tem essa instituição. Adicione contas e cartões dentro dela.");
+              setNameError(t("institutions.add.errors.nameTaken"));
               return;
             }
             setStep("products");
           }}
         >
-          <Field label="Outra instituição">
+          <Field label={t("institutions.add.other")}>
             <TextInput
-              placeholder="Nome do banco, corretora ou carteira"
+              placeholder={t("institutions.add.otherPlaceholder")}
               value={name}
               maxLength={80}
               aria-invalid={nameError ? true : undefined}
@@ -97,7 +100,7 @@ export function AddInstitution({ onDone }: { onDone: () => void }) {
           ) : null}
           <div className="flex justify-end">
             <Button variant="primary" type="submit">
-              Continuar
+              {t("common.actions.continue")}
             </Button>
           </div>
         </form>
@@ -132,6 +135,7 @@ function ProductsStep({
   onBack: () => void;
   onDone: () => void;
 }) {
+  const { t } = useTranslation();
   const toast = useToast();
   const createInstitution = useCreateInstitution();
   const createAccount = useCreateAccount();
@@ -158,14 +162,14 @@ function ProductsStep({
     for (const type of accountTypes) {
       const value = parseSignedReaisToMinorUnits(balances[type] ?? "");
       if (value === null) {
-        setError(`Saldo inválido em ${accountTypeLabels[type]}.`);
+        setError(t("institutions.add.errors.invalidBalance", { type: t(accountTypeLabels[type]) }));
         return;
       }
       parsed.set(type, value);
     }
     const cardLimit = /^[0.,\s]*$/.test(limit) ? "0" : parseReaisToMinorUnits(limit);
     if (selected.includes("CARD") && cardLimit === null) {
-      setError("Limite do cartão inválido.");
+      setError(t("institutions.add.errors.invalidLimit"));
       return;
     }
 
@@ -195,7 +199,7 @@ function ProductsStep({
           },
         });
       }
-      toast(`${name} adicionado`);
+      toast(t("institutions.add.added", { name }));
       onDone();
     } catch (reason: unknown) {
       setError(errorMessage(reason));
@@ -211,7 +215,7 @@ function ProductsStep({
       <div className="flex items-center gap-3">
         <button
           type="button"
-          aria-label="Voltar"
+          aria-label={t("common.actions.back")}
           className="-ml-2 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-muted transition-colors hover:bg-hover hover:text-foreground"
           onClick={onBack}
         >
@@ -219,7 +223,7 @@ function ProductsStep({
         </button>
         <InstitutionMark name={name} color={color} size="sm" />
         <p className="min-w-0">
-          O que você tem no <span className="font-medium">{name}</span>?
+          <Trans i18nKey="institutions.add.question" values={{ name }} components={{ name: <span className="font-medium" /> }} />
         </p>
       </div>
 
@@ -243,18 +247,18 @@ function ProductsStep({
                   {on ? <Icon name="check" size={13} /> : null}
                 </span>
                 <span className="min-w-0 flex-1">
-                  <span className="block text-sm">{product.label}</span>
-                  <span className="block text-xs text-faint">{product.hint}</span>
+                  <span className="block text-sm">{t(product.label)}</span>
+                  <span className="block text-xs text-faint">{t(product.hint)}</span>
                 </span>
               </button>
               {on ? (
                 <div className="animate-enter px-4 pb-4 sm:pl-12">
                   {product.value === "CARD" ? (
                     <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-                      <Field label="Limite" className="col-span-2 sm:col-span-1">
+                      <Field label={t("institutions.add.limit")} className="col-span-2 sm:col-span-1">
                         <MoneyInput value={limit} onChange={setLimit} />
                       </Field>
-                      <Field label="Fecha dia">
+                      <Field label={t("institutions.add.closingDay")}>
                         <select
                           className={controlClass}
                           value={closingDay}
@@ -267,7 +271,7 @@ function ProductsStep({
                           ))}
                         </select>
                       </Field>
-                      <Field label="Vence dia">
+                      <Field label={t("institutions.add.dueDay")}>
                         <select
                           className={controlClass}
                           value={dueDay}
@@ -296,16 +300,15 @@ function ProductsStep({
       </ul>
 
       <p className="text-xs text-faint">
-        O saldo de hoje entra no seu patrimônio, não como receita. Aplicações (CDB, ações, FIIs) são
-        cadastradas depois, em Investimentos.
+        {t("institutions.add.note")}
       </p>
       <FormFooter error={error}>
         <div className="flex-1" />
         <Button variant="ghost" onClick={onDone}>
-          Cancelar
+          {t("common.actions.cancel")}
         </Button>
         <Button variant="primary" type="submit" disabled={saving}>
-          {saving ? "Adicionando…" : `Adicionar ${name}`}
+          {saving ? t("institutions.add.adding") : t("institutions.add.submit", { name })}
         </Button>
       </FormFooter>
     </form>

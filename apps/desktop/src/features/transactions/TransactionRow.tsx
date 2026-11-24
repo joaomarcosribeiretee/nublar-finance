@@ -1,4 +1,6 @@
 import type { ReactNode } from "react";
+import { useTranslation } from "react-i18next";
+import { t } from "@/i18n";
 import { Icon, type IconName } from "@/components/Icon";
 import { Money } from "@/components/Money";
 import { useToast } from "@/components/Toast";
@@ -39,7 +41,7 @@ function route(from: string | undefined, to: string | undefined): ReactNode {
     <>
       {from ?? ""}
       <Icon name="arrowRight" size={11} className="mx-1 inline -translate-y-px" />
-      <span className="sr-only">para </span>
+      <span className="sr-only">{t("transactions.row.to")} </span>
       {to ?? ""}
     </>
   );
@@ -58,7 +60,7 @@ function subtitleOf(transaction: Transaction): ReactNode {
   if (transaction.type === "REDEMPTION") {
     return route(transaction.investment?.name, transaction.account?.name);
   }
-  const category = transaction.category?.name ?? "Sem categoria";
+  const category = transaction.category?.name ?? t("transactions.noCategory");
   if (transaction.card) {
     const installment =
       (transaction.installmentCount ?? 1) > 1
@@ -79,6 +81,7 @@ export function TransactionRow({
   /** Rows grouped by invoice rather than by day show their own date. */
   showDate?: boolean;
 }) {
+  const { t } = useTranslation();
   const look = lookOf(transaction);
   const pending = transaction.status === "PENDING";
 
@@ -100,16 +103,16 @@ export function TransactionRow({
               {transaction.description ||
                 transaction.category?.name ||
                 (transaction.type === "CARD_PAYMENT"
-                  ? "Pagamento de fatura"
+                  ? t("transactions.kind.cardPayment")
                   : transaction.type === "INVESTMENT"
-                    ? "Aporte"
+                    ? t("transactions.kind.investment")
                     : transaction.type === "REDEMPTION"
-                      ? "Resgate"
-                      : entryTypeLabels[transaction.type])}
+                      ? t("transactions.kind.redemption")
+                      : t(entryTypeLabels[transaction.type]))}
             </span>
             {pending ? (
               <span className="shrink-0 rounded-full bg-accent/10 px-2 py-0.5 text-[10px] font-medium tracking-wide text-accent uppercase">
-                Pendente
+                {t("transactions.row.pending")}
               </span>
             ) : null}
           </span>
@@ -139,6 +142,7 @@ export function TransactionRow({
 
 /** Confirm or skip a recurring occurrence without opening the form. */
 function PendingActions({ transaction }: { transaction: Transaction }) {
+  const { t } = useTranslation();
   const toast = useToast();
   const confirm = useConfirmTransaction();
   const skip = useSkipTransaction();
@@ -148,10 +152,10 @@ function PendingActions({ transaction }: { transaction: Transaction }) {
     try {
       if (action === "confirm") {
         await confirm.mutateAsync({ id: transaction.id });
-        toast("Confirmado");
+        toast(t("transactions.row.confirmed"));
       } else {
         await skip.mutateAsync(transaction.id);
-        toast("Pulado este mês");
+        toast(t("transactions.row.skipped"));
       }
     } catch (reason: unknown) {
       toast(errorMessage(reason), "error");
@@ -166,7 +170,7 @@ function PendingActions({ transaction }: { transaction: Transaction }) {
         className="rounded-lg px-2.5 py-1.5 text-xs text-muted transition-colors hover:bg-hover-strong hover:text-foreground disabled:opacity-50"
         onClick={() => void run("skip")}
       >
-        Pular
+        {t("transactions.row.skip")}
       </button>
       <button
         type="button"
@@ -175,7 +179,7 @@ function PendingActions({ transaction }: { transaction: Transaction }) {
         onClick={() => void run("confirm")}
       >
         <Icon name="check" size={13} />
-        Confirmar
+        {t("common.actions.confirm")}
       </button>
     </span>
   );

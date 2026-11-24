@@ -1,0 +1,50 @@
+{
+  "errors": {
+    "empty": "Nenhum lançamento encontrado no arquivo.",
+    "noAccount": "Cadastre uma conta antes de importar um extrato.",
+    "tooBig": "Arquivo grande demais. Exporte um período menor (até 5 MB).",
+    "unreadable": "Não foi possível ler o arquivo. Tente exportar o extrato de novo.",
+    "missingCategory_one": "Escolha a categoria de {{count}} lançamento.",
+    "missingCategory_other": "Escolha a categoria de {{count}} lançamentos."
+  },
+  "toast": {
+    "imported_zero": "{{count}} importados",
+    "imported_one": "{{count}} importado",
+    "imported_other": "{{count}} importados",
+    "skipped_one": ", {{count}} já existia",
+    "skipped_other": ", {{count}} já existiam",
+    "learned_zero": "{{count}} regras aprendidas.",
+    "learned_one": "{{count}} regra aprendida.",
+    "learned_other": "{{count}} regras aprendidas."
+  },
+  "account": "Importar para a conta",
+  "file": "Arquivo do extrato",
+  "pickFile": "Escolher .ofx ou .csv",
+  "howTo": "No app ou site do banco, abra o extrato e procure “Exportar” ou “Baixar”. OFX é o mais confiável; CSV também funciona. Nada é salvo antes da revisão.",
+  "summary": {
+    "rows_zero": "{{count}} lançamentos",
+    "rows_one": "{{count}} lançamento",
+    "rows_other": "{{count}} lançamentos",
+    "duplicates_one": "{{count}} parece já lançado (desmarcado)",
+    "duplicates_other": "{{count}} parecem já lançados (desmarcados)",
+    "noDuplicates": "nenhum repetido"
+  },
+  "changeFile": "Trocar arquivo",
+  "row": {
+    "include": "Importar {{name}}",
+    "duplicate": "Já lançado?",
+    "category": "Categoria de {{name}}"
+  },
+  "rulesHint": "As categorias que você escolher viram regras: na próxima importação, lançamentos parecidos já vêm categorizados. Transferências entre suas contas: desmarque e lance como transferência.",
+  "selected_zero": "{{count}} selecionados · entradas <income/> · saídas <expense/>",
+  "selected_one": "{{count}} selecionado · entradas <income/> · saídas <expense/>",
+  "selected_other": "{{count}} selecionados · entradas <income/> · saídas <expense/>",
+  "importing": "Importando…",
+  "submit": "Importar {{count}}",
+  "csv": {
+    "column": "Coluna {{index}}",
+    "intro": "Não reconheci as colunas deste CSV. Diga qual é qual:",
+    "invert": "Gastos aparecem positivos no arquivo (comum em fatura de cartão)",
+    "submit": "Ler com essas colunas"
+  }
+}

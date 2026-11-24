@@ -1,0 +1,29 @@
+{
+  "eyebrow": "Ajuste o Nublar",
+  "title": "Configurações",
+  "intro": "Tudo o que você muda aqui é salvo na hora.",
+  "profile": {
+    "title": "Perfil",
+    "email": "E-mail",
+    "emailHint": "Usado para entrar no Nublar.",
+    "session": "Sessão",
+    "signOut": "Sair"
+  },
+  "about": {
+    "title": "Sobre",
+    "version": "Versão",
+    "source": "Código-fonte",
+    "viewOnGitHub": "Ver no GitHub"
+  },
+  "appearance": {
+    "title": "Aparência",
+    "subtitle": "O tema muda na hora, sem recarregar.",
+    "theme": "Tema",
+    "dark": "Escuro",
+    "darkHint": "Padrão do Nublar",
+    "light": "Claro",
+    "lightHint": "Para ambientes iluminados",
+    "system": "Sistema",
+    "systemHint": "Segue o computador"
+  }
+}

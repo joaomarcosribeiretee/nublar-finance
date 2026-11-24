@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { Button } from "@/components/Button";
 import { Icon } from "@/components/Icon";
 import { Money } from "@/components/Money";
@@ -47,6 +48,7 @@ export function BudgetOverview({
   /** Opens the month's entries of that category. */
   onCategory?: (category: { id: string; name: string }) => void;
 }) {
+  const { t } = useTranslation();
   const budgets = useBudgets(month);
   const data = budgets.data;
   const pace = monthProgress(month);
@@ -56,11 +58,11 @@ export function BudgetOverview({
 
   return (
     <Panel
-      title={`Orçamentos de ${monthLabel(month).toLowerCase()}`}
-      subtitle={pace !== undefined && items.length > 0 ? "A marca mostra quanto do mês já passou" : undefined}
+      title={t("planning.overview.title", { month: monthLabel(month).toLowerCase() })}
+      subtitle={pace !== undefined && items.length > 0 ? t("planning.overview.markerHint") : undefined}
       actions={
         <Button variant="ghost" className="h-8 px-3 text-xs" onClick={onManage}>
-          {items.length > 0 ? "Ajustar limites" : "Criar orçamento"}
+          {items.length > 0 ? t("planning.overview.adjust") : t("planning.budgets.create")}
         </Button>
       }
     >
@@ -82,8 +84,8 @@ export function BudgetOverview({
             <Icon name="gauge" size={16} />
           </span>
           <span className="min-w-0 text-sm">
-            Defina um limite por mês para cada categoria
-            <span className="block text-xs text-muted">Mercado, restaurantes, lazer: veja aqui quanto ainda pode gastar.</span>
+            {t("planning.overview.emptyTitle")}
+            <span className="block text-xs text-muted">{t("planning.overview.emptyHint")}</span>
           </span>
         </button>
       ) : (
@@ -92,7 +94,7 @@ export function BudgetOverview({
             <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
               <p className="text-sm">
                 <Money amount={data.totals.spent} className="text-lg" />{" "}
-                <span className="text-muted">de {formatMinorUnits(data.totals.limit)}</span>
+                <span className="text-muted">{t("planning.of", { amount: formatMinorUnits(data.totals.limit) })}</span>
               </p>
               <Remaining amount={data.totals.remaining} />
             </div>
@@ -101,7 +103,7 @@ export function BudgetOverview({
               value={data.totals.usedBps / 100}
               tone={budgetTone[data.totals.status]}
               marker={pace}
-              markerTitle="Quanto do mês já passou"
+              markerTitle={t("planning.markerTitle")}
             />
           </div>
 
@@ -111,7 +113,7 @@ export function BudgetOverview({
                 <button
                   type="button"
                   onClick={() => (onCategory ? onCategory(item.category) : onManage())}
-                  aria-label={`${item.category.name}: ${formatMinorUnits(item.spent)} de ${formatMinorUnits(item.limit)}`}
+                  aria-label={t("planning.overview.itemLabel", { name: item.category.name, spent: formatMinorUnits(item.spent), limit: formatMinorUnits(item.limit) })}
                   className="w-full rounded-xl p-2 text-left transition-colors hover:bg-hover"
                 >
                   <span className="flex items-baseline justify-between gap-3 text-sm">
@@ -135,7 +137,7 @@ export function BudgetOverview({
 
           {hidden > 0 ? (
             <button type="button" onClick={onManage} className="flex items-center gap-1 text-xs text-accent hover:underline">
-              Ver {hidden === 1 ? "mais 1 categoria" : `mais ${hidden} categorias`}
+              {t("planning.overview.more", { count: hidden })}
               <Icon name="chevronRight" size={13} />
             </button>
           ) : null}
@@ -146,13 +148,14 @@ export function BudgetOverview({
 }
 
 function Remaining({ amount }: { amount: string }) {
+  const { t } = useTranslation();
   return amount.startsWith("-") ? (
     <span className="text-xs text-negative">
-      Passou <Money amount={amount.slice(1)} />
+      {t("planning.over")} <Money amount={amount.slice(1)} />
     </span>
   ) : (
     <span className="text-xs text-muted">
-      Restam <Money amount={amount} className="text-foreground" />
+      {t("planning.remaining")} <Money amount={amount} className="text-foreground" />
     </span>
   );
 }

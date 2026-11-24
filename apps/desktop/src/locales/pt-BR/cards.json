@@ -1,0 +1,55 @@
+{
+  "eyebrow": "Faturas e limites",
+  "stats": {
+    "debt": "Comprometido nos cartões",
+    "available": "Limite disponível",
+    "count": "Cartões cadastrados"
+  },
+  "empty": {
+    "title": "Nenhum cartão",
+    "description": "Cadastre seus cartões para acompanhar faturas, parcelas e limite.",
+    "action": "Cadastrar cartão"
+  },
+  "tile": {
+    "invoiceOf": "Fatura de {{month}} · vence {{date}}",
+    "overLimit": "Limite excedido em"
+  },
+  "detail": {
+    "previous": "Fatura anterior",
+    "next": "Próxima fatura",
+    "total": "Total",
+    "paid": "Pago",
+    "remaining": "Restante",
+    "dates": "Fecha em {{closing}} · vence em {{due}}",
+    "empty": "Nenhuma compra nesta fatura.",
+    "payment": "Pagamento · {{account}}",
+    "installment": "parcela {{number}}/{{count}}",
+    "edit": "Editar cartão",
+    "invoices": "Ver faturas"
+  },
+  "pay": {
+    "paid": "Fatura paga",
+    "action": "Pagar fatura",
+    "errors": {
+      "amount": "Informe um valor, por exemplo 250,00.",
+      "account": "Escolha a conta de onde sai o pagamento.",
+      "tooMuch": "O valor passa do que falta pagar nesta fatura."
+    },
+    "partial": "Pagamento parcial registrado",
+    "hint": "Sai da conta e abate a dívida do cartão. Não é despesa: as compras já contaram na fatura. As cobranças previstas desta fatura são confirmadas junto.",
+    "registering": "Registrando…",
+    "submit": "Confirmar pagamento"
+  },
+  "form": {
+    "invalidLimit": "Limite inválido. Use algo como 5.000,00.",
+    "updated": "Cartão atualizado",
+    "created": "Cartão criado",
+    "deleted": "Cartão excluído",
+    "institution": "Instituição",
+    "name": "Nome do cartão",
+    "namePlaceholder": "Ex.: Nubank",
+    "paysWith": "Paga com",
+    "closingHint": "Compras no dia do fechamento ou depois entram na fatura seguinte.",
+    "datesHint": "Mudar as datas vale para novas compras."
+  }
+}

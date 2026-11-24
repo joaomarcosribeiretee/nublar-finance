@@ -1,11 +1,13 @@
 import type { KeyboardEvent } from "react";
 import type { Theme } from "@nublar/validation";
+import { useTranslation } from "react-i18next";
 import { Icon } from "@/components/Icon";
+import type { TranslationKey } from "@/i18n";
 
-const options: { value: Theme; label: string; hint: string }[] = [
-  { value: "DARK", label: "Escuro", hint: "Padrão do Nublar" },
-  { value: "LIGHT", label: "Claro", hint: "Para ambientes iluminados" },
-  { value: "SYSTEM", label: "Sistema", hint: "Segue o computador" },
+const options: { value: Theme; label: TranslationKey; hint: TranslationKey }[] = [
+  { value: "DARK", label: "settings.appearance.dark", hint: "settings.appearance.darkHint" },
+  { value: "LIGHT", label: "settings.appearance.light", hint: "settings.appearance.lightHint" },
+  { value: "SYSTEM", label: "settings.appearance.system", hint: "settings.appearance.systemHint" },
 ];
 
 /**
@@ -13,6 +15,7 @@ const options: { value: Theme; label: string; hint: string }[] = [
  * its own data-theme, so it always shows the real tokens of that palette.
  */
 export function ThemePicker({ value, onChange }: { value: Theme; onChange: (theme: Theme) => void }) {
+  const { t } = useTranslation();
   // A radio group moves with the arrow keys and keeps a single tab stop.
   function onKeyDown(event: KeyboardEvent<HTMLDivElement>) {
     const step =
@@ -32,7 +35,7 @@ export function ThemePicker({ value, onChange }: { value: Theme; onChange: (them
   }
 
   return (
-    <div role="radiogroup" aria-label="Tema" onKeyDown={onKeyDown} className="grid grid-cols-3 gap-3">
+    <div role="radiogroup" aria-label={t("settings.appearance.theme")} onKeyDown={onKeyDown} className="grid grid-cols-3 gap-3">
       {options.map((option) => {
         const active = option.value === value;
         return (
@@ -59,8 +62,8 @@ export function ThemePicker({ value, onChange }: { value: Theme; onChange: (them
             </div>
             <div className="mt-2.5 flex items-start justify-between gap-2 px-1 pb-0.5">
               <div className="min-w-0">
-                <p className="text-sm">{option.label}</p>
-                <p className="mt-0.5 truncate text-xs text-muted">{option.hint}</p>
+                <p className="text-sm">{t(option.label)}</p>
+                <p className="mt-0.5 truncate text-xs text-muted">{t(option.hint)}</p>
               </div>
               <span
                 className={`mt-0.5 grid size-4 shrink-0 place-items-center rounded-full border transition-colors ${

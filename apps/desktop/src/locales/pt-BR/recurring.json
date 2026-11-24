@@ -1,0 +1,59 @@
+{
+  "describe": {
+    "everyInvoice": "em toda fatura",
+    "everyDay": "todo dia {{day}}",
+    "until": "até {{month}}"
+  },
+  "groups": {
+    "income": "Receitas fixas",
+    "expense": "Despesas fixas",
+    "installments": "Parcelados"
+  },
+  "intro": "Salário, aluguel, assinaturas e carnês. Todo mês o Nublar cria o lançamento e confirma sozinho na data (no cartão, quando a fatura fecha). Até lá dá para ajustar ou pular.",
+  "new": "Nova recorrência",
+  "edit": "Editar recorrência",
+  "search": {
+    "label": "Buscar recorrências",
+    "placeholder": "Buscar por descrição, categoria ou conta",
+    "count_zero": "{{count}} itens",
+    "count_one": "{{count}} item",
+    "count_other": "{{count}} itens"
+  },
+  "empty": {
+    "title": "Nenhuma recorrência",
+    "description": "Cadastre o que se repete (salário, aluguel, Netflix no cartão, um carnê em 10x) para não lançar à mão todo mês.",
+    "action": "Criar recorrência"
+  },
+  "notFound": {
+    "title": "Nenhuma recorrência encontrada",
+    "description": "Confira a busca e tente novamente.",
+    "clear": "Limpar busca"
+  },
+  "perMonth": "{{amount}} por mês",
+  "total": "total {{amount}}",
+  "form": {
+    "errors": {
+      "amount": "Informe um valor, por exemplo 49,90.",
+      "end": "O fim precisa ser depois do início."
+    },
+    "updated": "Recorrência atualizada",
+    "created": "Recorrência criada",
+    "removed": "Recorrência removida",
+    "placeholders": {
+      "income": "Ex.: Salário",
+      "installments": "Ex.: Carnê da geladeira",
+      "expense": "Ex.: Netflix"
+    },
+    "installments": "Em quantas vezes",
+    "installmentsPreview": "{{count}}x de cerca de {{amount}}",
+    "cardHint": "Entra em toda fatura, na data de vencimento dela. Não precisa escolher o dia.",
+    "day": "Todo dia",
+    "start": {
+      "card": "A partir da fatura de",
+      "installments": "Primeira parcela em",
+      "monthly": "Começa em"
+    },
+    "end": "Termina em (opcional)",
+    "editHint": "Alterar atualiza os pendentes. O que já foi confirmado não muda."
+  }
+}

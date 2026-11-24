@@ -1,4 +1,6 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
+import { t } from "@/i18n";
 import logo from "../../../../../assets/logo_semfundo.png";
 import { Button } from "@/components/Button";
 import { controlClass, Field } from "@/components/Field";
@@ -11,15 +13,16 @@ type Mode = "sign-in" | "sign-up";
 
 function translateAuthError(message: string): string {
   const lower = message.toLowerCase();
-  if (lower.includes("already registered")) return "Esse email já tem conta. Entre com ele.";
-  if (lower.includes("email not confirmed")) return "Confirme o email antes de entrar.";
-  if (lower.includes("rate limit")) return "Muitas tentativas. Aguarde um pouco.";
-  if (lower.includes("password")) return "Senha fraca. Use pelo menos 8 caracteres.";
-  if (lower.includes("fetch")) return "Sem conexão com o Supabase.";
+  if (lower.includes("already registered")) return t("auth.errors.alreadyRegistered");
+  if (lower.includes("email not confirmed")) return t("auth.errors.emailNotConfirmed");
+  if (lower.includes("rate limit")) return t("auth.errors.rateLimit");
+  if (lower.includes("password")) return t("auth.errors.weakPassword");
+  if (lower.includes("fetch")) return t("auth.errors.offline");
   return message;
 }
 
 export function AuthScreen() {
+  const { t } = useTranslation();
   const configError = supabaseConfigError();
   const [mode, setMode] = useState<Mode>("sign-in");
   const [email, setEmail] = useState("");
@@ -32,11 +35,11 @@ export function AuthScreen() {
     event.preventDefault();
     setMessage(null);
     if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
-      setMessage({ text: "Digite um email válido, como nome@exemplo.com.", tone: "error" });
+      setMessage({ text: t("auth.errors.invalidEmail"), tone: "error" });
       return;
     }
     if (password.length < 8) {
-      setMessage({ text: "A senha precisa ter pelo menos 8 caracteres.", tone: "error" });
+      setMessage({ text: t("auth.errors.shortPassword"), tone: "error" });
       return;
     }
 
@@ -50,7 +53,7 @@ export function AuthScreen() {
           return;
         }
         if (!data.session) {
-          setMessage({ text: "Conta criada. Confirme o email para entrar.", tone: "info" });
+          setMessage({ text: t("auth.signUpDone"), tone: "info" });
         }
         return;
       }
@@ -59,14 +62,14 @@ export function AuthScreen() {
       if (error) {
         setMessage({
           text: error.message.toLowerCase().includes("invalid")
-            ? "Email ou senha incorretos."
+            ? t("auth.errors.invalidCredentials")
             : translateAuthError(error.message),
           tone: "error",
         });
       }
     } catch (reason: unknown) {
       setMessage({
-        text: translateAuthError(reason instanceof Error ? reason.message : "Falha ao entrar"),
+        text: translateAuthError(reason instanceof Error ? reason.message : t("auth.errors.signInFailed")),
         tone: "error",
       });
     } finally {
@@ -83,18 +86,17 @@ export function AuthScreen() {
         <div className="auth-story">
           <div className="flex items-center gap-3">
           <img src={logo} alt="" className="h-20 w-20 object-contain" />
-          <span className="font-display text-3xl tracking-tight">Nublar</span>
+          <span className="font-display text-3xl tracking-tight">{t("common.appName")}</span>
           </div>
-          <p className="design-eyebrow mt-10">Seu dinheiro, com clareza</p>
-          <h1 className="auth-headline">Mais visão.<br />Mais tranquilidade.</h1>
+          <p className="design-eyebrow mt-10">{t("auth.story.eyebrow")}</p>
+          <h1 className="auth-headline">{t("auth.story.headline")}<br />{t("auth.story.headlineSecond")}</h1>
           <p className="mt-6 max-w-sm text-base leading-relaxed text-muted">
-            Entenda o presente e planeje o que vem pela frente.
-            Sua vida financeira, em um só lugar.
+            {t("auth.story.intro")}
           </p>
           <div className="auth-features">
-            <span><Icon name="bank" size={19} /> Contas reunidas</span>
-            <span><Icon name="chart" size={19} /> Gastos à vista</span>
-            <span><Icon name="target" size={19} /> Planos no caminho</span>
+            <span><Icon name="bank" size={19} /> {t("auth.story.accounts")}</span>
+            <span><Icon name="chart" size={19} /> {t("auth.story.spending")}</span>
+            <span><Icon name="target" size={19} /> {t("auth.story.plans")}</span>
           </div>
         </div>
 
@@ -104,17 +106,17 @@ export function AuthScreen() {
           className="auth-form space-y-5"
         >
           <div className="mb-7">
-            <h2 className="font-display text-3xl">{mode === "sign-in" ? "Bom ter você aqui." : "Seu próximo começo."}</h2>
-            <p className="mt-2 text-sm text-muted">{mode === "sign-in" ? "Entre para cuidar dos seus planos." : "Crie sua conta e organize suas finanças."}</p>
+            <h2 className="font-display text-3xl">{mode === "sign-in" ? t("auth.signIn.title") : t("auth.signUp.title")}</h2>
+            <p className="mt-2 text-sm text-muted">{mode === "sign-in" ? t("auth.signIn.subtitle") : t("auth.signUp.subtitle")}</p>
           </div>
           <div className="flex">
             <Segmented
               full
-              label="Entrar ou criar conta"
+              label={t("auth.mode")}
               value={mode}
               options={[
-                { value: "sign-in", label: "Entrar" },
-                { value: "sign-up", label: "Criar conta" },
+                { value: "sign-in", label: t("auth.signIn.action") },
+                { value: "sign-up", label: t("auth.signUp.action") },
               ]}
               onChange={(next) => {
                 setMode(next);
@@ -122,7 +124,7 @@ export function AuthScreen() {
               }}
             />
           </div>
-          <Field label="Email">
+          <Field label={t("auth.email")}>
             <input
               className={controlClass}
               type="email"
@@ -137,13 +139,13 @@ export function AuthScreen() {
               required
             />
           </Field>
-          <Field label="Senha">
+          <Field label={t("auth.password")}>
             <span className="relative block">
               <input
                 className={`${controlClass} pr-11`}
                 type={showPassword ? "text" : "password"}
                 autoComplete={mode === "sign-up" ? "new-password" : "current-password"}
-                placeholder={mode === "sign-up" ? "Mínimo 8 caracteres" : ""}
+                placeholder={mode === "sign-up" ? t("auth.passwordHint") : ""}
                 maxLength={72}
                 value={password}
                 onChange={(event) => setPassword(event.target.value)}
@@ -151,7 +153,7 @@ export function AuthScreen() {
               />
               <button
                 type="button"
-                aria-label={showPassword ? "Ocultar senha" : "Mostrar senha"}
+                aria-label={showPassword ? t("auth.hidePassword") : t("auth.showPassword")}
                 aria-pressed={showPassword}
                 className="absolute top-1/2 right-1 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-lg text-faint transition-colors hover:text-foreground"
                 onClick={() => setShowPassword((value) => !value)}
@@ -175,7 +177,7 @@ export function AuthScreen() {
             className="w-full"
             disabled={pending || Boolean(configError)}
           >
-            {pending ? "Aguarde…" : mode === "sign-in" ? "Entrar" : "Criar conta"}
+            {pending ? t("auth.wait") : mode === "sign-in" ? t("auth.signIn.action") : t("auth.signUp.action")}
           </Button>
         </form>
       </div>

@@ -221,6 +221,19 @@ types/
 
 O que é de uma tela fica na feature. `components` guarda o que mais de uma tela usa.
 
+## Textos e idiomas
+
+Todo texto visível sai de `src/locales/<idioma>/<área>.json` (i18next + react-i18next, configurado em `src/i18n`).
+
+- pt-BR é o padrão e o fallback: o que faltar em `en` aparece em português.
+- Uma área por arquivo (`home`, `transactions`, …), lida como prefixo da chave: `t("home.title")`.
+- Chaves são tipadas a partir do pt-BR: chave inexistente é erro de TypeScript.
+- Plural com `_one` / `_other` e `t(chave, { count })`. Quando o número pode ser 0, crie também `_zero` (em pt-BR o 0 cai no singular).
+- Texto com elemento no meio (negrito, valor) usa `<Trans>`.
+- Fora de componentes (toasts, `lib/`), importe `t` de `@/i18n`.
+- `lib/labels.ts` mapeia enums para chaves; renderize com `t(accountTypeLabels[tipo])`.
+- O lint (`i18next/no-literal-string`) falha se houver string literal visível em JSX.
+
 ---
 
 # Valores monetários

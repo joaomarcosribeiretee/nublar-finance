@@ -1,0 +1,25 @@
+{
+  "screens": {
+    "home": "Início",
+    "transactions": "Lançamentos",
+    "accounts": "Instituições",
+    "investments": "Investimentos",
+    "analytics": "Análises",
+    "cards": "Cartões",
+    "invoices": "Faturas",
+    "budgets": "Orçamentos",
+    "goals": "Metas",
+    "calendar": "Calendário",
+    "categories": "Categorias",
+    "settings": "Configurações"
+  },
+  "groups": {
+    "netWorth": "Patrimônio",
+    "planning": "Planejamento",
+    "organization": "Organização"
+  },
+  "mainNav": "Principal",
+  "workspace": "Meu espaço",
+  "more": "Mais",
+  "allScreens": "Todas as telas"
+}

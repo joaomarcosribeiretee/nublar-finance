@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Trans, useTranslation } from "react-i18next";
 import { Button } from "@/components/Button";
 import { EmptyState } from "@/components/EmptyState";
 import { controlClass, Field, MoneyInput, TextInput } from "@/components/Field";
@@ -24,6 +25,7 @@ import {
 import { ColorPicker } from "@/features/institutions/InstitutionForm";
 
 export function GoalsScreen() {
+  const { t } = useTranslation();
   const goals = useGoals();
   const [editing, setEditing] = useState<Goal | "new" | null>(null);
   const data = goals.data;
@@ -33,22 +35,22 @@ export function GoalsScreen() {
   return (
     <section className="animate-enter space-y-6">
       <PageHeader
-        eyebrow="Reserva, viagem, entrada do carro"
-        title="Metas"
+        eyebrow={t("planning.goals.eyebrow")}
+        title={t("shell.screens.goals")}
         actions={
           <Button variant="primary" onClick={() => setEditing("new")}>
             <Icon name="plus" size={16} />
-            Nova meta
+            {t("planning.goals.new")}
           </Button>
         }
       >
-        Ligue contas ou investimentos a uma meta e o progresso se atualiza sozinho.
+        {t("planning.goals.intro")}
       </PageHeader>
       {data && data.length > 0 ? <div className="flex flex-wrap items-center justify-between gap-3">
-        <Segmented label="Estado das metas" value={filter} onChange={setFilter} options={[
-          { value: "active", label: `Em andamento (${data.filter((g) => !g.reached).length})` },
-          { value: "done", label: `Concluídas (${data.filter((g) => g.reached).length})` },
-          { value: "all", label: "Todas" },
+        <Segmented label={t("planning.goals.filter.label")} value={filter} onChange={setFilter} options={[
+          { value: "active", label: t("planning.goals.filter.active", { count: data.filter((g) => !g.reached).length }) },
+          { value: "done", label: t("planning.goals.filter.done", { count: data.filter((g) => g.reached).length }) },
+          { value: "all", label: t("planning.goals.filter.all") },
         ]} />
       </div> : null}
 
@@ -57,16 +59,16 @@ export function GoalsScreen() {
       ) : data && data.length === 0 ? (
         <EmptyState
           icon="target"
-          title="Nenhuma meta"
-          description="Diga quanto quer juntar e até quando. O Nublar mostra quanto guardar por mês."
+          title={t("planning.goals.empty.title")}
+          description={t("planning.goals.empty.description")}
           action={
             <Button variant="primary" onClick={() => setEditing("new")}>
-              Criar meta
+              {t("planning.goals.empty.action")}
             </Button>
           }
         />
       ) : visible?.length === 0 ? (
-        <EmptyState icon="target" title={filter === "done" ? "Seus próximos objetivos estão a caminho" : "Nenhuma meta em andamento"} description={filter === "done" ? "As metas atingidas aparecem aqui." : "Crie uma meta para o seu próximo plano."} action={<Button onClick={() => setEditing("new")}>Nova meta</Button>} />
+        <EmptyState icon="target" title={filter === "done" ? t("planning.goals.noneDone.title") : t("planning.goals.noneActive.title")} description={filter === "done" ? t("planning.goals.noneDone.description") : t("planning.goals.noneActive.description")} action={<Button onClick={() => setEditing("new")}>{t("planning.goals.new")}</Button>} />
       ) : (
         <ul className="grid grid-cols-[repeat(auto-fill,minmax(min(100%,280px),1fr))] gap-4">
           {!data
@@ -82,7 +84,7 @@ export function GoalsScreen() {
       <Modal
         open={editing !== null}
         onClose={() => setEditing(null)}
-        title={editing === "new" ? "Nova meta" : editing ? editing.name : ""}
+        title={editing === "new" ? t("planning.goals.new") : editing ? editing.name : ""}
         width={560}
       >
         {editing ? <GoalForm goal={editing === "new" ? null : editing} onDone={() => setEditing(null)} /> : null}
@@ -92,6 +94,7 @@ export function GoalsScreen() {
 }
 
 function GoalCard({ goal, onOpen }: { goal: Goal; onOpen: () => void }) {
+  const { t } = useTranslation();
   const progress = goal.progressBps / 100;
   return (
     <button
@@ -107,22 +110,25 @@ function GoalCard({ goal, onOpen }: { goal: Goal; onOpen: () => void }) {
       <span className="mt-6 break-words text-3xl tabular">
         <Money amount={goal.saved} />
       </span>
-      <span className="text-xs text-muted">de {formatMinorUnits(goal.target)}</span>
+      <span className="text-xs text-muted">{t("planning.of", { amount: formatMinorUnits(goal.target) })}</span>
       <span className="mt-3 block">
         <ProgressBar size="md" value={progress} color={goal.color} />
       </span>
       <span className="mt-5 border-t border-line pt-4 text-sm leading-relaxed">
         {goal.reached ? (
-          <span className="text-positive">Meta atingida</span>
+          <span className="text-positive">{t("planning.goals.card.reached")}</span>
         ) : goal.late ? (
-          <span className="text-negative">Prazo passou · faltam {formatMinorUnits(goal.remaining)}</span>
+          <span className="text-negative">{t("planning.goals.card.late", { amount: formatMinorUnits(goal.remaining) })}</span>
         ) : goal.monthlyNeeded ? (
           <span className="text-muted">
-            Guarde <span className="text-foreground">{formatMinorUnits(goal.monthlyNeeded)}</span> por mês até{" "}
-            {goal.targetDate ? monthLabel(goal.targetDate.slice(0, 7)).toLowerCase() : ""}
+            <Trans
+              i18nKey="planning.goals.card.monthly"
+              values={{ amount: formatMinorUnits(goal.monthlyNeeded), month: goal.targetDate ? monthLabel(goal.targetDate.slice(0, 7)).toLowerCase() : "" }}
+              components={{ value: <span className="text-foreground" /> }}
+            />
           </span>
         ) : (
-          <span className="text-muted">Faltam {formatMinorUnits(goal.remaining)}</span>
+          <span className="text-muted">{t("planning.goals.card.remaining", { amount: formatMinorUnits(goal.remaining) })}</span>
         )}
       </span>
     </button>
@@ -130,6 +136,7 @@ function GoalCard({ goal, onOpen }: { goal: Goal; onOpen: () => void }) {
 }
 
 function GoalForm({ goal, onDone }: { goal: Goal | null; onDone: () => void }) {
+  const { t } = useTranslation();
   const toast = useToast();
   const accounts = useAccounts();
   const portfolio = usePortfolio();
@@ -152,15 +159,15 @@ function GoalForm({ goal, onDone }: { goal: Goal | null; onDone: () => void }) {
     const targetMinor = parseReaisToMinorUnits(target);
     const manualMinor = /^[0.,\s]*$/.test(manual) ? "0" : parseReaisToMinorUnits(manual);
     if (!name.trim()) {
-      setError("Dê um nome para a meta.");
+      setError(t("planning.goals.form.errors.name"));
       return;
     }
     if (!targetMinor) {
-      setError("Informe quanto quer juntar, por exemplo 10.000,00.");
+      setError(t("planning.goals.form.errors.target"));
       return;
     }
     if (manualMinor === null) {
-      setError("O valor já guardado está inválido. Use algo como 1.500,00.");
+      setError(t("planning.goals.form.errors.saved"));
       return;
     }
     try {
@@ -177,7 +184,7 @@ function GoalForm({ goal, onDone }: { goal: Goal | null; onDone: () => void }) {
           investmentIds,
         },
       });
-      toast(goal ? "Meta atualizada" : "Meta criada");
+      toast(goal ? t("planning.goals.form.updated") : t("planning.goals.form.created"));
       onDone();
     } catch (reason: unknown) {
       setError(errorMessage(reason));
@@ -192,7 +199,7 @@ function GoalForm({ goal, onDone }: { goal: Goal | null; onDone: () => void }) {
     }
     try {
       await remove.mutateAsync(goal.id);
-      toast("Meta removida");
+      toast(t("planning.goals.form.removed"));
       onDone();
     } catch (reason: unknown) {
       setError(errorMessage(reason));
@@ -205,32 +212,32 @@ function GoalForm({ goal, onDone }: { goal: Goal | null; onDone: () => void }) {
   return (
     <form onSubmit={(event) => void submit(event)} className="space-y-5">
       <div className="grid gap-3 sm:grid-cols-[1fr_170px]">
-        <Field label="Nome">
+        <Field label={t("institutions.form.name")}>
           <TextInput
             autoFocus
-            placeholder="Ex.: Reserva de emergência"
+            placeholder={t("planning.goals.form.namePlaceholder")}
             value={name}
             maxLength={80}
             onChange={setName}
           />
         </Field>
-        <Field label="Quanto quer juntar">
+        <Field label={t("planning.goals.form.target")}>
           <MoneyInput value={target} onChange={setTarget} />
         </Field>
       </div>
       <div className="grid gap-3 sm:grid-cols-2">
-        <Field label="Até quando (opcional)">
+        <Field label={t("planning.goals.form.date")}>
           <input className={controlClass} type="month" value={targetMonth} onChange={(event) => setTargetMonth(event.target.value)} />
         </Field>
-        <Field label="Já guardado fora daqui (opcional)">
+        <Field label={t("planning.goals.form.saved")}>
           <MoneyInput value={manual} onChange={setManual} />
         </Field>
       </div>
 
-      <Panel title="O que conta para esta meta" subtitle="O saldo das contas e o valor dos investimentos marcados entram no progresso." className="!p-4">
+      <Panel title={t("planning.goals.form.sources.title")} subtitle={t("planning.goals.form.sources.subtitle")} className="!p-4">
         <div className="space-y-1">
           {accounts.data?.length === 0 && (portfolio.data?.items.length ?? 0) === 0 ? (
-            <p className="text-sm text-faint">Nenhuma conta ou investimento cadastrado ainda.</p>
+            <p className="text-sm text-faint">{t("planning.goals.form.sources.empty")}</p>
           ) : null}
           {accounts.data?.map((account) => (
             <label key={account.id} className="flex cursor-pointer items-center gap-3 rounded-lg px-2 py-2 text-sm has-focus-visible:outline-2 has-focus-visible:outline-(--focus-ring) hover:bg-hover">
@@ -260,7 +267,7 @@ function GoalForm({ goal, onDone }: { goal: Goal | null; onDone: () => void }) {
               </span>
               <span className="min-w-0 flex-1 truncate">
                 {investment.name}
-                <span className="text-faint"> · investimento</span>
+                <span className="text-faint"> · {t("planning.goals.form.sources.investment")}</span>
               </span>
               <Money amount={investment.current} className="text-xs text-muted" />
             </label>
@@ -268,7 +275,7 @@ function GoalForm({ goal, onDone }: { goal: Goal | null; onDone: () => void }) {
         </div>
       </Panel>
 
-      <Field label="Cor">
+      <Field label={t("institutions.form.color")}>
         <ColorPicker value={color} onChange={setColor} />
       </Field>
 
@@ -280,15 +287,15 @@ function GoalForm({ goal, onDone }: { goal: Goal | null; onDone: () => void }) {
             onBlur={() => setConfirmDelete(false)}
             disabled={remove.isPending}
           >
-            {confirmDelete ? "Confirmar" : "Remover"}
+            {confirmDelete ? t("common.actions.confirm") : t("common.actions.remove")}
           </Button>
         ) : null}
         <div className="flex-1" />
         <Button variant="ghost" onClick={onDone}>
-          Cancelar
+          {t("common.actions.cancel")}
         </Button>
         <Button variant="primary" type="submit" disabled={save.isPending}>
-          {save.isPending ? "Salvando…" : "Salvar"}
+          {save.isPending ? t("common.save.saving") : t("common.actions.save")}
         </Button>
       </FormFooter>
     </form>

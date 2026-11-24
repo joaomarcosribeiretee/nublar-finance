@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { useTranslation } from "react-i18next";
 import { Button } from "@/components/Button";
 import { Icon } from "@/components/Icon";
 import { PageHeader, Panel } from "@/components/Page";
@@ -14,12 +15,13 @@ const REPOSITORY_URL = "https://github.com/joaomarcosribeiretee/nublar-finance";
 export function SettingsScreen({ email, onSignOut }: { email: string; onSignOut: () => void }) {
   // Sections that change preferences pass `save` to their controls.
   const { preferences, save, status, saved, failed } = useSaveSetting();
+  const { t } = useTranslation();
 
   return (
     <section className="animate-enter">
       <PageHeader
-        eyebrow="Ajuste o Nublar"
-        title="Configurações"
+        eyebrow={t("settings.eyebrow")}
+        title={t("settings.title")}
         actions={
           <p
             role="status"
@@ -30,39 +32,39 @@ export function SettingsScreen({ email, onSignOut }: { email: string; onSignOut:
           </p>
         }
       >
-        Tudo o que você muda aqui é salvo na hora.
+        {t("settings.intro")}
       </PageHeader>
 
       <div className="mt-6 flex max-w-2xl flex-col gap-4">
-        <Panel title="Perfil">
-          <SettingRow label="E-mail" hint="Usado para entrar no Nublar.">
+        <Panel title={t("settings.profile.title")}>
+          <SettingRow label={t("settings.profile.email")} hint={t("settings.profile.emailHint")}>
             <span className="min-w-0 truncate text-sm" title={email}>
               {email}
             </span>
           </SettingRow>
-          <SettingRow label="Sessão">
+          <SettingRow label={t("settings.profile.session")}>
             <Button variant="ghost" className="-mr-4" onClick={onSignOut}>
-              <Icon name="logout" size={16} /> Sair
+              <Icon name="logout" size={16} /> {t("settings.profile.signOut")}
             </Button>
           </SettingRow>
         </Panel>
 
-        <Panel title="Aparência" subtitle="O tema muda na hora, sem recarregar.">
+        <Panel title={t("settings.appearance.title")} subtitle={t("settings.appearance.subtitle")}>
           <ThemePicker value={preferences.theme} onChange={(theme) => save({ theme })} />
         </Panel>
 
-        <Panel title="Sobre">
-          <SettingRow label="Versão">
+        <Panel title={t("settings.about.title")}>
+          <SettingRow label={t("settings.about.version")}>
             <span className="text-sm tabular text-muted">{__APP_VERSION__}</span>
           </SettingRow>
-          <SettingRow label="Código-fonte">
+          <SettingRow label={t("settings.about.source")}>
             <a
               href={REPOSITORY_URL}
               target="_blank"
               rel="noreferrer"
               className="inline-flex items-center gap-1.5 rounded-lg text-sm text-accent hover:underline"
             >
-              Ver no GitHub <Icon name="arrowRight" size={14} />
+              {t("settings.about.viewOnGitHub")} <Icon name="arrowRight" size={14} />
             </a>
           </SettingRow>
         </Panel>

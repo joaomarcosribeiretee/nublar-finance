@@ -1,4 +1,6 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
+import { t } from "@/i18n";
 import { AccountSelect } from "@/components/AccountSelect";
 import { Button } from "@/components/Button";
 import { EmptyState } from "@/components/EmptyState";
@@ -26,12 +28,12 @@ import { CategoryChips } from "@/features/transactions/CategoryChips";
 
 /** "todo dia 8 · Nubank · Conta corrente", "em toda fatura · Cartão Nubank", "10x · até jan 27". */
 function describeRule(rule: RecurringRule): string {
-  const where = rule.card ? `Cartão ${rule.card.name}` : (rule.account?.name ?? "");
-  const when = rule.card ? "em toda fatura" : `todo dia ${rule.dayOfMonth}`;
+  const where = rule.card ? t("institutions.panel.card", { name: rule.card.name }) : (rule.account?.name ?? "");
+  const when = rule.card ? t("recurring.describe.everyInvoice") : t("recurring.describe.everyDay", { day: rule.dayOfMonth });
   const until = rule.installments
-    ? `${rule.installments}x · até ${shortMonthLabel(rule.endMonth ?? rule.startMonth)} ${(rule.endMonth ?? "").slice(2, 4)}`
+    ? `${rule.installments}x · ${t("recurring.describe.until", { month: `${shortMonthLabel(rule.endMonth ?? rule.startMonth)} ${(rule.endMonth ?? "").slice(2, 4)}` })}`
     : rule.endMonth
-      ? `até ${monthLabel(rule.endMonth).toLowerCase()}`
+      ? t("recurring.describe.until", { month: monthLabel(rule.endMonth).toLowerCase() })
       : null;
   return [rule.category.name, when, where, until].filter(Boolean).join(" · ");
 }
@@ -44,32 +46,32 @@ function monthlyOf(rule: RecurringRule): bigint {
 
 /** The rules behind every scheduled entry; lives as a tab of Lançamentos. */
 export function RecurringScreen() {
+  const { t } = useTranslation();
   const rules = useRecurring();
   const [editing, setEditing] = useState<RecurringRule | "new" | null>(null);
   const [search, setSearch] = useState("");
   const data = (rules.data ?? []).filter((rule) => `${rule.description} ${rule.category.name} ${rule.card?.name ?? ""} ${rule.account?.name ?? ""}`.toLocaleLowerCase("pt-BR").includes(search.trim().toLocaleLowerCase("pt-BR")));
   const groups: { title: string; items: RecurringRule[]; tone: "positive" | "plain" }[] = [
-    { title: "Receitas fixas", items: data.filter((r) => r.type === "INCOME"), tone: "positive" },
-    { title: "Despesas fixas", items: data.filter((r) => r.type === "EXPENSE" && !r.installments), tone: "plain" },
-    { title: "Parcelados", items: data.filter((r) => r.installments), tone: "plain" },
+    { title: t("recurring.groups.income"), items: data.filter((r) => r.type === "INCOME"), tone: "positive" },
+    { title: t("recurring.groups.expense"), items: data.filter((r) => r.type === "EXPENSE" && !r.installments), tone: "plain" },
+    { title: t("recurring.groups.installments"), items: data.filter((r) => r.installments), tone: "plain" },
   ];
 
   return (
     <section className="animate-enter space-y-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <p className="max-w-xl text-sm text-muted">
-          Salário, aluguel, assinaturas e carnês. Todo mês o Nublar cria o lançamento e confirma sozinho na data (no
-          cartão, quando a fatura fecha). Até lá dá para ajustar ou pular.
+          {t("recurring.intro")}
         </p>
         <Button onClick={() => setEditing("new")}>
           <Icon name="plus" size={16} />
-          Nova recorrência
+          {t("recurring.new")}
         </Button>
       </div>
       {rules.data && rules.data.length > 0 ? <div className="filter-toolbar flex items-center gap-3">
         <Icon name="search" size={17} className="text-muted" />
-        <input type="search" aria-label="Buscar recorrências" placeholder="Buscar por descrição, categoria ou conta" value={search} onChange={(event) => setSearch(event.target.value)} maxLength={100} className="min-w-0 flex-1 bg-transparent py-2 text-sm outline-none" />
-        <span className="shrink-0 text-xs text-muted">{data.length} itens</span>
+        <input type="search" aria-label={t("recurring.search.label")} placeholder={t("recurring.search.placeholder")} value={search} onChange={(event) => setSearch(event.target.value)} maxLength={100} className="min-w-0 flex-1 bg-transparent py-2 text-sm outline-none" />
+        <span className="shrink-0 text-xs text-muted">{t("recurring.search.count", { count: data.length })}</span>
       </div> : null}
 
       {rules.isError ? (
@@ -79,15 +81,15 @@ export function RecurringScreen() {
       ) : rules.data?.length === 0 ? (
         <EmptyState
           icon="repeat"
-          title="Nenhuma recorrência"
-          description="Cadastre o que se repete (salário, aluguel, Netflix no cartão, um carnê em 10x) para não lançar à mão todo mês."
+          title={t("recurring.empty.title")}
+          description={t("recurring.empty.description")}
           action={
             <Button variant="primary" onClick={() => setEditing("new")}>
-              Criar recorrência
+              {t("recurring.empty.action")}
             </Button>
           }
         />
-      ) : data.length === 0 ? <EmptyState icon="search" title="Nenhuma recorrência encontrada" description="Confira a busca e tente novamente." action={<Button onClick={() => setSearch("")}>Limpar busca</Button>} /> : (
+      ) : data.length === 0 ? <EmptyState icon="search" title={t("recurring.notFound.title")} description={t("recurring.notFound.description")} action={<Button onClick={() => setSearch("")}>{t("recurring.notFound.clear")}</Button>} /> : (
         <div className="space-y-4">
           {groups
             .filter((group) => group.items.length > 0)
@@ -98,7 +100,7 @@ export function RecurringScreen() {
                   key={group.title}
                   flush
                   title={group.title}
-                  actions={<span className="text-xs text-muted">{formatMinorUnits(total.toString())} por mês</span>}
+                  actions={<span className="text-xs text-muted">{t("recurring.perMonth", { amount: formatMinorUnits(total.toString()) })}</span>}
                 >
                   <ul>
                     {group.items.map((rule) => (
@@ -118,7 +120,7 @@ export function RecurringScreen() {
                           <span className="shrink-0 text-right">
                             <Money amount={monthlyOf(rule).toString()} tone={group.tone} className="block text-sm" />
                             {rule.installments ? (
-                              <span className="text-[11px] text-faint">total {formatMinorUnits(rule.amount)}</span>
+                              <span className="text-[11px] text-faint">{t("recurring.total", { amount: formatMinorUnits(rule.amount) })}</span>
                             ) : null}
                           </span>
                         </button>
@@ -134,7 +136,7 @@ export function RecurringScreen() {
       <Modal
         open={editing !== null}
         onClose={() => setEditing(null)}
-        title={editing === "new" ? "Nova recorrência" : "Editar recorrência"}
+        title={editing === "new" ? t("recurring.new") : t("recurring.edit")}
         width={540}
       >
         {editing ? <RecurringForm rule={editing === "new" ? null : editing} onDone={() => setEditing(null)} /> : null}
@@ -144,6 +146,7 @@ export function RecurringScreen() {
 }
 
 function RecurringForm({ rule, onDone }: { rule: RecurringRule | null; onDone: () => void }) {
+  const { t } = useTranslation();
   const toast = useToast();
   const accounts = useAccounts();
   const cards = useCards();
@@ -174,15 +177,15 @@ function RecurringForm({ rule, onDone }: { rule: RecurringRule | null; onDone: (
   async function submit(event: React.FormEvent) {
     event.preventDefault();
     if (!parsed) {
-      setError("Informe um valor, por exemplo 49,90.");
+      setError(t("recurring.form.errors.amount"));
       return;
     }
     if (!categoryId) {
-      setError("Escolha uma categoria.");
+      setError(t("transactions.form.errors.category"));
       return;
     }
     if (!plan && endMonth && endMonth < startMonth) {
-      setError("O fim precisa ser depois do início.");
+      setError(t("recurring.form.errors.end"));
       return;
     }
     try {
@@ -201,7 +204,7 @@ function RecurringForm({ rule, onDone }: { rule: RecurringRule | null; onDone: (
           endMonth: plan ? null : endMonth || null,
         },
       });
-      toast(rule ? "Recorrência atualizada" : "Recorrência criada");
+      toast(rule ? t("recurring.form.updated") : t("recurring.form.created"));
       onDone();
     } catch (reason: unknown) {
       setError(errorMessage(reason));
@@ -216,7 +219,7 @@ function RecurringForm({ rule, onDone }: { rule: RecurringRule | null; onDone: (
     }
     try {
       await remove.mutateAsync(rule.id);
-      toast("Recorrência removida");
+      toast(t("recurring.form.removed"));
       onDone();
     } catch (reason: unknown) {
       setError(errorMessage(reason));
@@ -227,11 +230,11 @@ function RecurringForm({ rule, onDone }: { rule: RecurringRule | null; onDone: (
     <form onSubmit={(event) => void submit(event)} className="space-y-5">
       <div className="flex flex-wrap items-center gap-3">
         <Segmented
-          label="Tipo"
+          label={t("transactions.filters.label")}
           value={type}
           options={[
-            { value: "EXPENSE", label: "Despesa", activeClass: "text-negative" },
-            { value: "INCOME", label: "Receita", activeClass: "text-positive" },
+            { value: "EXPENSE", label: t("labels.entryType.EXPENSE"), activeClass: "text-negative" },
+            { value: "INCOME", label: t("labels.entryType.INCOME"), activeClass: "text-positive" },
           ]}
           onChange={(value) => {
             setType(value);
@@ -241,11 +244,11 @@ function RecurringForm({ rule, onDone }: { rule: RecurringRule | null; onDone: (
         {type === "EXPENSE" ? (
           <Segmented
             size="sm"
-            label="Repetição"
+            label={t("transactions.form.repeat.label")}
             value={mode}
             options={[
-              { value: "monthly", label: "Fixo todo mês" },
-              { value: "installments", label: "Parcelado" },
+              { value: "monthly", label: t("transactions.form.repeat.monthly") },
+              { value: "installments", label: t("transactions.form.repeat.installments") },
             ]}
             onChange={setMode}
           />
@@ -253,22 +256,22 @@ function RecurringForm({ rule, onDone }: { rule: RecurringRule | null; onDone: (
       </div>
 
       <div className="grid gap-3 sm:grid-cols-[1fr_170px]">
-        <Field label="Descrição">
+        <Field label={t("transactions.form.description")}>
           <TextInput
             autoFocus
-            placeholder={type === "INCOME" ? "Ex.: Salário" : plan ? "Ex.: Carnê da geladeira" : "Ex.: Netflix"}
+            placeholder={type === "INCOME" ? t("recurring.form.placeholders.income") : plan ? t("recurring.form.placeholders.installments") : t("recurring.form.placeholders.expense")}
             value={description}
             maxLength={200}
             onChange={setDescription}
           />
         </Field>
-        <Field label={plan ? "Valor total" : "Valor por mês"}>
+        <Field label={plan ? t("transactions.form.amount.total") : t("transactions.form.amount.monthly")}>
           <MoneyInput value={amount} onChange={setAmount} />
         </Field>
       </div>
 
       {plan ? (
-        <Field label="Em quantas vezes">
+        <Field label={t("recurring.form.installments")}>
           <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
             <IntegerInput
               className={`${controlClass} !w-24 tabular`}
@@ -279,7 +282,7 @@ function RecurringForm({ rule, onDone }: { rule: RecurringRule | null; onDone: (
             />
             {parsed ? (
               <span className="text-sm text-muted">
-                {installments}x de cerca de {formatMinorUnits((BigInt(parsed) / BigInt(installments)).toString())}
+                {t("recurring.form.installmentsPreview", { count: installments, amount: formatMinorUnits((BigInt(parsed) / BigInt(installments)).toString()) })}
               </span>
             ) : null}
           </div>
@@ -290,14 +293,14 @@ function RecurringForm({ rule, onDone }: { rule: RecurringRule | null; onDone: (
 
       {type === "EXPENSE" && (cards.data?.length ?? 0) > 0 ? (
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <span className="text-xs text-muted">Pagar com</span>
+          <span className="text-xs text-muted">{t("transactions.form.payWith.label")}</span>
           <Segmented
             size="sm"
-            label="Pagar com"
+            label={t("transactions.form.payWith.label")}
             value={payWith}
             options={[
-              { value: "account", label: "Conta" },
-              { value: "card", label: "Cartão de crédito" },
+              { value: "account", label: t("transactions.form.payWith.account") },
+              { value: "card", label: t("transactions.form.payWith.card") },
             ]}
             onChange={setPayWith}
           />
@@ -305,7 +308,7 @@ function RecurringForm({ rule, onDone }: { rule: RecurringRule | null; onDone: (
       ) : null}
 
       {onCard ? (
-        <Field label="Cartão">
+        <Field label={t("transactions.form.card")}>
           <select className={controlClass} value={chosenCard} onChange={(event) => setCardId(event.target.value)}>
             {cards.data?.map((card) => (
               <option key={card.id} value={card.id}>
@@ -314,13 +317,13 @@ function RecurringForm({ rule, onDone }: { rule: RecurringRule | null; onDone: (
             ))}
           </select>
           <span className="text-[11px] text-faint">
-            Entra em toda fatura, na data de vencimento dela. Não precisa escolher o dia.
+            {t("recurring.form.cardHint")}
           </span>
         </Field>
       ) : (
         <div className="grid grid-cols-[minmax(0,1fr)_96px] gap-3 sm:grid-cols-[1fr_110px]">
-          <AccountSelect label="Conta" accounts={accounts.data ?? []} value={chosenAccount} onChange={setAccountId} />
-          <Field label="Todo dia">
+          <AccountSelect label={t("transactions.form.payWith.account")} accounts={accounts.data ?? []} value={chosenAccount} onChange={setAccountId} />
+          <Field label={t("recurring.form.day")}>
             <select className={controlClass} value={dayOfMonth} onChange={(event) => setDayOfMonth(Number(event.target.value))}>
               {Array.from({ length: 31 }, (_, index) => index + 1).map((day) => (
                 <option key={day} value={day}>
@@ -333,7 +336,7 @@ function RecurringForm({ rule, onDone }: { rule: RecurringRule | null; onDone: (
       )}
 
       <div className="grid grid-cols-2 gap-3">
-        <Field label={onCard ? "A partir da fatura de" : plan ? "Primeira parcela em" : "Começa em"}>
+        <Field label={onCard ? t("recurring.form.start.card") : plan ? t("recurring.form.start.installments") : t("recurring.form.start.monthly")}>
           <input
             className={controlClass}
             type="month"
@@ -343,7 +346,7 @@ function RecurringForm({ rule, onDone }: { rule: RecurringRule | null; onDone: (
           />
         </Field>
         {plan ? null : (
-          <Field label="Termina em (opcional)">
+          <Field label={t("recurring.form.end")}>
             <input
               className={controlClass}
               type="month"
@@ -355,7 +358,7 @@ function RecurringForm({ rule, onDone }: { rule: RecurringRule | null; onDone: (
         )}
       </div>
 
-      {rule ? <p className="text-xs text-faint">Alterar atualiza os pendentes. O que já foi confirmado não muda.</p> : null}
+      {rule ? <p className="text-xs text-faint">{t("recurring.form.editHint")}</p> : null}
       <FormFooter error={error}>
         {rule ? (
           <Button
@@ -364,15 +367,15 @@ function RecurringForm({ rule, onDone }: { rule: RecurringRule | null; onDone: (
             onBlur={() => setConfirmDelete(false)}
             disabled={remove.isPending}
           >
-            {confirmDelete ? "Confirmar" : "Remover"}
+            {confirmDelete ? t("common.actions.confirm") : t("common.actions.remove")}
           </Button>
         ) : null}
         <div className="flex-1" />
         <Button variant="ghost" onClick={onDone}>
-          Cancelar
+          {t("common.actions.cancel")}
         </Button>
         <Button variant="primary" type="submit" disabled={save.isPending}>
-          {save.isPending ? "Salvando…" : "Salvar"}
+          {save.isPending ? t("common.save.saving") : t("common.actions.save")}
         </Button>
       </FormFooter>
     </form>

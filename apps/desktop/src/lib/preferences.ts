@@ -4,6 +4,7 @@ import {
   type Preferences,
   type Theme,
 } from "@nublar/validation";
+import { setLocale } from "@/i18n";
 
 /**
  * Local copy of the last preferences the API returned, so theme and language
@@ -56,6 +57,7 @@ export function applyPreferences(preferences: Preferences): void {
   const root = document.documentElement;
   root.dataset.theme = resolveTheme(preferences.theme, matchMedia(lightQuery).matches);
   root.lang = preferences.locale;
+  setLocale(preferences.locale);
   // Title bar and native menus (Electron only).
   window.nublar?.setTheme(nativeThemeSource(preferences.theme));
 }

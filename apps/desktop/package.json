@@ -17,8 +17,10 @@
     "@nublar/validation": "workspace:*",
     "@supabase/supabase-js": "^2.76.1",
     "@tanstack/react-query": "^5.104.0",
+    "i18next": "^27.2.7",
     "react": "^19.3.0",
     "react-dom": "^19.3.0",
+    "react-i18next": "^18.0.3",
     "recharts": "^3.10.1"
   },
   "devDependencies": {
@@ -32,6 +34,7 @@
     "concurrently": "^9.2.1",
     "electron": "^38.1.2",
     "eslint": "^9.18.0",
+    "eslint-plugin-i18next": "^6.1.5",
     "tailwindcss": "^4.3.3",
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.20.0",

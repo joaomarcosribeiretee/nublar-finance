@@ -1,0 +1,145 @@
+{
+  "fields": {
+    "category": "Categoria"
+  },
+  "categoryChips": {
+    "less": "Menos",
+    "more": "Mais {{count}}"
+  },
+  "noCategory": "Sem categoria",
+  "kind": {
+    "cardPayment": "Pagamento de fatura",
+    "investment": "Aporte",
+    "redemption": "Resgate"
+  },
+  "row": {
+    "to": "para",
+    "pending": "Pendente",
+    "confirmed": "Confirmado",
+    "skipped": "Pulado este mês",
+    "skip": "Pular"
+  },
+  "new": "Novo lançamento",
+  "title": "Lançamentos",
+  "import": "Importar extrato",
+  "newShort": "Novo",
+  "result": "Resultado",
+  "filters": {
+    "label": "Tipo",
+    "all": "Todos",
+    "expense": "Despesas",
+    "income": "Receitas",
+    "transfer": "Transferências"
+  },
+  "views": {
+    "label": "O que ver",
+    "month": "Por mês",
+    "upcoming": "Próximos meses",
+    "recurring": "Recorrentes"
+  },
+  "search": {
+    "label": "Buscar lançamentos",
+    "placeholder": "Buscar"
+  },
+  "filter": {
+    "category": "Categoria: {{name}}",
+    "clear": "Limpar filtro"
+  },
+  "empty": {
+    "title": "Nada em {{month}}",
+    "description": "Registre receitas, despesas e transferências para acompanhar para onde o dinheiro vai.",
+    "filtered": "Nenhum lançamento com esse filtro."
+  },
+  "group": {
+    "invoice": "Fatura {{name}} · vence {{date}}"
+  },
+  "upcoming": {
+    "empty": "Nada previsto neste mês.",
+    "note": "Previsto: recorrências, parcelas e compras já lançadas, confirmadas ou não. Meses pulados ficam fora."
+  },
+  "strip": {
+    "previous": "Meses anteriores",
+    "choose": "Escolher mês",
+    "currentMarker": "(mês atual)",
+    "noData": "sem dados",
+    "next": "Meses seguintes",
+    "current": "Mês atual"
+  },
+  "form": {
+    "titles": {
+      "purchase": "Compra no cartão",
+      "pending": "Lançamento pendente",
+      "edit": "Editar lançamento"
+    },
+    "noAccount": {
+      "title": "Nenhuma conta ainda",
+      "description": "Todo lançamento acontece em uma conta. Adicione seu banco para começar."
+    },
+    "errors": {
+      "amount": "Informe um valor, por exemplo 25,90.",
+      "sameAccount": "Escolha duas contas diferentes.",
+      "category": "Escolha uma categoria."
+    },
+    "toasts": {
+      "recurringUpdated": "Recorrência atualizada daqui em diante",
+      "updated": "Lançamento atualizado",
+      "recurringCreated": "Recorrência criada: confirmada automaticamente a cada mês",
+      "installments": "Parcelado em {{count}}x",
+      "saved": "Lançamento salvo",
+      "purchaseDeleted": "Compra excluída",
+      "deleted": "Lançamento excluído",
+      "movementDeleted": "Excluído"
+    },
+    "type": "Tipo de lançamento",
+    "amount": {
+      "total": "Valor total",
+      "monthly": "Valor por mês",
+      "single": "Valor"
+    },
+    "payWith": {
+      "label": "Pagar com",
+      "account": "Conta",
+      "card": "Cartão de crédito"
+    },
+    "from": "De",
+    "to": "Para",
+    "card": "Cartão",
+    "repeat": {
+      "label": "Repetição",
+      "once": "Não repete",
+      "monthly": "Fixo todo mês",
+      "installments": "Parcelado",
+      "count": "Número de parcelas",
+      "times": "vezes",
+      "monthlyCard": "Entra em toda fatura do cartão e é confirmado quando a fatura fecha.",
+      "monthlyAccount": "Todo dia {{day}}, a partir de {{month}}. Confirmado automaticamente na data.",
+      "installmentsAccount": "Uma parcela por mês na conta, a partir desta data. Cada uma é confirmada automaticamente na data."
+    },
+    "scope": {
+      "title": "Recorrência",
+      "label": "O que esta edição muda",
+      "one": "Só este mês",
+      "following": "Este e os próximos",
+      "oneHint": "Continua recorrente; os outros meses não mudam.",
+      "followingInstallmentsHint": "Descrição, categoria e conta mudam a partir deste mês. O valor das outras parcelas segue o total do parcelamento.",
+      "followingHint": "Valor, descrição, categoria e conta mudam a partir deste mês."
+    },
+    "description": "Descrição",
+    "descriptionPlaceholder": "Ex.: Mercado",
+    "purchaseDate": "Data da compra",
+    "date": "Data",
+    "transferHint": "Transferências entre suas contas não contam como receita nem despesa.",
+    "cardHint": "A despesa entra no mês de cada fatura. Compras no dia do fechamento ou depois vão para a fatura seguinte.",
+    "deleteInstallments": "Excluir {{count}} parcelas",
+    "skipMonth": "Pular este mês",
+    "installmentsEqual": "{{count}}x de <value>{{value}}</value>",
+    "installmentsUneven": "1ª de <value>{{first}}</value> e {{rest}}x de <value>{{value}}</value>",
+    "invoice": "Fatura",
+    "paidWith": "Pago com",
+    "investment": "Investimento",
+    "leftFrom": "Saiu de",
+    "returnedTo": "Voltou para",
+    "cardPaymentHint": "Pagamentos de fatura não são despesa: as compras já contaram no mês da fatura.",
+    "movementHint": "Aportes e resgates só mudam o dinheiro de lugar: não são despesa nem receita."
+  }
+}

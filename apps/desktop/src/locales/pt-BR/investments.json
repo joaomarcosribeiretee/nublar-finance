@@ -1,0 +1,124 @@
+{
+  "bulk": {
+    "invalid": "Valor inválido em {{name}}.",
+    "updated_one": "{{count}} valor atualizado",
+    "updated_other": "{{count}} valores atualizados",
+    "intro": "Copie o valor atual de cada aplicação do app do banco. Só o que mudou é salvo.",
+    "updatedOn": "atualizado {{date}}",
+    "currentValueOf": "Valor atual de {{name}}",
+    "date": "Valores de",
+    "submit": "Salvar valores"
+  },
+  "eyebrow": "Renda fixa, ações, FIIs, cripto",
+  "updateValues": "Atualizar valores",
+  "new": "Novo investimento",
+  "empty": {
+    "title": "Nenhum investimento",
+    "description": "Basta dizer quanto você tem hoje em cada aplicação. Depois é só atualizar o valor de vez em quando.",
+    "action": "Cadastrar investimento"
+  },
+  "stats": {
+    "current": "Valor atual",
+    "applied": "Aplicado",
+    "redeemed": "resgatado",
+    "gain": "Ganho",
+    "gainDetail": "valor + resgates − aplicado",
+    "return": "Rentabilidade",
+    "returnDetail": "sobre o aplicado"
+  },
+  "portfolio": "Sua carteira",
+  "allClasses": "Ver todas as classes",
+  "allocation": "Distribuição",
+  "describe": {
+    "matures": "vence {{date}}",
+    "noValue": "sem valor"
+  },
+  "fixedIncome": {
+    "title": "Renda fixa: quando dá para sacar",
+    "daily": "A qualquer momento",
+    "dailyHint": "Bom lugar para a reserva de emergência.",
+    "atMaturity": "Só no vencimento",
+    "unknown": "<value/> sem liquidez informada. Edite o investimento para classificar.",
+    "maturities": "Vencimentos nos próximos 12 meses",
+    "noMaturities": "Nada vence nos próximos 12 meses."
+  },
+  "form": {
+    "errors": {
+      "rate": "Taxa inválida. Use algo como 110 ou 6,5.",
+      "current": "Informe quanto você tem hoje.",
+      "applied": "Informe quanto você aplicou."
+    },
+    "updated": "Investimento atualizado",
+    "created": "Investimento cadastrado",
+    "deleted": "Investimento excluído",
+    "class": "Classe",
+    "product": "Produto",
+    "current": "Quanto você tem hoje",
+    "currentHint": "O valor que aparece hoje no app do banco ou da corretora. Entra no patrimônio, não como despesa.",
+    "name": "Nome (opcional)",
+    "rate": "Rentabilidade contratada (opcional)",
+    "indexer": "Indexador",
+    "unknown": "Não sei",
+    "rateValue": "Taxa",
+    "rateHint": "Só informativo. Está nos detalhes da aplicação no app do banco (ex.: “92% do CDI”).",
+    "liquidity": "Quando dá para sacar",
+    "liquidityLabel": "Liquidez",
+    "maturity": "Vencimento (opcional)",
+    "ticker": "Código (opcional)",
+    "quantity": "Quantidade (opcional)",
+    "history": "Sei quanto e quando apliquei",
+    "historyHint": "Opcional. Sem isso, o rendimento passa a ser contado a partir de hoje.",
+    "applied": "Valor aplicado",
+    "since": "Desde"
+  },
+  "horizons": {
+    "oneMonth": "1 mês",
+    "sixMonths": "6 meses",
+    "oneYear": "1 ano",
+    "maturity": "Até o vencimento"
+  },
+  "detail": {
+    "invest": "Aportar",
+    "redeem": "Resgatar",
+    "updateValue": "Atualizar valor",
+    "edit": "Editar dados",
+    "errors": {
+      "amount": "Informe um valor, por exemplo 500,00.",
+      "noAccount": "Cadastre uma conta antes: o dinheiro precisa sair de algum lugar ou voltar para ele.",
+      "value": "Informe quanto a aplicação vale na data.",
+      "invalidValue": "Valor inválido. Use algo como 1.250,00."
+    },
+    "invested": "Aporte registrado",
+    "redeemed": "Resgate registrado",
+    "from": "Sai de",
+    "to": "Volta para",
+    "movementHint": "Só muda o dinheiro de lugar: não é despesa nem receita.",
+    "submitInvest": "Registrar aporte",
+    "submitRedeem": "Registrar resgate",
+    "valueUpdated": "Valor atualizado",
+    "valueQuestion": "Quanto vale agora?",
+    "valueOnDate": "Valor na data",
+    "valueHint": "Copie o valor do app do banco ou da corretora. Aportes futuros somam sobre ele.",
+    "saveValue": "Salvar valor",
+    "history": "Histórico",
+    "movements": "Aportes e resgates ({{count}})",
+    "valuations": "Valores ({{count}})",
+    "noMovements": "Nenhum aporte ou resgate ainda.",
+    "deleteMovement": "Excluir movimentação",
+    "reportedValue": "Valor informado",
+    "deleteValue": "Excluir valor",
+    "valueDeleted": "Valor excluído",
+    "deleteConfirm": "Excluir?",
+    "matures": "Vence {{date}}"
+  },
+  "preview": {
+    "title": "Prévia de rendimento",
+    "subtitle": "{{rate}}% do CDI sobre o valor atual",
+    "exempt": "isento de IR",
+    "net": "líquido de IR",
+    "cdi": "CDI",
+    "cdiLabel": "CDI anual",
+    "gross": "bruto",
+    "note": "Estimativa com CDI constante; não altera o valor da posição, que segue pelas suas atualizações."
+  }
+}

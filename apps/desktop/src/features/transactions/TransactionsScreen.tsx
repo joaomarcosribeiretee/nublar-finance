@@ -1,4 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
+import { t, type TranslationKey } from "@/i18n";
 import { Button } from "@/components/Button";
 import { Modal } from "@/components/Modal";
 import { ErrorNote, PageHeader } from "@/components/Page";
@@ -28,11 +30,11 @@ type Group = { key: string; date: string; title: string; items: Transaction[]; i
 type Filter = "ALL" | EntryType;
 export type TransactionFilter = { type?: Filter; categoryId?: string | null; categoryName?: string };
 
-const filters: { value: Filter; label: string }[] = [
-  { value: "ALL", label: "Todos" },
-  { value: "EXPENSE", label: "Despesas" },
-  { value: "INCOME", label: "Receitas" },
-  { value: "TRANSFER", label: "Transferências" },
+const filters: { value: Filter; label: TranslationKey }[] = [
+  { value: "ALL", label: "transactions.filters.all" },
+  { value: "EXPENSE", label: "transactions.filters.expense" },
+  { value: "INCOME", label: "transactions.filters.income" },
+  { value: "TRANSFER", label: "transactions.filters.transfer" },
 ];
 
 /** What happened, what is coming, and the rules that make what is coming. */
@@ -51,6 +53,7 @@ export function TransactionsScreen({
   onEdit: (transaction: Transaction) => void;
   initialFilter?: TransactionFilter;
 }) {
+  const { t } = useTranslation();
   const transactions = useTransactions(month);
   const summary = useSummary(month);
   const [filter, setFilter] = useState<Filter>(initialFilter?.type ?? "ALL");
@@ -72,16 +75,16 @@ export function TransactionsScreen({
   return (
     <section className="animate-enter">
       <PageHeader
-        title="Lançamentos"
+        title={t("transactions.title")}
         actions={
           <>
             <Button variant="ghost" onClick={() => setImporting(true)}>
               <Icon name="upload" size={15} />
-              Importar extrato
+              {t("transactions.import")}
             </Button>
             <Button variant="primary" onClick={onNew}>
               <Icon name="plus" size={16} />
-              Novo
+              {t("transactions.newShort")}
               <kbd className="ml-1 hidden rounded bg-accent-fg/15 px-1.5 text-[10px] hoverable:inline">N</kbd>
             </Button>
           </>
@@ -90,12 +93,12 @@ export function TransactionsScreen({
 
       <div className="mt-6">
         <Segmented
-          label="O que ver"
+          label={t("transactions.views.label")}
           value={view}
           options={[
-            { value: "month" as const, label: "Por mês" },
-            { value: "upcoming" as const, label: "Próximos meses" },
-            { value: "recurring" as const, label: "Recorrentes" },
+            { value: "month" as const, label: t("transactions.views.month") },
+            { value: "upcoming" as const, label: t("transactions.views.upcoming") },
+            { value: "recurring" as const, label: t("transactions.views.recurring") },
           ]}
           onChange={(next) => { setView(next); if (next !== "month") setCategory(undefined); }}
         />
@@ -111,16 +114,16 @@ export function TransactionsScreen({
         <>
           <MonthStrip month={month} onChange={onMonthChange} />
           <div className="mt-4 grid gap-px overflow-hidden rounded-2xl border border-line bg-line @lg:grid-cols-3">
-            <MiniStat label="Receitas" amount={summary.data?.income} tone="positive" />
-            <MiniStat label="Despesas" amount={summary.data?.expense} tone="negative" />
-            <MiniStat label="Resultado" amount={summary.data?.result} tone="auto" />
+            <MiniStat label={t("transactions.filters.income")} amount={summary.data?.income} tone="positive" />
+            <MiniStat label={t("transactions.filters.expense")} amount={summary.data?.expense} tone="negative" />
+            <MiniStat label={t("transactions.result")} amount={summary.data?.result} tone="auto" />
           </div>
         </>
       ) : null}
 
       {view === "recurring" ? null : (
       <div className="filter-toolbar mt-6 flex flex-wrap items-center gap-3">
-        <Segmented size="sm" label="Tipo" value={filter} options={filters} onChange={setFilter} />
+        <Segmented size="sm" label={t("transactions.filters.label")} value={filter} options={filters.map((item) => ({ ...item, label: t(item.label) }))} onChange={setFilter} />
         <div className="relative w-full @lg:ml-auto @lg:w-64">
           <Icon
             name="search"
@@ -129,9 +132,9 @@ export function TransactionsScreen({
           />
           <input
             type="search"
-            aria-label="Buscar lançamentos"
+            aria-label={t("transactions.search.label")}
             className="h-10 w-full rounded-xl border border-line bg-surface-2 pr-3 pl-9 text-base outline-none transition-colors placeholder:text-faint hover:border-line-strong focus:border-accent/60 sm:h-9 sm:text-sm"
-            placeholder="Buscar"
+            placeholder={t("transactions.search.placeholder")}
             value={query}
             maxLength={80}
             onChange={(event) => setQuery(event.target.value)}
@@ -141,8 +144,8 @@ export function TransactionsScreen({
       )}
       {category?.categoryId !== undefined ? (
         <div className="mt-3 flex items-center gap-2 text-sm text-muted">
-          Categoria: {category.categoryName ?? "Sem categoria"}
-          <Button variant="ghost" className="h-8 px-2 text-xs" onClick={() => setCategory(undefined)}>Limpar filtro <Icon name="close" size={13} /></Button>
+          {t("transactions.filter.category", { name: category.categoryName ?? t("transactions.noCategory") })}
+          <Button variant="ghost" className="h-8 px-2 text-xs" onClick={() => setCategory(undefined)}>{t("transactions.filter.clear")} <Icon name="close" size={13} /></Button>
         </div>
       ) : null}
 
@@ -157,25 +160,25 @@ export function TransactionsScreen({
           ) : !hasAny ? (
             <EmptyState
               icon="list"
-              title={`Nada em ${monthLabel(month).toLowerCase()}`}
-              description="Registre receitas, despesas e transferências para acompanhar para onde o dinheiro vai."
+              title={t("transactions.empty.title", { month: monthLabel(month).toLowerCase() })}
+              description={t("transactions.empty.description")}
               action={
                 <Button variant="primary" onClick={onNew}>
                   <Icon name="plus" size={16} />
-                  Novo lançamento
+                  {t("transactions.new")}
                 </Button>
               }
             />
           ) : groups.length === 0 ? (
             <p className="py-10 text-center text-sm text-muted">
-              Nenhum lançamento com esse filtro.
+              {t("transactions.empty.filtered")}
             </p>
           ) : (
             <GroupList groups={groups} onEdit={onEdit} dim={transactions.isPlaceholderData} />
           )}
         </div>
       )}
-      <Modal open={importing} onClose={() => setImporting(false)} title="Importar extrato" width={820}>
+      <Modal open={importing} onClose={() => setImporting(false)} title={t("transactions.import")} width={820}>
         {importing ? <ImportFlow onDone={() => setImporting(false)} /> : null}
       </Modal>
     </section>
@@ -227,7 +230,7 @@ function groupEntries(list: Transaction[], invoices: Summary["invoices"]): Group
     result.push({
       key: `invoice:${cardId}`,
       date: dueDate,
-      title: `Fatura ${items[0].card?.name ?? ""} · vence ${shortDate(dueDate)}`,
+      title: t("transactions.group.invoice", { name: items[0].card?.name ?? "", date: shortDate(dueDate) }),
       items,
       invoice: true,
     });
@@ -291,6 +294,7 @@ function UpcomingMonths({
   query: string;
   onEdit: (transaction: Transaction) => void;
 }) {
+  const { t } = useTranslation();
   const months = Array.from({ length: UPCOMING_MONTHS }, (_, index) => shiftMonth(from, index + 1));
   const lists = useTransactionsFor(months);
   const summaries = useSummariesFor(months);
@@ -322,10 +326,10 @@ function UpcomingMonths({
               {totals ? (
                 <span className="flex items-center gap-5 text-xs">
                   <span className="hidden text-muted @2xl:inline">
-                    Receitas <Money amount={totals.income} tone="positive" />
+                    {t("transactions.filters.income")} <Money amount={totals.income} tone="positive" />
                   </span>
                   <span className="hidden text-muted @2xl:inline">
-                    Despesas <Money amount={totals.expense} />
+                    {t("transactions.filters.expense")} <Money amount={totals.expense} />
                   </span>
                   <span className="text-right @2xl:w-28">
                     <Money amount={totals.result} tone="auto" />
@@ -344,7 +348,7 @@ function UpcomingMonths({
                 ) : !list ? (
                   <ListSkeleton rows={3} />
                 ) : groups.length === 0 ? (
-                  <p className="py-6 text-center text-sm text-muted">Nada previsto neste mês.</p>
+                  <p className="py-6 text-center text-sm text-muted">{t("transactions.upcoming.empty")}</p>
                 ) : (
                   <GroupList groups={groups} onEdit={onEdit} includePending />
                 )}
@@ -354,7 +358,7 @@ function UpcomingMonths({
         );
       })}
       <p className="px-1 text-xs text-faint">
-        Previsto: recorrências, parcelas e compras já lançadas, confirmadas ou não. Meses pulados ficam fora.
+        {t("transactions.upcoming.note")}
       </p>
     </div>
   );
@@ -403,6 +407,7 @@ const STRIP_MONTHS = 6;
  * window; the future lives in "Próximos meses".
  */
 function MonthStrip({ month, onChange }: { month: string; onChange: (month: string) => void }) {
+  const { t } = useTranslation();
   const today = currentMonth();
   const [last, setEnd] = useState(() => (month > today ? month : today));
   // A month chosen elsewhere (the top bar, Análises) that falls outside the
@@ -425,10 +430,10 @@ function MonthStrip({ month, onChange }: { month: string; onChange: (month: stri
 
   return (
     <div className="mt-4 flex items-center gap-1">
-      <button type="button" aria-label="Meses anteriores" className={arrow} onClick={() => setEnd(shiftMonth(last, -STRIP_MONTHS))}>
+      <button type="button" aria-label={t("transactions.strip.previous")} className={arrow} onClick={() => setEnd(shiftMonth(last, -STRIP_MONTHS))}>
         <Icon name="chevronLeft" size={16} />
       </button>
-      <div role="group" aria-label="Escolher mês" className="scroll-quiet flex min-w-0 flex-1 gap-1 overflow-x-auto">
+      <div role="group" aria-label={t("transactions.strip.choose")} className="scroll-quiet flex min-w-0 flex-1 gap-1 overflow-x-auto">
         {months.map((item, index) => {
           const active = item === month;
           const result = summaries[index].data?.result;
@@ -448,7 +453,7 @@ function MonthStrip({ month, onChange }: { month: string; onChange: (month: stri
               <span className={`text-sm ${active ? "text-foreground" : "text-muted"}`}>
                 {shortMonthLabel(item)}
                 {showYear ? <span className="text-faint"> {item.slice(2, 4)}</span> : null}
-                {item === today ? <span className="sr-only"> (mês atual)</span> : null}
+                {item === today ? <span className="sr-only"> {t("transactions.strip.currentMarker")}</span> : null}
               </span>
               {result === undefined ? (
                 summaries[index].isError ? (
@@ -457,7 +462,7 @@ function MonthStrip({ month, onChange }: { month: string; onChange: (month: stri
                   <span className="skeleton h-3 w-14" />
                 )
               ) : result === "0" ? (
-                <span className="text-[11px] text-faint">sem dados</span>
+                <span className="text-[11px] text-faint">{t("transactions.strip.noData")}</span>
               ) : (
                 // Short form: the exact number is in the totals right below.
                 <span
@@ -473,7 +478,7 @@ function MonthStrip({ month, onChange }: { month: string; onChange: (month: stri
         })}
       </div>
       {last < today ? (
-        <button type="button" aria-label="Meses seguintes" className={arrow} onClick={() => setEnd(shiftMonth(last, STRIP_MONTHS) > today ? today : shiftMonth(last, STRIP_MONTHS))}>
+        <button type="button" aria-label={t("transactions.strip.next")} className={arrow} onClick={() => setEnd(shiftMonth(last, STRIP_MONTHS) > today ? today : shiftMonth(last, STRIP_MONTHS))}>
           <Icon name="chevronRight" size={16} />
         </button>
       ) : (
@@ -481,7 +486,7 @@ function MonthStrip({ month, onChange }: { month: string; onChange: (month: stri
       )}
       {month !== today ? (
         <Button variant="ghost" className="h-9 px-3 text-xs text-accent" onClick={() => { setEnd(today); onChange(today); }}>
-          Mês atual
+          {t("transactions.strip.current")}
         </Button>
       ) : null}
     </div>

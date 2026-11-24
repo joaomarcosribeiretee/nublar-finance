@@ -1,4 +1,6 @@
 import { useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
+import type { TranslationKey } from "@/i18n";
 import logo from "../../../../../assets/logo_semfundo.png";
 import { Icon, type IconName } from "@/components/Icon";
 import { Button } from "@/components/Button";
@@ -24,28 +26,28 @@ import { TransactionForm, type FormPreset } from "@/features/transactions/Transa
 import { TransactionsScreen, type TransactionFilter } from "@/features/transactions/TransactionsScreen";
 
 const screens = {
-  home: { label: "Início", icon: "home" },
-  transactions: { label: "Lançamentos", icon: "list" },
-  accounts: { label: "Instituições", icon: "bank" },
-  investments: { label: "Investimentos", icon: "trend" },
-  analytics: { label: "Análises", icon: "chart" },
-  cards: { label: "Cartões", icon: "card" },
-  invoices: { label: "Faturas", icon: "receipt" },
-  budgets: { label: "Orçamentos", icon: "gauge" },
-  goals: { label: "Metas", icon: "target" },
-  calendar: { label: "Calendário", icon: "calendar" },
-  categories: { label: "Categorias", icon: "tag" },
-  settings: { label: "Configurações", icon: "settings" },
-} as const satisfies Record<string, { label: string; icon: IconName }>;
+  home: { label: "shell.screens.home", icon: "home" },
+  transactions: { label: "shell.screens.transactions", icon: "list" },
+  accounts: { label: "shell.screens.accounts", icon: "bank" },
+  investments: { label: "shell.screens.investments", icon: "trend" },
+  analytics: { label: "shell.screens.analytics", icon: "chart" },
+  cards: { label: "shell.screens.cards", icon: "card" },
+  invoices: { label: "shell.screens.invoices", icon: "receipt" },
+  budgets: { label: "shell.screens.budgets", icon: "gauge" },
+  goals: { label: "shell.screens.goals", icon: "target" },
+  calendar: { label: "shell.screens.calendar", icon: "calendar" },
+  categories: { label: "shell.screens.categories", icon: "tag" },
+  settings: { label: "shell.screens.settings", icon: "settings" },
+} as const satisfies Record<string, { label: TranslationKey; icon: IconName }>;
 
 type Screen = keyof typeof screens;
 
 /** Sidebar sections: overview, where the money is, setup. */
-const navGroups: { title?: string; items: Screen[] }[] = [
+const navGroups: { title?: TranslationKey; items: Screen[] }[] = [
   { items: ["home", "analytics", "transactions"] },
-  { title: "Patrimônio", items: ["accounts", "investments", "cards", "invoices"] },
-  { title: "Planejamento", items: ["budgets", "goals", "calendar"] },
-  { title: "Organização", items: ["categories"] },
+  { title: "shell.groups.netWorth", items: ["accounts", "investments", "cards", "invoices"] },
+  { title: "shell.groups.planning", items: ["budgets", "goals", "calendar"] },
+  { title: "shell.groups.organization", items: ["categories"] },
 ];
 
 /** The phone tab bar: the daily screens, with the new-entry button between them. */
@@ -63,6 +65,7 @@ const settingsKeys = window.nublar?.platform === "darwin" ? "⌘ ," : "Ctrl ,";
 export function Shell({ email }: { email: string }) {
   // Loads the saved theme and language and keeps them applied.
   usePreferences();
+  const { t } = useTranslation();
   const [screen, setScreen] = useState<Screen>("home");
   const [month, setMonth] = useState(currentMonth);
   const [form, setForm] = useState<{
@@ -138,7 +141,7 @@ export function Shell({ email }: { email: string }) {
         className={`absolute top-1/2 left-0 h-4 w-0.5 -translate-y-1/2 rounded-full bg-accent transition-opacity ${settingsActive ? "opacity-100" : "opacity-0"}`}
       />
       <Icon name="settings" size={17} />
-      {screens.settings.label}
+      {t(screens.settings.label)}
       <kbd className="ml-auto hidden text-xs text-faint lg:inline">{settingsKeys}</kbd>
     </button>
   );
@@ -151,7 +154,7 @@ export function Shell({ email }: { email: string }) {
             key={group.title}
             className={`px-3 pb-1 text-[10px] font-medium tracking-[0.14em] text-faint uppercase ${index > 0 ? "pt-4" : ""}`}
           >
-            {group.title}
+            {t(group.title)}
           </p>
         ) : null,
         ...group.items.map((item) => {
@@ -170,7 +173,7 @@ export function Shell({ email }: { email: string }) {
                 className={`absolute top-1/2 left-0 h-4 w-0.5 -translate-y-1/2 rounded-full bg-accent transition-opacity ${active ? "opacity-100" : "opacity-0"}`}
               />
               <Icon name={screens[item].icon} size={17} />
-              {screens[item].label}
+              {t(screens[item].label)}
             </button>
           );
         }),
@@ -183,14 +186,14 @@ export function Shell({ email }: { email: string }) {
       <aside className="app-sidebar drag hidden w-64 shrink-0 flex-col px-5 pt-7 pb-5 lg:flex">
         <div className="flex items-center gap-2.5 px-2">
           <img src={logo} alt="" className="h-9 w-9 object-contain" />
-          <span className="font-display text-2xl tracking-tight">Nublar</span>
+          <span className="font-display text-2xl tracking-tight">{t("common.appName")}</span>
         </div>
         <Button variant="primary" className="no-drag mt-7 w-full" onClick={openNew}>
-          <Icon name="plus" size={17} /> Novo lançamento
+          <Icon name="plus" size={17} /> {t("transactions.new")}
           <kbd className="ml-auto text-xs opacity-60">N</kbd>
         </Button>
 
-        <nav aria-label="Principal" className="no-drag scroll-quiet mt-6 flex min-h-0 flex-col gap-1 overflow-y-auto">
+        <nav aria-label={t("shell.mainNav")} className="no-drag scroll-quiet mt-6 flex min-h-0 flex-col gap-1 overflow-y-auto">
           {navList}
         </nav>
 
@@ -205,7 +208,7 @@ export function Shell({ email }: { email: string }) {
             onClick={signOut}
           >
             <Icon name="logout" size={16} />
-            Sair
+            {t("settings.profile.signOut")}
           </button>
         </div>
       </aside>
@@ -214,13 +217,13 @@ export function Shell({ email }: { email: string }) {
         {/* Desktop: the window's drag strip. Phone: the app bar. */}
         <div className="app-toolbar drag flex h-14 shrink-0 items-center gap-2 border-b border-line px-4 lg:h-16 lg:px-10 lg:pr-40">
           <img src={logo} alt="" className="h-7 w-7 object-contain lg:hidden" />
-          <span className="hidden items-center gap-2 text-xs text-muted lg:flex"><span className="h-1.5 w-1.5 rounded-full bg-accent" />Meu espaço<span className="px-2 text-faint">/</span><span className="text-foreground">{screens[screen].label}</span></span>
+          <span className="hidden items-center gap-2 text-xs text-muted lg:flex"><span className="h-1.5 w-1.5 rounded-full bg-accent" />{t("shell.workspace")}<span className="px-2 text-faint">/</span><span className="text-foreground">{t(screens[screen].label)}</span></span>
           {monthly.includes(screen) ? (
             <div className="ml-auto">
               <MonthPicker month={month} onChange={setMonth} />
             </div>
           ) : (
-            <span className="font-display text-lg tracking-tight lg:hidden">Nublar</span>
+            <span className="font-display text-lg tracking-tight lg:hidden">{t("common.appName")}</span>
           )}
         </div>
         <main ref={main} className="flex-1 overflow-x-hidden overflow-y-auto">
@@ -293,7 +296,7 @@ export function Shell({ email }: { email: string }) {
       </div>
 
       <nav
-        aria-label="Principal"
+        aria-label={t("shell.mainNav")}
         className="pb-safe fixed inset-x-0 bottom-0 z-40 border-t border-line bg-surface lg:hidden"
       >
         <div className="mx-auto grid h-(--tabbar) max-w-xl grid-cols-5 items-center px-1">
@@ -301,14 +304,14 @@ export function Shell({ email }: { email: string }) {
             <Tab
               key={item}
               icon={screens[item].icon}
-              label={screens[item].label}
+              label={t(screens[item].label)}
               active={screen === item && !menuOpen}
               onClick={() => go(item)}
             />
           ))}
           <button
             type="button"
-            aria-label="Novo lançamento"
+            aria-label={t("transactions.new")}
             className="mx-auto flex h-11 w-11 items-center justify-center rounded-2xl bg-accent text-accent-fg shadow-lg shadow-shadow/40 transition-[filter,scale] active:scale-95 active:brightness-95"
             onClick={openNew}
           >
@@ -318,22 +321,22 @@ export function Shell({ email }: { email: string }) {
             <Tab
               key={item}
               icon={screens[item].icon}
-              label={screens[item].label}
+              label={t(screens[item].label)}
               active={screen === item && !menuOpen}
               onClick={() => go(item)}
             />
           ))}
           <Tab
             icon="grid"
-            label="Mais"
+            label={t("shell.more")}
             active={menuOpen || !tabs.includes(screen)}
             onClick={() => setMenuOpen(true)}
           />
         </div>
       </nav>
 
-      <Modal open={menuOpen} onClose={() => setMenuOpen(false)} title="Nublar">
-        <nav aria-label="Todas as telas" className="flex flex-col gap-1">
+      <Modal open={menuOpen} onClose={() => setMenuOpen(false)} title={t("common.appName")}>
+        <nav aria-label={t("shell.allScreens")} className="flex flex-col gap-1">
           {navList}
         </nav>
         <div className="mt-5 border-t border-line pt-4">
@@ -345,7 +348,7 @@ export function Shell({ email }: { email: string }) {
             onClick={signOut}
           >
             <Icon name="logout" size={16} />
-            Sair
+            {t("settings.profile.signOut")}
           </button>
         </div>
       </Modal>

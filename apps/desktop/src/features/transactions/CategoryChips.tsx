@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Field } from "@/components/Field";
 import type { Category, CategoryKind } from "@/lib/queries";
 
@@ -20,6 +21,7 @@ export function CategoryChips({
   value: string;
   onChange: (id: string) => void;
 }) {
+  const { t } = useTranslation();
   const [expanded, setExpanded] = useState(false);
   const list = categories
     .filter((category) => category.kind === kind)
@@ -34,7 +36,7 @@ export function CategoryChips({
         ];
 
   return (
-    <Field label="Categoria">
+    <Field label={t("transactions.fields.category")}>
       <div className="flex flex-wrap gap-1.5">
         {visible.map((category) => (
           <button
@@ -57,7 +59,7 @@ export function CategoryChips({
             className="rounded-full px-3 py-1.5 text-sm text-accent transition-colors hover:bg-accent/10"
             onClick={() => setExpanded((current) => !current)}
           >
-            {expanded ? "Menos" : `Mais ${list.length - VISIBLE}`}
+            {expanded ? t("transactions.categoryChips.less") : t("transactions.categoryChips.more", { count: list.length - VISIBLE })}
           </button>
         ) : null}
       </div>

@@ -3,6 +3,7 @@ import { createRoot } from "react-dom/client";
 import "@fontsource/fraunces/500.css";
 import "@fontsource/outfit/400.css";
 import "@fontsource/outfit/500.css";
+import "./i18n";
 import { App } from "./App";
 import { followSystemTheme } from "./lib/preferences";
 import "./index.css";

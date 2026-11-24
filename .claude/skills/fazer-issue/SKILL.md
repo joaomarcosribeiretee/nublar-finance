@@ -48,7 +48,7 @@ Ao terminar a preparação, informe ao usuário em uma linha: a issue, a branch 
 - **Siga o código existente.** Leia `docs/tecnico.md` e as decisões em `docs/decisions/` relevantes antes de mudar a arquitetura.
 - **Desktop** (`apps/desktop`):
   - cores só via tokens de `src/styles/tokens.css` (o teste `tokens.test.ts` bloqueia cor fixa);
-  - textos em pt-BR (até a issue de i18n existir);
+  - textos em `src/locales` via i18n (`t("area.chave")`), nunca literais no JSX;
   - componentes de `src/components`.
 - **API** (`apps/api`):
   - NestJS + Prisma;

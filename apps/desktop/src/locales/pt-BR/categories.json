@@ -1,0 +1,18 @@
+{
+  "eyebrow": "Organize seus lançamentos",
+  "intro": "As mais usadas aparecem primeiro nos formulários.",
+  "search": {
+    "label": "Buscar categorias",
+    "placeholder": "Buscar categoria"
+  },
+  "exists": "\"{{name}}\" já existe em {{kind}}",
+  "removed": "\"{{name}}\" removida",
+  "usage_one": "{{count}} lançamento",
+  "usage_other": "{{count}} lançamentos",
+  "unused": "sem uso",
+  "remove": "Remover {{name}}",
+  "notFound": "Nenhuma categoria com esse nome.",
+  "empty": "Adicione sua primeira categoria.",
+  "newOf": "Nova categoria de {{kind}}",
+  "new": "Nova categoria"
+}

@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { useTranslation } from "react-i18next";
 import { Button } from "@/components/Button";
 import { Icon } from "@/components/Icon";
 import { Money } from "@/components/Money";
@@ -39,6 +40,7 @@ export function HomeScreen({
   onAnalytics: () => void;
   onBudgets: () => void;
 }) {
+  const { t } = useTranslation();
   const summary = useSummary(month);
   const transactions = useTransactions(month);
   const accounts = useAccounts();
@@ -47,27 +49,27 @@ export function HomeScreen({
   const failure = accounts.error ?? summary.error;
 
   if (failure && (!data || !accounts.data)) {
-    return <section className="space-y-6"><PageHeader title="Início" /><ErrorNote>{errorMessage(failure)}</ErrorNote><Button onClick={() => { void accounts.refetch(); void summary.refetch(); }}>Tentar novamente</Button></section>;
+    return <section className="space-y-6"><PageHeader title={t("home.title")} /><ErrorNote>{errorMessage(failure)}</ErrorNote><Button onClick={() => { void accounts.refetch(); void summary.refetch(); }}>{t("common.actions.retry")}</Button></section>;
   }
 
   if (accounts.isSuccess && accounts.data.length === 0) {
     return (
       <section className="onboarding animate-enter">
-        <p className="design-eyebrow">Um começo simples</p>
-        <h1 className="mt-4 max-w-xl font-display text-4xl @2xl:text-5xl">Sua vida financeira.<br /><span className="text-accent">Agora, por inteiro.</span></h1>
+        <p className="design-eyebrow">{t("home.onboarding.eyebrow")}</p>
+        <h1 className="mt-4 max-w-xl font-display text-4xl @2xl:text-5xl">{t("home.onboarding.title")}<br /><span className="text-accent">{t("home.onboarding.titleAccent")}</span></h1>
         <p className="mt-5 max-w-md text-muted">
-          Comece pelos lugares onde seu dinheiro está: bancos, corretoras, carteiras.
+          {t("home.onboarding.intro")}
         </p>
         <div className="mt-7">
           <Button variant="primary" onClick={onCreateAccount}>
-            <Icon name="plus" size={16} /> Adicionar instituição
+            <Icon name="plus" size={16} /> {t("home.onboarding.addInstitution")}
           </Button>
-          <p className="mt-3 text-sm text-muted">Escolha seu banco e adicione suas contas e cartões.</p>
+          <p className="mt-3 text-sm text-muted">{t("home.onboarding.addInstitutionHint")}</p>
         </div>
         <div className="onboarding-steps mt-9">
-          <span><Icon name="bank" size={18} /> Reúna suas contas</span>
-          <span><Icon name="list" size={18} /> Registre seu dia a dia</span>
-          <span><Icon name="target" size={18} /> Acompanhe seus planos</span>
+          <span><Icon name="bank" size={18} /> {t("home.onboarding.stepAccounts")}</span>
+          <span><Icon name="list" size={18} /> {t("home.onboarding.stepDaily")}</span>
+          <span><Icon name="target" size={18} /> {t("home.onboarding.stepPlans")}</span>
         </div>
       </section>
     );
@@ -87,24 +89,24 @@ export function HomeScreen({
       <header className="month-hero">
         <div className="min-w-0">
           <p className="design-eyebrow">{monthLabel(month)}</p>
-          <h1 className="mt-3 text-sm font-normal text-muted">{positive ? "Sobrou este mês" : "Faltou este mês"}</h1>
+          <h1 className="mt-3 text-sm font-normal text-muted">{positive ? t("home.result.surplus") : t("home.result.deficit")}</h1>
           <div className="hero-value mt-1 font-display tracking-tight">
             {data ? <Money amount={data.result.replace("-", "")} tone={positive ? "positive" : "negative"} /> : <div className="skeleton h-14 w-72" />}
           </div>
           <dl className="mt-7 space-y-4">
-            <FlowBar label="Entrou" amount={data?.income} width={widthOf(incomeValue)} tone="positive" delta={<Delta current={data?.income} previous={data?.previous.income} previousLabel={previousLabel} goodWhenUp />} onOpen={() => onSeeAll({ type: "INCOME" })} />
-            <FlowBar label="Saiu" amount={data?.expense} width={widthOf(expenseValue)} tone="negative" delta={<Delta current={data?.expense} previous={data?.previous.expense} previousLabel={previousLabel} goodWhenUp={false} />} onOpen={() => onSeeAll({ type: "EXPENSE" })} />
+            <FlowBar label={t("home.flow.income")} amount={data?.income} width={widthOf(incomeValue)} tone="positive" delta={<Delta current={data?.income} previous={data?.previous.income} previousLabel={previousLabel} goodWhenUp />} onOpen={() => onSeeAll({ type: "INCOME" })} />
+            <FlowBar label={t("home.flow.expense")} amount={data?.expense} width={widthOf(expenseValue)} tone="negative" delta={<Delta current={data?.expense} previous={data?.previous.expense} previousLabel={previousLabel} goodWhenUp={false} />} onOpen={() => onSeeAll({ type: "EXPENSE" })} />
           </dl>
         </div>
         <aside className="hero-aside">
-          <p className="text-sm text-muted">Patrimônio</p>
+          <p className="text-sm text-muted">{t("home.netWorth")}</p>
           <div className="mt-1 text-2xl @2xl:text-3xl">
             {data ? <Money amount={data.netWorth} /> : <div className="skeleton h-8 w-44" />}
           </div>
           {data ? (
             <p className="mt-1 text-xs text-muted">
-              {formatMinorUnits(data.cash)} em contas
-              {BigInt(data.investments) > 0n ? ` · ${formatMinorUnits(data.investments)} investidos` : ""}
+              {t("home.cashInAccounts", { amount: formatMinorUnits(data.cash) })}
+              {BigInt(data.investments) > 0n ? ` · ${t("home.invested", { amount: formatMinorUnits(data.investments) })}` : ""}
             </p>
           ) : null}
           <NetWorthSparkline month={month} onOpen={onAnalytics} />
@@ -121,18 +123,18 @@ export function HomeScreen({
       {needsAttention && data ? <Attention summary={data} onOpen={onEdit} onCards={onCards} /> : null}
 
       <div className="grid gap-4 @2xl:grid-cols-[1fr_1.15fr]">
-        <Panel title="Para onde foi o dinheiro" subtitle="Maiores despesas do mês" actions={<Button variant="ghost" className="h-8 px-3 text-xs" onClick={onAnalytics}>Análises</Button>}>
+        <Panel title={t("home.categories.title")} subtitle={t("home.categories.subtitle")} actions={<Button variant="ghost" className="h-8 px-3 text-xs" onClick={onAnalytics}>{t("home.categories.analytics")}</Button>}>
           {!data ? (
             <div className="space-y-4">{[0, 1, 2].map((index) => <div key={index} className="skeleton h-8" />)}</div>
           ) : data.expensesByCategory.length === 0 ? (
-            <p className="text-sm text-faint">Nenhuma despesa em {monthLabel(month).toLowerCase()}.</p>
+            <p className="text-sm text-faint">{t("home.categories.empty", { month: monthLabel(month).toLowerCase() })}</p>
           ) : (
             <ul className="-mx-2 space-y-1">
               {data.expensesByCategory.slice(0, 5).map((group) => {
                 const share = percentOf(group.amount, data.expense);
                 return (
                   <li key={group.categoryId ?? "none"}>
-                    <button type="button" className="category-drill w-full rounded-xl p-2 text-left transition-colors hover:bg-hover" onClick={() => onSeeAll({ type: "EXPENSE", categoryId: group.categoryId, categoryName: group.name })} aria-label={`Ver lançamentos de ${group.name}`}>
+                    <button type="button" className="category-drill w-full rounded-xl p-2 text-left transition-colors hover:bg-hover" onClick={() => onSeeAll({ type: "EXPENSE", categoryId: group.categoryId, categoryName: group.name })} aria-label={t("home.categories.open", { name: group.name })}>
                       <div className="flex items-baseline justify-between gap-3 text-sm">
                         <span className="truncate">{group.name}</span>
                         <span className="flex shrink-0 items-baseline gap-2">
@@ -151,11 +153,11 @@ export function HomeScreen({
 
         <Panel
           flush
-          title="Últimos lançamentos"
+          title={t("home.latest.title")}
           actions={
             <>
-              <Button variant="ghost" className="h-8 px-3 text-xs" onClick={() => onSeeAll()}>Ver todos</Button>
-              <Button variant="ghost" className="h-8 w-8 px-0" onClick={onNew} aria-label="Novo lançamento"><Icon name="plus" size={16} /></Button>
+              <Button variant="ghost" className="h-8 px-3 text-xs" onClick={() => onSeeAll()}>{t("home.latest.seeAll")}</Button>
+              <Button variant="ghost" className="h-8 w-8 px-0" onClick={onNew} aria-label={t("transactions.new")}><Icon name="plus" size={16} /></Button>
             </>
           }
         >
@@ -165,8 +167,8 @@ export function HomeScreen({
             <ListSkeleton rows={4} />
           ) : (transactions.data?.length ?? 0) === 0 ? (
             <p className="px-3 py-6 text-sm text-faint">
-              Nenhum lançamento neste mês.{" "}
-              <button type="button" className="text-accent hover:underline" onClick={onNew}>Registrar agora</button>
+              {t("home.latest.empty")}{" "}
+              <button type="button" className="text-accent hover:underline" onClick={onNew}>{t("home.latest.register")}</button>
             </p>
           ) : (
             <ul>{transactions.data?.slice(0, 5).map((transaction) => <TransactionRow key={transaction.id} transaction={transaction} onOpen={onEdit} />)}</ul>
@@ -179,8 +181,9 @@ export function HomeScreen({
 
 /** One bar per flow, same scale for both, so "saiu" reads against "entrou" at a glance. */
 function FlowBar({ label, amount, width, tone, delta, onOpen }: { label: string; amount: string | undefined; width: number; tone: "positive" | "negative"; delta: ReactNode; onOpen: () => void }) {
+  const { t } = useTranslation();
   return (
-    <button type="button" onClick={onOpen} aria-label={`Ver lançamentos: ${label.toLowerCase()}`} className="metric-link block w-full rounded-xl text-left">
+    <button type="button" onClick={onOpen} aria-label={t("home.flow.open", { label: label.toLowerCase() })} className="metric-link block w-full rounded-xl text-left">
       <div className="flex items-baseline justify-between gap-3">
         <dt className="text-sm text-muted">{label}</dt>
         <dd className="flex items-baseline gap-3">
@@ -194,15 +197,16 @@ function FlowBar({ label, amount, width, tone, delta, onOpen }: { label: string;
 }
 
 function Delta({ current, previous, previousLabel, goodWhenUp }: { current: string | undefined; previous: string | undefined; previousLabel: string; goodWhenUp: boolean }) {
+  const { t } = useTranslation();
   if (current === undefined || previous === undefined || BigInt(previous) === 0n) return null;
   const change = BigInt(current) - BigInt(previous);
-  if (change === 0n) return <span className="text-xs text-faint">igual a {previousLabel}</span>;
+  if (change === 0n) return <span className="text-xs text-faint">{t("home.delta.same", { month: previousLabel })}</span>;
   const percent = Math.round(Number((change * 1000n) / BigInt(previous)) / 10);
   const up = change > 0n;
   return (
     <span className={`text-xs ${up === goodWhenUp ? "text-positive" : "text-negative"}`}>
-      <span className="sr-only">{up ? "subiu " : "caiu "}</span>
-      {up ? "+" : "−"}{Math.abs(percent)}% vs {previousLabel}
+      <span className="sr-only">{up ? t("home.delta.up") : t("home.delta.down")}{" "}</span>
+      {t("home.delta.vs", { percent: `${up ? "+" : "−"}${Math.abs(percent)}`, month: previousLabel })}
     </span>
   );
 }
@@ -217,11 +221,12 @@ function Attention({
   onOpen: (transaction: Transaction) => void;
   onCards: (cardId?: string) => void;
 }) {
+  const { t } = useTranslation();
   return (
     <article className="min-w-0 rounded-3xl border border-line bg-surface p-2 @2xl:p-3">
       <h2 className="flex items-center gap-2 px-3 pt-3 pb-2 text-sm">
         <Icon name="calendar" size={15} />
-        Precisa de atenção
+        {t("home.attention.title")}
       </h2>
       <ul>
         {summary.invoices.map((invoice) => (
@@ -235,9 +240,9 @@ function Attention({
                 <Icon name="card" size={16} />
               </span>
               <span className="min-w-0 flex-1">
-                <span className="block truncate text-sm">Fatura {invoice.card.name}</span>
+                <span className="block truncate text-sm">{t("home.attention.invoice", { name: invoice.card.name })}</span>
                 <span className="block text-xs text-muted">
-                  Vence {shortDate(invoice.dueDate)} · {invoiceStatusLabels[invoice.status].toLowerCase()}
+                  {t("home.attention.due", { date: shortDate(invoice.dueDate) })} · {t(invoiceStatusLabels[invoice.status]).toLowerCase()}
                 </span>
               </span>
               <Money

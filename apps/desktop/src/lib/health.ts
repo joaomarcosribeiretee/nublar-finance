@@ -1,13 +1,14 @@
+import { t } from "@/i18n";
 import type { ServiceHealth } from "@nublar/validation";
 
 export function healthLabel(health: ServiceHealth | null): string {
   if (!health) {
-    return "API indisponível";
+    return t("common.health.down");
   }
 
   if (health.database === "up") {
-    return "API e banco conectados";
+    return t("common.health.up");
   }
 
-  return "API no ar, banco indisponível";
+  return t("common.health.databaseDown");
 }

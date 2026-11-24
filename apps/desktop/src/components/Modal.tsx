@@ -1,4 +1,5 @@
 import { useEffect, useId, useRef, type ReactNode } from "react";
+import { useTranslation } from "react-i18next";
 import { Icon } from "./Icon";
 
 /**
@@ -20,6 +21,7 @@ export function Modal({
   width?: number;
 }) {
   const ref = useRef<HTMLDialogElement>(null);
+  const { t } = useTranslation();
   const titleId = useId();
 
   useEffect(() => {
@@ -66,7 +68,7 @@ export function Modal({
             <h2 id={titleId} className="min-w-0 break-words font-display text-2xl">{title}</h2>
             <button
               type="button"
-              aria-label="Fechar"
+              aria-label={t("common.actions.close")}
               className="-mr-2 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-muted transition-colors hover:bg-hover hover:text-foreground"
               onClick={onClose}
             >

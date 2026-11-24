@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Button } from "@/components/Button";
 import { ErrorNote, PageHeader, StatStrip } from "@/components/Page";
 import { EmptyState } from "@/components/EmptyState";
@@ -42,6 +43,7 @@ export function InstitutionsScreen({
   onOpenCards: () => void;
   onOpenInvestments: () => void;
 }) {
+  const { t } = useTranslation();
   const institutions = useInstitutions();
   const accounts = useAccounts();
   const cards = useCards();
@@ -63,27 +65,27 @@ export function InstitutionsScreen({
   return (
     <section className="animate-enter">
       <PageHeader
-        eyebrow="Bancos, corretoras e carteiras"
-        title="Instituições"
+        eyebrow={t("institutions.eyebrow")}
+        title={t("shell.screens.accounts")}
         actions={
           <>
             <Button variant="ghost" onClick={() => setDialog({ kind: "cash" })}>
-              Dinheiro em espécie
+              {t("institutions.cash")}
             </Button>
             <Button variant="primary" onClick={() => onAddingChange(true)}>
               <Icon name="plus" size={16} />
-              Instituição
+              {t("institutions.newShort")}
             </Button>
           </>
         }
       >
-        Dinheiro em contas, sem contar investimentos.
+        {t("institutions.intro")}
       </PageHeader>
 
       {!failure && summary.data ? <div className="mt-6"><StatStrip columns="grid-cols-1 @lg:grid-cols-3" items={[
-        { label: "Disponível em contas", value: <Money amount={summary.data.cash} /> },
-        { label: "Em investimentos", value: <Money amount={summary.data.investments} /> },
-        { label: "Instituições cadastradas", value: institutions.data?.length ?? "—" },
+        { label: t("institutions.stats.cash"), value: <Money amount={summary.data.cash} /> },
+        { label: t("institutions.stats.investments"), value: <Money amount={summary.data.investments} /> },
+        { label: t("institutions.stats.count"), value: institutions.data?.length ?? "—" },
       ]} /></div> : null}
       <div className="institution-grid mt-6 grid items-start gap-4 @3xl:grid-cols-2">
         {failure ? <ErrorNote>{errorMessage(failure)}</ErrorNote> : null}
@@ -92,11 +94,11 @@ export function InstitutionsScreen({
         ) : empty ? (
           <div className="col-span-full"><EmptyState
             icon="bank"
-            title="Onde está seu dinheiro?"
-            description="Adicione seus bancos, corretoras e carteiras. Dentro de cada um você coloca contas, caixinhas e cartões."
+            title={t("institutions.empty.title")}
+            description={t("institutions.empty.description")}
             action={
               <Button variant="primary" onClick={() => onAddingChange(true)}>
-                Adicionar instituição
+                {t("home.onboarding.addInstitution")}
               </Button>
             }
           /></div>
@@ -128,10 +130,10 @@ export function InstitutionsScreen({
         )}
       </div>
 
-      <Modal open={current?.kind === "add-institution"} onClose={close} title="Nova instituição" width={560}>
+      <Modal open={current?.kind === "add-institution"} onClose={close} title={t("institutions.new")} width={560}>
         <AddInstitution onDone={close} />
       </Modal>
-      <Modal open={current?.kind === "cash"} onClose={close} title="Dinheiro em espécie">
+      <Modal open={current?.kind === "cash"} onClose={close} title={t("institutions.cash")}>
         <AccountForm account={null} institution={null} fixedType="CASH" onDone={close} />
       </Modal>
       <Modal
@@ -157,7 +159,7 @@ export function InstitutionsScreen({
         onClose={close}
         title={
           current?.kind === "add-to"
-            ? `${current.what === "card" ? "Novo cartão" : "Nova conta"} · ${current.institution.name}`
+            ? `${current.what === "card" ? t("institutions.newCard") : t("institutions.newAccount")} · ${current.institution.name}`
             : ""
         }
       >
@@ -192,6 +194,7 @@ function InstitutionPanel({
   onInvestments?: () => void;
   onAdd?: (what: "account" | "card") => void;
 }) {
+  const { t } = useTranslation();
   const color = institution?.color ?? "var(--faint)";
 
   return (
@@ -205,10 +208,10 @@ function InstitutionPanel({
           </span>
         )}
         <div className="min-w-0 flex-1">
-          <h2 className="truncate">{institution?.name ?? "Fora de instituições"}</h2>
+          <h2 className="truncate">{institution?.name ?? t("institutions.panel.loose")}</h2>
           {institution && BigInt(institution.cardDebt) > 0n ? (
             <p className="truncate text-xs text-muted">
-              Cartões devem <Money amount={institution.cardDebt} />
+              {t("institutions.panel.cardDebt")} <Money amount={institution.cardDebt} />
             </p>
           ) : null}
         </div>
@@ -218,7 +221,7 @@ function InstitutionPanel({
         {onEdit ? (
           <button
             type="button"
-            aria-label="Editar instituição"
+            aria-label={t("institutions.panel.edit")}
             className="-mr-1 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-faint transition-colors hover:bg-hover hover:text-foreground"
             onClick={onEdit}
           >
@@ -238,10 +241,10 @@ function InstitutionPanel({
               <span className="h-1.5 w-1.5 shrink-0 rounded-full" style={{ background: color }} />
               <span className="min-w-0 flex-1">
                 <span className="block truncate text-sm">
-                  {account.name || accountTypeLabels[account.type]}
+                  {account.name || t(accountTypeLabels[account.type])}
                 </span>
                 {account.name ? (
-                  <span className="block text-xs text-muted">{accountTypeLabels[account.type]}</span>
+                  <span className="block text-xs text-muted">{t(accountTypeLabels[account.type])}</span>
                 ) : null}
               </span>
               <Money
@@ -260,7 +263,7 @@ function InstitutionPanel({
               className="flex w-full items-center gap-3 rounded-2xl px-3 py-2.5 text-left transition-colors hover:bg-hover"
             >
               <Icon name="trend" size={14} className="text-muted" />
-              <span className="flex-1 text-sm">Investimentos</span>
+              <span className="flex-1 text-sm">{t("shell.screens.investments")}</span>
               <Money amount={institution.investments} className="text-sm" />
             </button>
           </li>
@@ -274,14 +277,14 @@ function InstitutionPanel({
             >
               <Icon name="card" size={14} className="text-muted" />
               <span className="min-w-0 flex-1">
-                <span className="block truncate text-sm">Cartão {card.name}</span>
+                <span className="block truncate text-sm">{t("institutions.panel.card", { name: card.name })}</span>
                 <span className="block text-xs text-muted">
-                  Disponível <Money amount={card.available} />
+                  {t("institutions.panel.available")} <Money amount={card.available} />
                 </span>
               </span>
               <span className="text-right">
                 <Money amount={card.currentInvoice.remaining} className="block text-sm" />
-                <span className="block text-[11px] text-faint">fatura</span>
+                <span className="block text-[11px] text-faint">{t("institutions.panel.invoice")}</span>
               </span>
             </button>
           </li>
@@ -296,7 +299,7 @@ function InstitutionPanel({
             className="flex items-center gap-1.5 rounded-lg px-2.5 py-2 text-xs text-muted transition-colors hover:bg-hover hover:text-foreground"
           >
             <Icon name="plus" size={13} />
-            Conta
+            {t("transactions.form.payWith.account")}
           </button>
           <button
             type="button"
@@ -304,7 +307,7 @@ function InstitutionPanel({
             className="flex items-center gap-1.5 rounded-lg px-2.5 py-2 text-xs text-muted transition-colors hover:bg-hover hover:text-foreground"
           >
             <Icon name="plus" size={13} />
-            Cartão
+            {t("transactions.form.card")}
           </button>
         </footer>
       ) : (

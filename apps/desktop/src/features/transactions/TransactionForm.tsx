@@ -1,4 +1,6 @@
 import { useState } from "react";
+import { Trans, useTranslation } from "react-i18next";
+import type { TranslationKey } from "@/i18n";
 import { AccountSelect } from "@/components/AccountSelect";
 import { CategoryChips } from "./CategoryChips";
 import { Button } from "@/components/Button";
@@ -27,10 +29,10 @@ import {
   type Transaction,
 } from "@/lib/queries";
 
-const typeOptions: { value: EntryType; label: string; activeClass: string }[] = [
-  { value: "EXPENSE", label: "Despesa", activeClass: "text-negative" },
-  { value: "INCOME", label: "Receita", activeClass: "text-positive" },
-  { value: "TRANSFER", label: "Transferência", activeClass: "text-transfer" },
+const typeOptions: { value: EntryType; label: TranslationKey; activeClass: string }[] = [
+  { value: "EXPENSE", label: "labels.entryType.EXPENSE", activeClass: "text-negative" },
+  { value: "INCOME", label: "labels.entryType.INCOME", activeClass: "text-positive" },
+  { value: "TRANSFER", label: "labels.entryType.TRANSFER", activeClass: "text-transfer" },
 ];
 
 type Repeat = "once" | "monthly" | "installments";
@@ -53,19 +55,20 @@ export function TransactionForm({
   preset?: FormPreset | null;
   onNeedAccount: () => void;
 }) {
+  const { t } = useTranslation();
   const title = !editing
-    ? "Novo lançamento"
+    ? t("transactions.new")
     : editing.type === "CARD_PAYMENT"
-      ? "Pagamento de fatura"
+      ? t("transactions.kind.cardPayment")
       : editing.type === "INVESTMENT"
-        ? "Aporte"
+        ? t("transactions.kind.investment")
         : editing.type === "REDEMPTION"
-          ? "Resgate"
+          ? t("transactions.kind.redemption")
           : editing.purchase
-            ? "Compra no cartão"
+            ? t("transactions.form.titles.purchase")
             : editing.status === "PENDING"
-              ? "Lançamento pendente"
-              : "Editar lançamento";
+              ? t("transactions.form.titles.pending")
+              : t("transactions.form.titles.edit");
 
   return (
     <Modal open={open} onClose={onClose} title={title} width={520}>
@@ -100,6 +103,7 @@ function FormBody({
   onDone: () => void;
   onNeedAccount: () => void;
 }) {
+  const { t } = useTranslation();
   const toast = useToast();
   const accounts = useAccounts();
   const categories = useCategories();
@@ -171,11 +175,11 @@ function FormBody({
     return (
       <EmptyState
         icon="wallet"
-        title="Nenhuma conta ainda"
-        description="Todo lançamento acontece em uma conta. Adicione seu banco para começar."
+        title={t("transactions.form.noAccount.title")}
+        description={t("transactions.form.noAccount.description")}
         action={
           <Button variant="primary" onClick={onNeedAccount}>
-            Adicionar instituição
+            {t("home.onboarding.addInstitution")}
           </Button>
         }
       />
@@ -185,15 +189,15 @@ function FormBody({
   async function submit(event: React.FormEvent) {
     event.preventDefault();
     if (!parsedAmount) {
-      setError("Informe um valor, por exemplo 25,90.");
+      setError(t("transactions.form.errors.amount"));
       return;
     }
     if (type === "TRANSFER" && (!destinationId || destinationId === sourceId)) {
-      setError("Escolha duas contas diferentes.");
+      setError(t("transactions.form.errors.sameAccount"));
       return;
     }
     if (type !== "TRANSFER" && !chosenCategory) {
-      setError("Escolha uma categoria.");
+      setError(t("transactions.form.errors.category"));
       return;
     }
 
@@ -211,7 +215,7 @@ function FormBody({
             scope,
           },
         });
-        toast(scope === "following" ? "Recorrência atualizada daqui em diante" : "Lançamento atualizado");
+        toast(scope === "following" ? t("transactions.form.toasts.recurringUpdated") : t("transactions.form.toasts.updated"));
         onDone();
         return;
       }
@@ -233,7 +237,7 @@ function FormBody({
             postFirst: date <= todayLocal(),
           },
         });
-        toast("Recorrência criada: confirmada automaticamente a cada mês");
+        toast(t("transactions.form.toasts.recurringCreated"));
         onDone();
         return;
       }
@@ -253,7 +257,7 @@ function FormBody({
             postFirst: date <= todayLocal(),
           },
         });
-        toast(`Parcelado em ${parts}x`);
+        toast(t("transactions.form.toasts.installments", { count: parts }));
         onDone();
         return;
       }
@@ -290,7 +294,7 @@ function FormBody({
           await removePurchase.mutateAsync(purchase.id);
         }
       }
-      toast(editing ? "Lançamento atualizado" : "Lançamento salvo");
+      toast(editing ? t("transactions.form.toasts.updated") : t("transactions.form.toasts.saved"));
       onDone();
     } catch (reason: unknown) {
       setError(errorMessage(reason));
@@ -308,10 +312,10 @@ function FormBody({
     try {
       if (purchase) {
         await removePurchase.mutateAsync(purchase.id);
-        toast("Compra excluída");
+        toast(t("transactions.form.toasts.purchaseDeleted"));
       } else {
         await removeEntry.mutateAsync(editing.id);
-        toast(occurrence || editing.status === "PENDING" ? "Pulado este mês" : "Lançamento excluído");
+        toast(occurrence || editing.status === "PENDING" ? t("transactions.row.skipped") : t("transactions.form.toasts.deleted"));
       }
       onDone();
     } catch (reason: unknown) {
@@ -324,12 +328,12 @@ function FormBody({
       return;
     }
     if (!parsedAmount) {
-      setError("Informe um valor, por exemplo 25,90.");
+      setError(t("transactions.form.errors.amount"));
       return;
     }
     try {
       await confirm.mutateAsync({ id: editing.id, amount: parsedAmount, date });
-      toast("Confirmado");
+      toast(t("transactions.row.confirmed"));
       onDone();
     } catch (reason: unknown) {
       setError(errorMessage(reason));
@@ -350,9 +354,9 @@ function FormBody({
       {!pending && !purchase && !occurrence ? (
         <Segmented
           full
-          label="Tipo de lançamento"
+          label={t("transactions.form.type")}
           value={type}
-          options={typeOptions}
+          options={typeOptions.map((option) => ({ ...option, label: t(option.label) }))}
           onChange={(next) => {
             setType(next);
             setError(null);
@@ -362,10 +366,10 @@ function FormBody({
 
       <label className="block rounded-2xl border border-line bg-surface-2 px-4 py-3 transition-colors focus-within:border-accent/60">
         <span className="text-xs text-muted">
-          {effectiveRepeat === "installments" ? "Valor total" : effectiveRepeat === "monthly" ? "Valor por mês" : "Valor"}
+          {effectiveRepeat === "installments" ? t("transactions.form.amount.total") : effectiveRepeat === "monthly" ? t("transactions.form.amount.monthly") : t("transactions.form.amount.single")}
         </span>
         <div className="mt-1 flex items-baseline gap-2">
-          <span className={`text-lg ${amountColor}`}>R$</span>
+          <span className={`text-lg ${amountColor}`}>{t("common.money.symbol")}</span>
           <MoneyInput
             autoFocus={!editing}
             className={`tabular w-full min-w-0 bg-transparent font-display text-3xl outline-none placeholder:text-faint focus-visible:outline-none ${amountColor}`}
@@ -380,14 +384,14 @@ function FormBody({
 
       {type === "EXPENSE" && cardList.length > 0 && !pending && !occurrence ? (
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <span className="text-xs text-muted">Pagar com</span>
+          <span className="text-xs text-muted">{t("transactions.form.payWith.label")}</span>
           <Segmented
             size="sm"
-            label="Pagar com"
+            label={t("transactions.form.payWith.label")}
             value={payWith}
             options={[
-              { value: "account", label: "Conta" },
-              { value: "card", label: "Cartão de crédito" },
+              { value: "account", label: t("transactions.form.payWith.account") },
+              { value: "card", label: t("transactions.form.payWith.card") },
             ]}
             onChange={setPayWith}
           />
@@ -396,8 +400,8 @@ function FormBody({
 
       {type === "TRANSFER" ? (
         <div className="grid gap-3 sm:grid-cols-2">
-          {accountSelect("De", sourceId, setAccountId)}
-          {accountSelect("Para", destinationId, setDestinationAccountId)}
+          {accountSelect(t("transactions.form.from"), sourceId, setAccountId)}
+          {accountSelect(t("transactions.form.to"), destinationId, setDestinationAccountId)}
         </div>
       ) : (
         <>
@@ -408,7 +412,7 @@ function FormBody({
             onChange={setCategoryId}
           />
           {onCard ? (
-            <Field label="Cartão">
+            <Field label={t("transactions.form.card")}>
               <select
                 className={controlClass}
                 value={chosenCard}
@@ -423,7 +427,7 @@ function FormBody({
               </select>
             </Field>
           ) : (
-            accountSelect("Conta", sourceId, setAccountId)
+            accountSelect(t("transactions.form.payWith.account"), sourceId, setAccountId)
           )}
         </>
       )}
@@ -431,15 +435,15 @@ function FormBody({
       {canRepeat && !pending ? (
         <div className="space-y-3 rounded-2xl border border-line p-3">
           <div className="flex flex-wrap items-center justify-between gap-2">
-            <span className="text-xs text-muted">Repetição</span>
+            <span className="text-xs text-muted">{t("transactions.form.repeat.label")}</span>
             <Segmented
               size="sm"
-              label="Repetição"
+              label={t("transactions.form.repeat.label")}
               value={effectiveRepeat}
               options={[
-                { value: "once" as Repeat, label: "Não repete" },
-                ...(editing ? [] : [{ value: "monthly" as Repeat, label: "Fixo todo mês" }]),
-                ...(type === "EXPENSE" ? [{ value: "installments" as Repeat, label: "Parcelado" }] : []),
+                { value: "once" as Repeat, label: t("transactions.form.repeat.once") },
+                ...(editing ? [] : [{ value: "monthly" as Repeat, label: t("transactions.form.repeat.monthly") }]),
+                ...(type === "EXPENSE" ? [{ value: "installments" as Repeat, label: t("transactions.form.repeat.installments") }] : []),
               ]}
               onChange={setRepeat}
             />
@@ -447,27 +451,27 @@ function FormBody({
           {effectiveRepeat === "installments" ? (
             <div className="animate-enter flex flex-wrap items-center gap-x-3 gap-y-2">
               <IntegerInput
-                aria-label="Número de parcelas"
+                aria-label={t("transactions.form.repeat.count")}
                 className={`${controlClass} !w-20 tabular`}
                 min={2}
                 max={maxInstallments}
                 value={Math.min(installments, maxInstallments)}
                 onChange={setInstallments}
               />
-              <span className="text-sm text-muted">vezes</span>
+              <span className="text-sm text-muted">{t("transactions.form.repeat.times")}</span>
               {parsedAmount ? <InstallmentPreview total={parsedAmount} count={parts} inline /> : null}
             </div>
           ) : null}
           {effectiveRepeat === "monthly" ? (
             <p className="animate-enter text-xs text-faint">
               {onCard
-                ? "Entra em toda fatura do cartão e é confirmado quando a fatura fecha."
-                : `Todo dia ${Number(date.slice(8, 10))}, a partir de ${monthLabel(date.slice(0, 7)).toLowerCase()}. Confirmado automaticamente na data.`}
+                ? t("transactions.form.repeat.monthlyCard")
+                : t("transactions.form.repeat.monthlyAccount", { day: Number(date.slice(8, 10)), month: monthLabel(date.slice(0, 7)).toLowerCase() })}
             </p>
           ) : null}
           {effectiveRepeat === "installments" && !onCard ? (
             <p className="text-xs text-faint">
-              Uma parcela por mês na conta, a partir desta data. Cada uma é confirmada automaticamente na data.
+              {t("transactions.form.repeat.installmentsAccount")}
             </p>
           ) : null}
         </div>
@@ -478,39 +482,39 @@ function FormBody({
           <div className="flex flex-wrap items-center justify-between gap-2">
             <span className="flex items-center gap-1.5 text-xs text-muted">
               <Icon name="repeat" size={13} />
-              Recorrência
+              {t("transactions.form.scope.title")}
             </span>
             <Segmented
               size="sm"
-              label="O que esta edição muda"
+              label={t("transactions.form.scope.label")}
               value={scope}
               options={[
-                { value: "one" as const, label: "Só este mês" },
-                { value: "following" as const, label: "Este e os próximos" },
+                { value: "one" as const, label: t("transactions.form.scope.one") },
+                { value: "following" as const, label: t("transactions.form.scope.following") },
               ]}
               onChange={setScope}
             />
           </div>
           <p className="text-xs text-faint">
             {scope === "one"
-              ? "Continua recorrente; os outros meses não mudam."
+              ? t("transactions.form.scope.oneHint")
               : (occurrence.installmentCount ?? 1) > 1
-                ? "Descrição, categoria e conta mudam a partir deste mês. O valor das outras parcelas segue o total do parcelamento."
-                : "Valor, descrição, categoria e conta mudam a partir deste mês."}
+                ? t("transactions.form.scope.followingInstallmentsHint")
+                : t("transactions.form.scope.followingHint")}
           </p>
         </div>
       ) : null}
 
       <div className="grid gap-3 sm:grid-cols-[1fr_160px]">
-        <Field label="Descrição">
+        <Field label={t("transactions.form.description")}>
           <TextInput
-            placeholder={type === "TRANSFER" ? "Opcional" : "Ex.: Mercado"}
+            placeholder={type === "TRANSFER" ? t("common.optional") : t("transactions.form.descriptionPlaceholder")}
             value={description}
             maxLength={200}
             onChange={setDescription}
           />
         </Field>
-        <Field label={onCard ? "Data da compra" : "Data"}>
+        <Field label={onCard ? t("transactions.form.purchaseDate") : t("transactions.form.date")}>
           <input
             className={controlClass}
             type="date"
@@ -523,13 +527,12 @@ function FormBody({
 
       {type === "TRANSFER" ? (
         <p className="text-xs text-faint">
-          Transferências entre suas contas não contam como receita nem despesa.
+          {t("transactions.form.transferHint")}
         </p>
       ) : null}
       {onCard ? (
         <p className="text-xs text-faint">
-          A despesa entra no mês de cada fatura. Compras no dia do fechamento ou depois vão para a
-          fatura seguinte.
+          {t("transactions.form.cardHint")}
         </p>
       ) : null}
 
@@ -543,30 +546,30 @@ function FormBody({
           >
             {confirmDelete
               ? purchase && purchase.installments > 1
-                ? `Excluir ${purchase.installments} parcelas`
-                : "Confirmar"
+                ? t("transactions.form.deleteInstallments", { count: purchase.installments })
+                : t("common.actions.confirm")
               : pending || occurrence
-                ? "Pular este mês"
-                : "Excluir"}
+                ? t("transactions.form.skipMonth")
+                : t("common.actions.delete")}
           </Button>
         ) : null}
         <div className="flex-1" />
         {pending ? (
           <>
             <Button variant="ghost" type="submit" disabled={saving}>
-              Salvar
+              {t("common.actions.save")}
             </Button>
             <Button variant="primary" onClick={() => void confirmPending()} disabled={confirm.isPending}>
-              Confirmar
+              {t("common.actions.confirm")}
             </Button>
           </>
         ) : (
           <>
             <Button variant="ghost" onClick={onDone}>
-              Cancelar
+              {t("common.actions.cancel")}
             </Button>
             <Button variant="primary" type="submit" disabled={saving}>
-              {saving ? "Salvando…" : "Salvar"}
+              {saving ? t("common.save.saving") : t("common.actions.save")}
             </Button>
           </>
         )}
@@ -583,14 +586,17 @@ function InstallmentPreview({ total, count, inline }: { total: string; count: nu
   return (
     <p className={`animate-enter text-sm text-muted ${inline ? "" : "rounded-xl bg-surface-2 px-4 py-2.5"}`}>
       {first === base ? (
-        <>
-          {count}x de <span className="text-foreground tabular">{formatMinorUnits(base.toString())}</span>
-        </>
+        <Trans
+          i18nKey="transactions.form.installmentsEqual"
+          values={{ count, value: formatMinorUnits(base.toString()) }}
+          components={{ value: <span className="text-foreground tabular" /> }}
+        />
       ) : (
-        <>
-          1ª de <span className="text-foreground tabular">{formatMinorUnits(first.toString())}</span> e{" "}
-          {count - 1}x de <span className="text-foreground tabular">{formatMinorUnits(base.toString())}</span>
-        </>
+        <Trans
+          i18nKey="transactions.form.installmentsUneven"
+          values={{ rest: count - 1, first: formatMinorUnits(first.toString()), value: formatMinorUnits(base.toString()) }}
+          components={{ value: <span className="text-foreground tabular" /> }}
+        />
       )}
     </p>
   );
@@ -602,6 +608,7 @@ function isMovement(type: Transaction["type"]): boolean {
 }
 
 function PaymentDetails({ payment, onDone }: { payment: Transaction; onDone: () => void }) {
+  const { t } = useTranslation();
   const toast = useToast();
   const remove = useDeleteTransaction();
   const [confirmDelete, setConfirmDelete] = useState(false);
@@ -614,7 +621,7 @@ function PaymentDetails({ payment, onDone }: { payment: Transaction; onDone: () 
     }
     try {
       await remove.mutateAsync(payment.id);
-      toast("Excluído");
+      toast(t("transactions.form.toasts.movementDeleted"));
       onDone();
     } catch (reason: unknown) {
       setError(errorMessage(reason));
@@ -624,29 +631,29 @@ function PaymentDetails({ payment, onDone }: { payment: Transaction; onDone: () 
   return (
     <div className="space-y-5">
       <dl className="space-y-3 rounded-2xl bg-surface-2 p-4 text-sm">
-        <Row label="Valor">
+        <Row label={t("transactions.form.amount.single")}>
           <Money amount={payment.amount} className="text-lg" />
         </Row>
         {payment.type === "CARD_PAYMENT" ? (
           <>
-            <Row label="Cartão">{payment.card?.name}</Row>
-            <Row label="Fatura">{payment.invoiceMonth ? monthLabel(payment.invoiceMonth) : "—"}</Row>
-            <Row label="Pago com">{payment.account?.name}</Row>
+            <Row label={t("transactions.form.card")}>{payment.card?.name}</Row>
+            <Row label={t("transactions.form.invoice")}>{payment.invoiceMonth ? monthLabel(payment.invoiceMonth) : "—"}</Row>
+            <Row label={t("transactions.form.paidWith")}>{payment.account?.name}</Row>
           </>
         ) : (
           <>
-            <Row label="Investimento">{payment.investment?.name}</Row>
-            <Row label={payment.type === "INVESTMENT" ? "Saiu de" : "Voltou para"}>
+            <Row label={t("transactions.form.investment")}>{payment.investment?.name}</Row>
+            <Row label={payment.type === "INVESTMENT" ? t("transactions.form.leftFrom") : t("transactions.form.returnedTo")}>
               {payment.account?.name}
             </Row>
           </>
         )}
-        <Row label="Data">{dayLabel(payment.date)}</Row>
+        <Row label={t("transactions.form.date")}>{dayLabel(payment.date)}</Row>
       </dl>
       <p className="text-xs text-faint">
         {payment.type === "CARD_PAYMENT"
-          ? "Pagamentos de fatura não são despesa: as compras já contaram no mês da fatura."
-          : "Aportes e resgates só mudam o dinheiro de lugar: não são despesa nem receita."}
+          ? t("transactions.form.cardPaymentHint")
+          : t("transactions.form.movementHint")}
       </p>
       <FormFooter error={error}>
         <Button
@@ -655,11 +662,11 @@ function PaymentDetails({ payment, onDone }: { payment: Transaction; onDone: () 
           onBlur={() => setConfirmDelete(false)}
           disabled={remove.isPending}
         >
-          {confirmDelete ? "Confirmar exclusão" : "Excluir"}
+          {confirmDelete ? t("common.actions.confirmDelete") : t("common.actions.delete")}
         </Button>
         <div className="flex-1" />
         <Button variant="ghost" onClick={onDone}>
-          Fechar
+          {t("common.actions.close")}
         </Button>
       </FormFooter>
     </div>

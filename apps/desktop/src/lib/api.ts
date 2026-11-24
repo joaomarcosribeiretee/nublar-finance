@@ -1,3 +1,4 @@
+import { t } from "@/i18n";
 import { getSupabase } from "./supabase";
 
 export class ApiError extends Error {}
@@ -6,7 +7,7 @@ export async function api<T>(path: string, init?: RequestInit): Promise<T> {
   const { data } = await getSupabase().auth.getSession();
   const token = data.session?.access_token;
   if (!token) {
-    throw new ApiError("Sessão expirada. Entre de novo.");
+    throw new ApiError(t("common.errors.sessionExpired"));
   }
 
   const baseUrl = import.meta.env.VITE_API_URL ?? "http://localhost:3333";
@@ -21,7 +22,7 @@ export async function api<T>(path: string, init?: RequestInit): Promise<T> {
       },
     });
   } catch {
-    throw new ApiError("Não foi possível falar com a API. Ela está rodando?");
+    throw new ApiError(t("common.errors.apiUnreachable"));
   }
 
   if (!response.ok) {
@@ -31,7 +32,7 @@ export async function api<T>(path: string, init?: RequestInit): Promise<T> {
     const message = Array.isArray(body?.message)
       ? body.message[0]
       : body?.message;
-    throw new ApiError(message ?? "Não foi possível concluir a operação.");
+    throw new ApiError(message ?? t("common.errors.generic"));
   }
 
   if (response.status === 204) {
@@ -43,5 +44,5 @@ export async function api<T>(path: string, init?: RequestInit): Promise<T> {
 export function errorMessage(reason: unknown): string {
   return reason instanceof Error
     ? reason.message
-    : "Não foi possível concluir a operação.";
+    : t("common.errors.generic");
 }
