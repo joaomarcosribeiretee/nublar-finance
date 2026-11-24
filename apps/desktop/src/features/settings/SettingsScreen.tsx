@@ -1,0 +1,80 @@
+import type { ReactNode } from "react";
+import { Button } from "@/components/Button";
+import { Icon } from "@/components/Icon";
+import { PageHeader, Panel } from "@/components/Page";
+import { useSaveSetting } from "./useSaveSetting";
+
+const REPOSITORY_URL = "https://github.com/joaomarcosribeiretee/nublar-finance";
+
+/**
+ * One column of short sections. A section only appears once what it controls
+ * exists in the app: nothing here says "em breve".
+ */
+export function SettingsScreen({ email, onSignOut }: { email: string; onSignOut: () => void }) {
+  // Sections that change preferences pass `save` to their controls.
+  const { status, saved, failed } = useSaveSetting();
+
+  return (
+    <section className="animate-enter">
+      <PageHeader
+        eyebrow="Ajuste o Nublar"
+        title="Configurações"
+        actions={
+          <p
+            role="status"
+            className={`flex min-h-5 items-center gap-1.5 text-xs transition-opacity ${status ? "opacity-100" : "opacity-0"} ${failed ? "text-negative" : "text-muted"}`}
+          >
+            {saved ? <Icon name="check" size={14} className="text-positive" /> : null}
+            {status}
+          </p>
+        }
+      >
+        Tudo o que você muda aqui é salvo na hora.
+      </PageHeader>
+
+      <div className="mt-6 flex max-w-2xl flex-col gap-4">
+        <Panel title="Perfil">
+          <SettingRow label="E-mail" hint="Usado para entrar no Nublar.">
+            <span className="min-w-0 truncate text-sm" title={email}>
+              {email}
+            </span>
+          </SettingRow>
+          <SettingRow label="Sessão">
+            <Button variant="ghost" className="-mr-4" onClick={onSignOut}>
+              <Icon name="logout" size={16} /> Sair
+            </Button>
+          </SettingRow>
+        </Panel>
+
+        <Panel title="Sobre">
+          <SettingRow label="Versão">
+            <span className="text-sm tabular text-muted">{__APP_VERSION__}</span>
+          </SettingRow>
+          <SettingRow label="Código-fonte">
+            <a
+              href={REPOSITORY_URL}
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex items-center gap-1.5 rounded-lg text-sm text-accent hover:underline"
+            >
+              Ver no GitHub <Icon name="arrowRight" size={14} />
+            </a>
+          </SettingRow>
+        </Panel>
+      </div>
+    </section>
+  );
+}
+
+/** Label on the left, its control on the right; hairlines between rows. */
+function SettingRow({ label, hint, children }: { label: string; hint?: string; children: ReactNode }) {
+  return (
+    <div className="flex min-h-14 flex-wrap items-center justify-between gap-x-6 gap-y-2 border-t border-line py-3 first:border-t-0 first:pt-0 last:pb-0">
+      <div className="min-w-0">
+        <p className="text-sm">{label}</p>
+        {hint ? <p className="mt-0.5 text-xs text-muted">{hint}</p> : null}
+      </div>
+      <div className="flex min-w-0 items-center">{children}</div>
+    </div>
+  );
+}
