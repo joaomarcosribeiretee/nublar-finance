@@ -22,6 +22,7 @@ import {
   type Budgets,
 } from "@/lib/queries";
 import { budgetTone, monthProgress } from "./BudgetOverview";
+import { categoryLabel } from "@/lib/categories";
 
 const tone = budgetTone;
 
@@ -126,7 +127,7 @@ export function BudgetsScreen({ month }: { month: string }) {
                         className="budget-card flex h-full w-full flex-col gap-4 rounded-2xl border border-line bg-surface p-5 text-left transition-colors hover:border-line-strong hover:bg-surface-2"
                       >
                         <span className="flex w-full flex-wrap items-baseline justify-between gap-3 text-sm">
-                          <span className="font-medium">{item.category.name}</span>
+                          <span className="font-medium">{categoryLabel(item.category.name)}</span>
                           <span className="text-lg tabular">
                             <Money amount={item.spent} />
                             <span className="block text-xs text-muted"> {t("planning.of", { amount: formatMinorUnits(item.limit) })}</span>
@@ -153,7 +154,7 @@ export function BudgetsScreen({ month }: { month: string }) {
       <Modal
         open={editing !== null}
         onClose={() => setEditing(null)}
-        title={editing === "new" ? t("planning.budgets.new") : editing ? editing.category.name : ""}
+        title={editing === "new" ? t("planning.budgets.new") : editing ? categoryLabel(editing.category.name) : ""}
       >
         {editing ? (
           <BudgetForm
@@ -238,7 +239,7 @@ function BudgetForm({
             <option value="">{t("common.choose")}</option>
             {options.map((category) => (
               <option key={category.id} value={category.id}>
-                {category.name}
+                {categoryLabel(category.name)}
               </option>
             ))}
           </select>

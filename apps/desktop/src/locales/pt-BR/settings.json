@@ -25,5 +25,10 @@
     "lightHint": "Para ambientes iluminados",
     "system": "Sistema",
     "systemHint": "Segue o computador"
+  },
+  "language": {
+    "title": "Idioma",
+    "subtitle": "Muda na hora, sem reiniciar.",
+    "label": "Idioma do app"
   }
 }

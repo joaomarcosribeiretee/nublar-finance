@@ -1,1 +1,55 @@
-{}
+{
+  "eyebrow": "Statements and limits",
+  "stats": {
+    "debt": "Committed on cards",
+    "available": "Available limit",
+    "count": "Cards added"
+  },
+  "empty": {
+    "title": "No cards",
+    "description": "Add your cards to keep track of statements, installments and limit.",
+    "action": "Add card"
+  },
+  "tile": {
+    "invoiceOf": "{{month}} statement · due {{date}}",
+    "overLimit": "Over the limit by"
+  },
+  "detail": {
+    "previous": "Previous statement",
+    "next": "Next statement",
+    "total": "Total",
+    "paid": "Paid",
+    "remaining": "Remaining",
+    "dates": "Closes on {{closing}} · due on {{due}}",
+    "empty": "No purchases on this statement.",
+    "payment": "Payment · {{account}}",
+    "installment": "installment {{number}}/{{count}}",
+    "edit": "Edit card",
+    "invoices": "See statements"
+  },
+  "pay": {
+    "paid": "Statement paid",
+    "action": "Pay statement",
+    "errors": {
+      "amount": "Enter an amount, for example 250,00.",
+      "account": "Choose the account the payment comes from.",
+      "tooMuch": "The amount is more than what's left to pay on this statement."
+    },
+    "partial": "Partial payment recorded",
+    "hint": "It leaves the account and reduces the card debt. It's not an expense: the purchases already counted on the statement. The scheduled charges on this statement are confirmed along with it.",
+    "registering": "Recording…",
+    "submit": "Confirm payment"
+  },
+  "form": {
+    "invalidLimit": "Invalid limit. Use something like 5.000,00.",
+    "updated": "Card updated",
+    "created": "Card created",
+    "deleted": "Card deleted",
+    "institution": "Institution",
+    "name": "Card name",
+    "namePlaceholder": "E.g. Nubank",
+    "paysWith": "Paid from",
+    "closingHint": "Purchases on the closing day or later go on the next statement.",
+    "datesHint": "Changing the dates applies to new purchases."
+  }
+}

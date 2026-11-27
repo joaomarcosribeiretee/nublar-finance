@@ -1,1 +1,124 @@
-{}
+{
+  "bulk": {
+    "invalid": "Invalid amount for {{name}}.",
+    "updated_one": "{{count}} value updated",
+    "updated_other": "{{count}} values updated",
+    "intro": "Copy each investment's current value from your bank's app. Only what changed is saved.",
+    "updatedOn": "updated {{date}}",
+    "currentValueOf": "Current value of {{name}}",
+    "date": "Values as of",
+    "submit": "Save values"
+  },
+  "eyebrow": "Fixed income, stocks, REITs, crypto",
+  "updateValues": "Update values",
+  "new": "New investment",
+  "empty": {
+    "title": "No investments",
+    "description": "Just say how much you have in each investment today. Then update the value every now and then.",
+    "action": "Add investment"
+  },
+  "stats": {
+    "current": "Current value",
+    "applied": "Invested",
+    "redeemed": "withdrawn",
+    "gain": "Gain",
+    "gainDetail": "value + withdrawals − invested",
+    "return": "Return",
+    "returnDetail": "on the amount invested"
+  },
+  "portfolio": "Your portfolio",
+  "allClasses": "See all classes",
+  "allocation": "Allocation",
+  "describe": {
+    "matures": "matures {{date}}",
+    "noValue": "no value"
+  },
+  "fixedIncome": {
+    "title": "Fixed income: when you can withdraw",
+    "daily": "Anytime",
+    "dailyHint": "A good place for your emergency fund.",
+    "atMaturity": "Only at maturity",
+    "unknown": "<value/> without liquidity set. Edit the investment to classify it.",
+    "maturities": "Maturing in the next 12 months",
+    "noMaturities": "Nothing matures in the next 12 months."
+  },
+  "form": {
+    "errors": {
+      "rate": "Invalid rate. Use something like 110 or 6,5.",
+      "current": "Enter how much you have today.",
+      "applied": "Enter how much you invested."
+    },
+    "updated": "Investment updated",
+    "created": "Investment added",
+    "deleted": "Investment deleted",
+    "class": "Class",
+    "product": "Product",
+    "current": "How much you have today",
+    "currentHint": "The value shown today in your bank's or brokerage's app. It goes into your net worth, not as an expense.",
+    "name": "Name (optional)",
+    "rate": "Contracted rate (optional)",
+    "indexer": "Index",
+    "unknown": "I don't know",
+    "rateValue": "Rate",
+    "rateHint": "For reference only. It's in the investment details in your bank's app (e.g. “92% of CDI”).",
+    "liquidity": "When you can withdraw",
+    "liquidityLabel": "Liquidity",
+    "maturity": "Maturity (optional)",
+    "ticker": "Ticker (optional)",
+    "quantity": "Quantity (optional)",
+    "history": "I know how much and when I invested",
+    "historyHint": "Optional. Without it, returns are counted from today.",
+    "applied": "Amount invested",
+    "since": "Since"
+  },
+  "horizons": {
+    "oneMonth": "1 month",
+    "sixMonths": "6 months",
+    "oneYear": "1 year",
+    "maturity": "Until maturity"
+  },
+  "detail": {
+    "invest": "Invest",
+    "redeem": "Withdraw",
+    "updateValue": "Update value",
+    "edit": "Edit details",
+    "errors": {
+      "amount": "Enter an amount, for example 500,00.",
+      "noAccount": "Add an account first: the money has to come from somewhere or go back to it.",
+      "value": "Enter what the investment is worth on that date.",
+      "invalidValue": "Invalid value. Use something like 1.250,00."
+    },
+    "invested": "Contribution recorded",
+    "redeemed": "Withdrawal recorded",
+    "from": "From",
+    "to": "Back to",
+    "movementHint": "It only moves money around: it's neither an expense nor income.",
+    "submitInvest": "Record contribution",
+    "submitRedeem": "Record withdrawal",
+    "valueUpdated": "Value updated",
+    "valueQuestion": "What is it worth now?",
+    "valueOnDate": "Value on date",
+    "valueHint": "Copy the value from your bank's or brokerage's app. Future contributions add on top of it.",
+    "saveValue": "Save value",
+    "history": "History",
+    "movements": "Contributions and withdrawals ({{count}})",
+    "valuations": "Values ({{count}})",
+    "noMovements": "No contributions or withdrawals yet.",
+    "deleteMovement": "Delete movement",
+    "reportedValue": "Reported value",
+    "deleteValue": "Delete value",
+    "valueDeleted": "Value deleted",
+    "deleteConfirm": "Delete?",
+    "matures": "Matures {{date}}"
+  },
+  "preview": {
+    "title": "Return preview",
+    "subtitle": "{{rate}}% of CDI on the current value",
+    "exempt": "income tax exempt",
+    "net": "after income tax",
+    "cdi": "CDI",
+    "cdiLabel": "Annual CDI",
+    "gross": "gross",
+    "note": "Estimate with a constant CDI; it doesn't change the position's value, which follows your updates."
+  }
+}

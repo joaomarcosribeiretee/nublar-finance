@@ -1,4 +1,4 @@
-import { t } from "@/i18n";
+import { currentLocale, t } from "@/i18n";
 import { getSupabase } from "./supabase";
 
 export class ApiError extends Error {}
@@ -18,6 +18,9 @@ export async function api<T>(path: string, init?: RequestInit): Promise<T> {
       headers: {
         Authorization: `Bearer ${token}`,
         "Content-Type": "application/json",
+        // The API answers errors in this language; on first sign-in it is
+        // also the new user's starting language.
+        "Accept-Language": currentLocale(),
         ...(init?.headers ?? {}),
       },
     });

@@ -1,1 +1,46 @@
-{}
+{
+  "errors": {
+    "sessionExpired": "Session expired. Please sign in again.",
+    "apiUnreachable": "Couldn't reach the API. Is it running?",
+    "generic": "Couldn't complete the operation.",
+    "supabaseConfig": "The Supabase key is missing. In Project Settings → API, copy the publishable key into VITE_SUPABASE_ANON_KEY and SUPABASE_ANON_KEY."
+  },
+  "health": {
+    "down": "API unavailable",
+    "up": "API and database connected",
+    "databaseDown": "API up, database unavailable"
+  },
+  "save": {
+    "saving": "Saving…",
+    "saved": "Saved",
+    "failed": "Couldn't save"
+  },
+  "dates": {
+    "today": "Today",
+    "yesterday": "Yesterday"
+  },
+  "actions": {
+    "close": "Close",
+    "confirm": "Confirm",
+    "cancel": "Cancel",
+    "retry": "Try again",
+    "save": "Save",
+    "delete": "Delete",
+    "confirmDelete": "Confirm deletion",
+    "continue": "Continue",
+    "back": "Back",
+    "remove": "Remove",
+    "add": "Add"
+  },
+  "month": {
+    "previous": "Previous month",
+    "next": "Next month"
+  },
+  "money": {
+    "symbol": "R$"
+  },
+  "appName": "Nublar",
+  "optional": "Optional",
+  "none": "None",
+  "choose": "Choose…"
+}

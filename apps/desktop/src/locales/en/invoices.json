@@ -1,1 +1,31 @@
-{}
+{
+  "empty": {
+    "description": "Add a card to follow its statements here.",
+    "action": "Go to Cards",
+    "items": "Nothing on this statement."
+  },
+  "toPay": "To pay",
+  "paidOn": "Paid on {{date}}",
+  "paidOnWith": "Paid on {{date}} from {{account}}",
+  "partlyPaid": "<paid/> of <total/> already paid",
+  "payRest": "Pay the rest",
+  "scheduled": "Scheduled",
+  "scheduledHint": "Recurring charges not yet confirmed",
+  "usage": "Used <used/> · available <available/>",
+  "tapToEdit": "Tap an item to edit it.",
+  "addPurchase": "Add purchase",
+  "timeline": {
+    "title": "Upcoming and past",
+    "subtitle": "Includes installments and recurring charges already scheduled"
+  },
+  "groups": {
+    "installments": "Installments",
+    "fixed": "Subscriptions and fixed charges",
+    "purchases": "Purchases",
+    "payments": "Payments"
+  },
+  "scheduledBadge": "scheduled",
+  "lastInstallment": "last",
+  "installmentsLeft_one": "{{count}} left",
+  "installmentsLeft_other": "{{count}} left"
+}

@@ -1,1 +1,18 @@
-{}
+{
+  "eyebrow": "Organize your transactions",
+  "intro": "The most used ones appear first in forms.",
+  "search": {
+    "label": "Search categories",
+    "placeholder": "Search category"
+  },
+  "exists": "\"{{name}}\" already exists in {{kind}}",
+  "removed": "\"{{name}}\" removed",
+  "usage_one": "{{count}} transaction",
+  "usage_other": "{{count}} transactions",
+  "unused": "unused",
+  "remove": "Remove {{name}}",
+  "notFound": "No category with that name.",
+  "empty": "Add your first category.",
+  "newOf": "New {{kind}} category",
+  "new": "New category"
+}

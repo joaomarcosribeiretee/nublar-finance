@@ -25,6 +25,7 @@ import {
   type RecurringRule,
 } from "@/lib/queries";
 import { CategoryChips } from "@/features/transactions/CategoryChips";
+import { categoryLabel } from "@/lib/categories";
 
 /** "todo dia 8 · Nubank · Conta corrente", "em toda fatura · Cartão Nubank", "10x · até jan 27". */
 function describeRule(rule: RecurringRule): string {
@@ -35,7 +36,7 @@ function describeRule(rule: RecurringRule): string {
     : rule.endMonth
       ? t("recurring.describe.until", { month: monthLabel(rule.endMonth).toLowerCase() })
       : null;
-  return [rule.category.name, when, where, until].filter(Boolean).join(" · ");
+  return [categoryLabel(rule.category.name), when, where, until].filter(Boolean).join(" · ");
 }
 
 /** What a rule costs per month: the installment for plans, the amount otherwise. */
@@ -50,7 +51,7 @@ export function RecurringScreen() {
   const rules = useRecurring();
   const [editing, setEditing] = useState<RecurringRule | "new" | null>(null);
   const [search, setSearch] = useState("");
-  const data = (rules.data ?? []).filter((rule) => `${rule.description} ${rule.category.name} ${rule.card?.name ?? ""} ${rule.account?.name ?? ""}`.toLocaleLowerCase("pt-BR").includes(search.trim().toLocaleLowerCase("pt-BR")));
+  const data = (rules.data ?? []).filter((rule) => `${rule.description} ${categoryLabel(rule.category.name)} ${rule.card?.name ?? ""} ${rule.account?.name ?? ""}`.toLocaleLowerCase().includes(search.trim().toLocaleLowerCase()));
   const groups: { title: string; items: RecurringRule[]; tone: "positive" | "plain" }[] = [
     { title: t("recurring.groups.income"), items: data.filter((r) => r.type === "INCOME"), tone: "positive" },
     { title: t("recurring.groups.expense"), items: data.filter((r) => r.type === "EXPENSE" && !r.installments), tone: "plain" },
@@ -114,7 +115,7 @@ export function RecurringScreen() {
                             <Icon name={rule.card ? "card" : rule.installments ? "list" : "repeat"} size={15} />
                           </span>
                           <span className="min-w-0 flex-1">
-                            <span className="block truncate text-sm">{rule.description || rule.category.name}</span>
+                            <span className="block truncate text-sm">{rule.description || categoryLabel(rule.category.name)}</span>
                             <span className="block truncate text-xs text-muted">{describeRule(rule)}</span>
                           </span>
                           <span className="shrink-0 text-right">

@@ -16,13 +16,11 @@ import analytics from "./analytics.json";
 import imports from "./imports.json";
 import settings from "./settings.json";
 
-type DeepPartial<T> = { [K in keyof T]?: T[K] extends object ? DeepPartial<T[K]> : T[K] };
-
 /**
- * English is filled in by the translation issue. Whatever is missing here
- * falls back to pt-BR, so a partial file never shows a raw key.
+ * Typed as the pt-BR resources, so a key missing in English is a compile
+ * error. At runtime anything missing would still fall back to pt-BR.
  */
-export const en: DeepPartial<typeof ptBR> = {
+export const en: typeof ptBR = {
   common,
   labels,
   shell,

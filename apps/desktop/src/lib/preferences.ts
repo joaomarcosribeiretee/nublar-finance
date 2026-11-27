@@ -1,10 +1,11 @@
 import {
   DEFAULT_PREFERENCES,
   updatePreferencesSchema,
+  type Locale,
   type Preferences,
   type Theme,
 } from "@nublar/validation";
-import { setLocale } from "@/i18n";
+import { setLocale, systemLocale } from "@/i18n";
 
 /**
  * Local copy of the last preferences the API returned, so theme and language
@@ -15,16 +16,21 @@ export const PREFERENCES_STORAGE_KEY = "nublar.preferences";
 
 type KeyValueStore = Pick<Storage, "getItem" | "setItem">;
 
-/** Whatever still parses is kept; anything missing or broken gets its default. */
+/**
+ * Whatever still parses is kept; anything missing or broken gets its default.
+ * Without a saved language (first launch) the app starts in the system's.
+ */
 export function readCachedPreferences(
   storage: KeyValueStore = localStorage,
+  fallbackLocale: Locale = systemLocale(),
 ): Preferences {
+  const defaults: Preferences = { ...DEFAULT_PREFERENCES, locale: fallbackLocale };
   try {
     const raw = storage.getItem(PREFERENCES_STORAGE_KEY);
     const parsed = updatePreferencesSchema.safeParse(raw ? JSON.parse(raw) : {});
-    return parsed.success ? { ...DEFAULT_PREFERENCES, ...parsed.data } : DEFAULT_PREFERENCES;
+    return parsed.success ? { ...defaults, ...parsed.data } : defaults;
   } catch {
-    return DEFAULT_PREFERENCES;
+    return defaults;
   }
 }
 

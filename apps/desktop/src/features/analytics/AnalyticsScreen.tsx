@@ -41,6 +41,7 @@ import { activeSeries } from "@/lib/insights";
 import { useAnalytics, type Analytics, type AssetClass } from "@/lib/queries";
 import { IncomeSplitCard, ReserveCard, SpendingPace } from "./Insights";
 import { BudgetOverview } from "@/features/planning/BudgetOverview";
+import { categoryLabel } from "@/lib/categories";
 
 type Point = Analytics["series"][number];
 
@@ -351,7 +352,7 @@ function CategoriesCard({ data, dim }: { data: Analytics | undefined; dim: boole
             return (
               <li key={category.categoryId ?? "none"} className="group">
                 <div className="flex items-baseline justify-between gap-3 text-sm">
-                  <span className="truncate">{category.name}</span>
+                  <span className="truncate">{categoryLabel(category.name)}</span>
                   <span className="flex shrink-0 items-baseline gap-2">
                     {deltaBps !== null && delta !== 0n ? (
                       <span

@@ -58,5 +58,36 @@
   "rateSuffix": {
     "cdi": "% CDI",
     "yearly": "% a.a."
+  },
+  "category": {
+    "salary": "Salário",
+    "freelance": "Freelance",
+    "investmentIncome": "Rendimentos",
+    "refunds": "Reembolsos",
+    "giftsReceived": "Presentes recebidos",
+    "otherIncome": "Outras receitas",
+    "groceries": "Mercado",
+    "food": "Alimentação",
+    "restaurants": "Restaurantes e delivery",
+    "housing": "Moradia",
+    "utilities": "Contas da casa",
+    "transport": "Transporte",
+    "fuel": "Combustível",
+    "health": "Saúde",
+    "pharmacy": "Farmácia",
+    "education": "Educação",
+    "leisure": "Lazer",
+    "travel": "Viagens",
+    "shopping": "Compras",
+    "clothing": "Vestuário",
+    "beauty": "Beleza e cuidados",
+    "subscriptions": "Assinaturas",
+    "pets": "Pets",
+    "gifts": "Presentes",
+    "insurance": "Seguros",
+    "taxes": "Impostos e taxas",
+    "bankFees": "Tarifas bancárias",
+    "donations": "Doações",
+    "other": "Outros"
   }
 }

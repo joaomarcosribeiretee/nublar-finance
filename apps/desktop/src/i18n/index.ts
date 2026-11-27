@@ -1,10 +1,10 @@
 import i18n, { type ParseKeys } from "i18next";
 import { initReactI18next } from "react-i18next";
-import type { Locale } from "@nublar/validation";
+import { DEFAULT_LOCALE, resolveLocale, type Locale } from "@nublar/validation";
 import { en } from "@/locales/en";
 import { ptBR } from "@/locales/pt-BR";
 
-export const DEFAULT_LOCALE: Locale = "pt-BR";
+export { DEFAULT_LOCALE };
 
 /**
  * Every area file (common, home, …) is a top-level key of one namespace, so a
@@ -32,6 +32,22 @@ export function setLocale(locale: Locale): void {
   if (i18n.language !== locale) {
     void i18n.changeLanguage(locale);
   }
+}
+
+/** The language the app is showing now. */
+export function currentLocale(): Locale {
+  return resolveLocale(i18n.language);
+}
+
+/**
+ * The computer's language, for a first launch with nothing saved yet:
+ * Electron's app.getLocale(), or the browser's language outside Electron.
+ */
+export function systemLocale(): Locale {
+  return resolveLocale(
+    (typeof window !== "undefined" ? window.nublar?.locale : undefined) ??
+      (typeof navigator !== "undefined" ? navigator.language : undefined),
+  );
 }
 
 /** For code outside components (labels, toasts, lib helpers). */

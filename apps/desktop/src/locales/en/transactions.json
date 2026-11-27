@@ -1,1 +1,145 @@
-{}
+{
+  "fields": {
+    "category": "Category"
+  },
+  "categoryChips": {
+    "less": "Less",
+    "more": "{{count}} more"
+  },
+  "noCategory": "No category",
+  "kind": {
+    "cardPayment": "Statement payment",
+    "investment": "Contribution",
+    "redemption": "Withdrawal"
+  },
+  "row": {
+    "to": "to",
+    "pending": "Pending",
+    "confirmed": "Confirmed",
+    "skipped": "Skipped this month",
+    "skip": "Skip"
+  },
+  "new": "New transaction",
+  "title": "Transactions",
+  "import": "Import statement",
+  "newShort": "New",
+  "result": "Result",
+  "filters": {
+    "label": "Type",
+    "all": "All",
+    "expense": "Expenses",
+    "income": "Income",
+    "transfer": "Transfers"
+  },
+  "views": {
+    "label": "What to see",
+    "month": "By month",
+    "upcoming": "Upcoming months",
+    "recurring": "Recurring"
+  },
+  "search": {
+    "label": "Search transactions",
+    "placeholder": "Search"
+  },
+  "filter": {
+    "category": "Category: {{name}}",
+    "clear": "Clear filter"
+  },
+  "empty": {
+    "title": "Nothing in {{month}}",
+    "description": "Record income, expenses and transfers to follow where your money goes.",
+    "filtered": "No transactions match this filter."
+  },
+  "group": {
+    "invoice": "{{name}} statement · due {{date}}"
+  },
+  "upcoming": {
+    "empty": "Nothing scheduled this month.",
+    "note": "Scheduled: recurring items, installments and purchases already recorded, confirmed or not. Skipped months are left out."
+  },
+  "strip": {
+    "previous": "Previous months",
+    "choose": "Choose month",
+    "currentMarker": "(current month)",
+    "noData": "no data",
+    "next": "Next months",
+    "current": "Current month"
+  },
+  "form": {
+    "titles": {
+      "purchase": "Card purchase",
+      "pending": "Pending transaction",
+      "edit": "Edit transaction"
+    },
+    "noAccount": {
+      "title": "No accounts yet",
+      "description": "Every transaction happens in an account. Add your bank to get started."
+    },
+    "errors": {
+      "amount": "Enter an amount, for example 25,90.",
+      "sameAccount": "Choose two different accounts.",
+      "category": "Choose a category."
+    },
+    "toasts": {
+      "recurringUpdated": "Recurring item updated from now on",
+      "updated": "Transaction updated",
+      "recurringCreated": "Recurring item created: confirmed automatically every month",
+      "installments": "Split into {{count}} installments",
+      "saved": "Transaction saved",
+      "purchaseDeleted": "Purchase deleted",
+      "deleted": "Transaction deleted",
+      "movementDeleted": "Deleted"
+    },
+    "type": "Transaction type",
+    "amount": {
+      "total": "Total amount",
+      "monthly": "Monthly amount",
+      "single": "Amount"
+    },
+    "payWith": {
+      "label": "Pay with",
+      "account": "Account",
+      "card": "Credit card"
+    },
+    "from": "From",
+    "to": "To",
+    "card": "Card",
+    "repeat": {
+      "label": "Repeat",
+      "once": "Doesn't repeat",
+      "monthly": "Fixed every month",
+      "installments": "Installments",
+      "count": "Number of installments",
+      "times": "times",
+      "monthlyCard": "It goes on every card statement and is confirmed when the statement closes.",
+      "monthlyAccount": "Every month on day {{day}}, starting in {{month}}. Confirmed automatically on the date.",
+      "installmentsAccount": "One installment a month in the account, starting on this date. Each one is confirmed automatically on its date."
+    },
+    "scope": {
+      "title": "Recurring",
+      "label": "What this edit changes",
+      "one": "Only this month",
+      "following": "This and future months",
+      "oneHint": "It stays recurring; the other months don't change.",
+      "followingInstallmentsHint": "Description, category and account change from this month on. The other installments' amounts follow the plan's total.",
+      "followingHint": "Amount, description, category and account change from this month on."
+    },
+    "description": "Description",
+    "descriptionPlaceholder": "E.g. Groceries",
+    "purchaseDate": "Purchase date",
+    "date": "Date",
+    "transferHint": "Transfers between your own accounts count as neither income nor expense.",
+    "cardHint": "The expense counts in each statement's month. Purchases on the closing day or later go on the next statement.",
+    "deleteInstallments": "Delete {{count}} installments",
+    "skipMonth": "Skip this month",
+    "installmentsEqual": "{{count}}x of <value>{{value}}</value>",
+    "installmentsUneven": "1st of <value>{{first}}</value> and {{rest}}x of <value>{{value}}</value>",
+    "invoice": "Statement",
+    "paidWith": "Paid with",
+    "investment": "Investment",
+    "leftFrom": "Came out of",
+    "returnedTo": "Went back to",
+    "cardPaymentHint": "Statement payments are not expenses: the purchases already counted in the statement's month.",
+    "movementHint": "Contributions and withdrawals only move money around: they're neither expenses nor income."
+  }
+}

@@ -1,12 +1,20 @@
 import type { ReactNode } from "react";
+import type { Locale } from "@nublar/validation";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/Button";
 import { Icon } from "@/components/Icon";
 import { PageHeader, Panel } from "@/components/Page";
+import { Segmented } from "@/components/Segmented";
 import { ThemePicker } from "./ThemePicker";
 import { useSaveSetting } from "./useSaveSetting";
 
 const REPOSITORY_URL = "https://github.com/joaomarcosribeiretee/nublar-finance";
+
+/** Each language is named in itself, so anyone can find their own. */
+const LANGUAGES: { value: Locale; label: string }[] = [
+  { value: "pt-BR", label: "Português (Brasil)" },
+  { value: "en", label: "English" },
+];
 
 /**
  * One column of short sections. A section only appears once what it controls
@@ -51,6 +59,15 @@ export function SettingsScreen({ email, onSignOut }: { email: string; onSignOut:
 
         <Panel title={t("settings.appearance.title")} subtitle={t("settings.appearance.subtitle")}>
           <ThemePicker value={preferences.theme} onChange={(theme) => save({ theme })} />
+        </Panel>
+
+        <Panel title={t("settings.language.title")} subtitle={t("settings.language.subtitle")}>
+          <Segmented
+            label={t("settings.language.label")}
+            value={preferences.locale}
+            options={LANGUAGES}
+            onChange={(locale) => save({ locale })}
+          />
         </Panel>
 
         <Panel title={t("settings.about.title")}>

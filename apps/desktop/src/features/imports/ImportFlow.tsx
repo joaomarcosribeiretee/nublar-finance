@@ -17,6 +17,7 @@ import {
   type ImportMapping,
   type ImportPreview,
 } from "@/lib/queries";
+import { categoryLabel } from "@/lib/categories";
 
 /**
  * Bank files are often Latin-1. Read as UTF-8 first and fall back when the
@@ -249,7 +250,7 @@ export function ImportFlow({ onDone }: { onDone: () => void }) {
                             .filter((category) => category.kind === row.type)
                             .map((category) => (
                               <option key={category.id} value={category.id}>
-                                {category.name}
+                                {categoryLabel(category.name)}
                               </option>
                             ))}
                         </select>

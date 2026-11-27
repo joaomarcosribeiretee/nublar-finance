@@ -48,6 +48,27 @@ describe('PreferencesService', () => {
       expect(result).toEqual(DEFAULT_PREFERENCES);
     });
 
+    it('starts a new user in the language of the first request', async () => {
+      const { table, ...prisma } = prismaWith(null);
+      await new PreferencesService(prisma as never).get(userId, 'en');
+
+      expect(table.createMany).toHaveBeenCalledWith({
+        data: [{ userId, locale: 'en' }],
+        skipDuplicates: true,
+      });
+    });
+
+    it('keeps the stored language whatever the request says', async () => {
+      const { table, ...prisma } = prismaWith(row({ locale: 'pt-BR' }));
+      const result = await new PreferencesService(prisma as never).get(
+        userId,
+        'en',
+      );
+
+      expect(table.createMany).not.toHaveBeenCalled();
+      expect(result.locale).toBe('pt-BR');
+    });
+
     it('returns what is stored without writing', async () => {
       const { table, ...prisma } = prismaWith(
         row({ theme: 'LIGHT', hideValues: true, tipsSeen: ['home'] }),

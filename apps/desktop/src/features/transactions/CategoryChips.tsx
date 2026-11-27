@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Field } from "@/components/Field";
 import type { Category, CategoryKind } from "@/lib/queries";
+import { categoryLabel } from "@/lib/categories";
 
 /** How many chips show before "Mais"; the rest stays one click away. */
 const VISIBLE = 12;
@@ -25,7 +26,7 @@ export function CategoryChips({
   const [expanded, setExpanded] = useState(false);
   const list = categories
     .filter((category) => category.kind === kind)
-    .sort((a, b) => b.usage - a.usage || a.name.localeCompare(b.name, "pt-BR"));
+    .sort((a, b) => b.usage - a.usage || categoryLabel(a.name).localeCompare(categoryLabel(b.name)));
   const visible =
     expanded || list.length <= VISIBLE
       ? list
@@ -50,7 +51,7 @@ export function CategoryChips({
             }`}
             onClick={() => onChange(category.id)}
           >
-            {category.name}
+            {categoryLabel(category.name)}
           </button>
         ))}
         {list.length > VISIBLE ? (

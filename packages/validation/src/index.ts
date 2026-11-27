@@ -1,5 +1,15 @@
 import { INITIAL_CURRENCY } from "@nublar/types";
 import { z } from "zod";
+import { DEFAULT_LOCALE, localeSchema } from "./locale";
+import { msg } from "./messages";
+
+export * from "./categories";
+export * from "./locale";
+export {
+  translateValidationMessage,
+  validationMessages,
+  type ValidationMessageKey,
+} from "./messages";
 
 export const currencyCodeSchema = z.literal(INITIAL_CURRENCY);
 
@@ -9,12 +19,12 @@ export const currencyCodeSchema = z.literal(INITIAL_CURRENCY);
  */
 export const moneyAmountSchema = z
   .string()
-  .regex(/^-?\d+$/, "Valor deve ser inteiro em centavos")
+  .regex(/^-?\d+$/, msg("amountInteger"))
   .transform((value) => BigInt(value));
 
 export const positiveMinorAmountSchema = moneyAmountSchema.refine(
   (amount) => amount > 0n,
-  "Valor deve ser maior que zero",
+  msg("amountPositive"),
 );
 
 export const accountTypeSchema = z.enum([
@@ -32,7 +42,7 @@ export const entryTypeSchema = z.enum(["INCOME", "EXPENSE", "TRANSFER"]);
 
 export const calendarDateSchema = z
   .string()
-  .regex(/^\d{4}-\d{2}-\d{2}$/, "Data inválida")
+  .regex(/^\d{4}-\d{2}-\d{2}$/, msg("invalidDate"))
   .refine((value) => {
     // Date rolls 2026-02-31 over into March, so compare the round trip.
     const parsed = new Date(`${value}T00:00:00Z`);
@@ -40,30 +50,30 @@ export const calendarDateSchema = z
       !Number.isNaN(parsed.getTime()) &&
       parsed.toISOString().slice(0, 10) === value
     );
-  }, "Data inválida");
+  }, msg("invalidDate"));
 
 export const calendarMonthSchema = z
   .string()
-  .regex(/^\d{4}-(0[1-9]|1[0-2])$/, "Mês deve usar AAAA-MM");
+  .regex(/^\d{4}-(0[1-9]|1[0-2])$/, msg("invalidMonth"));
 
 const nameSchema = z
   .string()
   .trim()
-  .min(1, "Informe um nome")
-  .max(80, "Nome muito longo");
+  .min(1, msg("nameRequired"))
+  .max(80, msg("nameTooLong"));
 
 /** What the account held before tracking started. May be negative (overdraft). */
 const openingBalanceSchema = moneyAmountSchema;
 
 export const institutionSchema = z.object({
   name: nameSchema,
-  color: z.string().regex(/^#[0-9a-fA-F]{6}$/, "Cor inválida"),
+  color: z.string().regex(/^#[0-9a-fA-F]{6}$/, msg("invalidColor")),
 });
 
 /** Nickname is optional: without one the account reads as its type. */
-const nicknameSchema = z.string().trim().max(80, "Nome muito longo");
+const nicknameSchema = z.string().trim().max(80, msg("nameTooLong"));
 
-const institutionIdSchema = z.string().uuid("Instituição inválida").nullable();
+const institutionIdSchema = z.string().uuid(msg("invalidInstitution")).nullable();
 
 export const createAccountSchema = z.object({
   name: nicknameSchema.optional(),
@@ -86,11 +96,11 @@ export const createCategorySchema = z.object({
 export const createTransactionSchema = z
   .object({
     type: entryTypeSchema,
-    accountId: z.string().uuid("Escolha uma conta"),
+    accountId: z.string().uuid(msg("chooseAccount")),
     destinationAccountId: z.string().uuid().optional(),
     categoryId: z.string().uuid().optional(),
     amount: positiveMinorAmountSchema,
-    description: z.string().trim().max(200, "Descrição muito longa").optional(),
+    description: z.string().trim().max(200, msg("descriptionTooLong")).optional(),
     date: calendarDateSchema,
   })
   .superRefine((value, context) => {
@@ -98,21 +108,21 @@ export const createTransactionSchema = z
       if (!value.destinationAccountId) {
         context.addIssue({
           code: "custom",
-          message: "Escolha a conta de destino",
+          message: msg("chooseDestination"),
           path: ["destinationAccountId"],
         });
       }
       if (value.destinationAccountId === value.accountId) {
         context.addIssue({
           code: "custom",
-          message: "Contas de origem e destino devem ser diferentes",
+          message: msg("sameAccounts"),
           path: ["destinationAccountId"],
         });
       }
       if (value.categoryId) {
         context.addIssue({
           code: "custom",
-          message: "Transferências não têm categoria",
+          message: msg("transferWithCategory"),
           path: ["categoryId"],
         });
       }
@@ -122,28 +132,28 @@ export const createTransactionSchema = z
     if (!value.categoryId) {
       context.addIssue({
         code: "custom",
-        message: "Escolha uma categoria",
+        message: msg("chooseCategory"),
         path: ["categoryId"],
       });
     }
     if (value.destinationAccountId) {
       context.addIssue({
         code: "custom",
-        message: "Somente transferências têm conta de destino",
+        message: msg("destinationNotTransfer"),
         path: ["destinationAccountId"],
       });
     }
   });
 
 const dayOfMonthSchema = z
-  .number({ error: "Informe um dia entre 1 e 31" })
-  .int("Informe um dia entre 1 e 31")
-  .min(1, "Informe um dia entre 1 e 31")
-  .max(31, "Informe um dia entre 1 e 31");
+  .number({ error: msg("dayOfMonth") })
+  .int(msg("dayOfMonth"))
+  .min(1, msg("dayOfMonth"))
+  .max(31, msg("dayOfMonth"));
 
 export const creditCardSchema = z.object({
   name: nameSchema,
-  limit: moneyAmountSchema.refine((v) => v >= 0n, "Limite não pode ser negativo"),
+  limit: moneyAmountSchema.refine((v) => v >= 0n, msg("limitNegative")),
   closingDay: dayOfMonthSchema,
   dueDay: dayOfMonthSchema,
   paymentAccountId: z.string().uuid().nullable().optional(),
@@ -151,20 +161,20 @@ export const creditCardSchema = z.object({
 });
 
 export const cardPurchaseSchema = z.object({
-  cardId: z.string().uuid("Escolha um cartão"),
-  categoryId: z.string().uuid("Escolha uma categoria"),
+  cardId: z.string().uuid(msg("chooseCard")),
+  categoryId: z.string().uuid(msg("chooseCategory")),
   amount: positiveMinorAmountSchema,
   installments: z
     .number()
     .int()
-    .min(1, "Mínimo 1 parcela")
-    .max(48, "Máximo 48 parcelas"),
-  description: z.string().trim().max(200, "Descrição muito longa").optional(),
+    .min(1, msg("minOneInstallment"))
+    .max(48, msg("max48Installments")),
+  description: z.string().trim().max(200, msg("descriptionTooLong")).optional(),
   date: calendarDateSchema,
 });
 
 export const cardPaymentSchema = z.object({
-  accountId: z.string().uuid("Escolha uma conta"),
+  accountId: z.string().uuid(msg("chooseAccount")),
   amount: positiveMinorAmountSchema,
   date: calendarDateSchema,
   invoiceMonth: calendarMonthSchema,
@@ -173,20 +183,20 @@ export const cardPaymentSchema = z.object({
 export const recurringRuleSchema = z
   .object({
     type: z.enum(["INCOME", "EXPENSE"]),
-    accountId: z.string().uuid("Escolha uma conta").nullable().optional(),
+    accountId: z.string().uuid(msg("chooseAccount")).nullable().optional(),
     /** On a card the charge lands on every invoice; no day is needed. */
-    cardId: z.string().uuid("Escolha um cartão").nullable().optional(),
-    categoryId: z.string().uuid("Escolha uma categoria"),
+    cardId: z.string().uuid(msg("chooseCard")).nullable().optional(),
+    categoryId: z.string().uuid(msg("chooseCategory")),
     /** Per month, or the total when `installments` is set. */
     amount: positiveMinorAmountSchema,
     installments: z
       .number()
       .int()
-      .min(2, "Parcelado precisa de ao menos 2 parcelas")
-      .max(120, "Máximo 120 parcelas")
+      .min(2, msg("minTwoInstallments"))
+      .max(120, msg("max120Installments"))
       .nullable()
       .optional(),
-    description: z.string().trim().max(200, "Descrição muito longa").optional(),
+    description: z.string().trim().max(200, msg("descriptionTooLong")).optional(),
     dayOfMonth: dayOfMonthSchema.optional(),
     startMonth: calendarMonthSchema,
     endMonth: calendarMonthSchema.nullable().optional(),
@@ -202,28 +212,28 @@ export const recurringRuleSchema = z
     if (!rule.accountId === !rule.cardId) {
       context.addIssue({
         code: "custom",
-        message: "Escolha uma conta ou um cartão",
+        message: msg("accountOrCard"),
         path: ["accountId"],
       });
     }
     if (rule.cardId && rule.type !== "EXPENSE") {
       context.addIssue({
         code: "custom",
-        message: "Cartão só tem despesas",
+        message: msg("cardExpenseOnly"),
         path: ["cardId"],
       });
     }
     if (rule.accountId && rule.dayOfMonth === undefined) {
       context.addIssue({
         code: "custom",
-        message: "Informe o dia do mês",
+        message: msg("dayRequired"),
         path: ["dayOfMonth"],
       });
     }
     if (rule.endMonth && rule.endMonth < rule.startMonth) {
       context.addIssue({
         code: "custom",
-        message: "O fim precisa ser depois do início",
+        message: msg("endBeforeStart"),
         path: ["endMonth"],
       });
     }
@@ -241,11 +251,11 @@ export const confirmOccurrenceSchema = z.object({
  */
 export const updateOccurrenceSchema = z.object({
   amount: positiveMinorAmountSchema,
-  categoryId: z.string().uuid("Escolha uma categoria"),
-  description: z.string().trim().max(200, "Descrição muito longa").optional(),
+  categoryId: z.string().uuid(msg("chooseCategory")),
+  description: z.string().trim().max(200, msg("descriptionTooLong")).optional(),
   date: calendarDateSchema,
   /** Account occurrences only; card ones stay on their card. */
-  accountId: z.string().uuid("Escolha uma conta").optional(),
+  accountId: z.string().uuid(msg("chooseAccount")).optional(),
   scope: z.enum(["one", "following"]).default("one"),
 });
 
@@ -262,19 +272,19 @@ export const assetClassSchema = z.enum([
 
 const nonNegativeMinorSchema = moneyAmountSchema.refine(
   (amount) => amount >= 0n,
-  "Valor não pode ser negativo",
+  msg("amountNegative"),
 );
 
 const investmentDetailsSchema = z.object({
   name: nameSchema,
   assetClass: assetClassSchema,
   institutionId: z.string().uuid().nullable().optional(),
-  ticker: z.string().trim().max(20, "Código muito longo").optional(),
+  ticker: z.string().trim().max(20, msg("tickerTooLong")).optional(),
   /** Informative; kept as typed text so fractions never become floats. */
   quantity: z
     .string()
     .trim()
-    .regex(/^(\d+([.,]\d+)?)?$/, "Quantidade inválida")
+    .regex(/^(\d+([.,]\d+)?)?$/, msg("invalidQuantity"))
     .optional(),
   maturityDate: calendarDateSchema.nullable().optional(),
   product: z
@@ -297,8 +307,8 @@ const investmentDetailsSchema = z.object({
   rateBps: z
     .number()
     .int()
-    .min(0, "Taxa inválida")
-    .max(100000, "Taxa inválida")
+    .min(0, msg("invalidRate"))
+    .max(100000, msg("invalidRate"))
     .nullable()
     .optional(),
   liquidity: z.enum(["DAILY", "AT_MATURITY"]).nullable().optional(),
@@ -328,13 +338,13 @@ export const bulkValuationSchema = z.object({
         value: nonNegativeMinorSchema,
       }),
     )
-    .min(1, "Nada para atualizar")
+    .min(1, msg("nothingToUpdate"))
     .max(200),
 });
 
 export const investmentMovementSchema = z.object({
   type: z.enum(["INVESTMENT", "REDEMPTION"]),
-  accountId: z.string().uuid("Escolha uma conta"),
+  accountId: z.string().uuid(msg("chooseAccount")),
   amount: positiveMinorAmountSchema,
   date: calendarDateSchema,
 });
@@ -345,7 +355,7 @@ export const valuationSchema = z.object({
 });
 
 export const budgetSchema = z.object({
-  categoryId: z.string().uuid("Escolha uma categoria"),
+  categoryId: z.string().uuid(msg("chooseCategory")),
   amount: positiveMinorAmountSchema,
 });
 
@@ -354,9 +364,9 @@ export const goalSchema = z.object({
   target: positiveMinorAmountSchema,
   targetDate: calendarDateSchema.nullable().optional(),
   manualSaved: moneyAmountSchema
-    .refine((amount) => amount >= 0n, "Valor não pode ser negativo")
+    .refine((amount) => amount >= 0n, msg("amountNegative"))
     .optional(),
-  color: z.string().regex(/^#[0-9a-fA-F]{6}$/, "Cor inválida"),
+  color: z.string().regex(/^#[0-9a-fA-F]{6}$/, msg("invalidColor")),
   accountIds: z.array(z.string().uuid()).max(20).optional(),
   investmentIds: z.array(z.string().uuid()).max(50).optional(),
 });
@@ -364,10 +374,10 @@ export const goalSchema = z.object({
 export type GoalInput = z.infer<typeof goalSchema>;
 
 export const importPreviewSchema = z.object({
-  accountId: z.string().uuid("Escolha uma conta"),
+  accountId: z.string().uuid(msg("chooseAccount")),
   format: z.enum(["OFX", "CSV"]),
   /** File text; 5 MB is far beyond any monthly statement. */
-  content: z.string().min(1, "Arquivo vazio").max(5_000_000, "Arquivo grande demais"),
+  content: z.string().min(1, msg("emptyFile")).max(5_000_000, msg("fileTooBig")),
   mapping: z
     .object({
       date: z.number().int().min(0),
@@ -379,7 +389,7 @@ export const importPreviewSchema = z.object({
 });
 
 export const importCommitSchema = z.object({
-  accountId: z.string().uuid("Escolha uma conta"),
+  accountId: z.string().uuid(msg("chooseAccount")),
   source: z.enum(["OFX_IMPORT", "CSV_IMPORT"]),
   rows: z
     .array(
@@ -387,13 +397,13 @@ export const importCommitSchema = z.object({
         date: calendarDateSchema,
         description: z.string().trim().max(200),
         /** Signed: negative left the account. */
-        amount: moneyAmountSchema.refine((v) => v !== 0n, "Valor zerado"),
-        categoryId: z.string().uuid("Escolha uma categoria"),
+        amount: moneyAmountSchema.refine((v) => v !== 0n, msg("amountZero")),
+        categoryId: z.string().uuid(msg("chooseCategory")),
         externalId: z.string().max(255).nullable().optional(),
       }),
     )
-    .min(1, "Nada para importar")
-    .max(2000, "Importe no máximo 2.000 lançamentos por vez"),
+    .min(1, msg("nothingToImport"))
+    .max(2000, msg("importTooMany")),
 });
 
 /** Edits replace the whole entry, so they follow the same rules as creation. */
@@ -412,8 +422,6 @@ export type CreateTransactionInput = z.infer<typeof createTransactionSchema>;
 
 export const themeSchema = z.enum(["DARK", "LIGHT", "SYSTEM"]);
 
-export const localeSchema = z.enum(["pt-BR", "en"]);
-
 export const onboardingStateSchema = z.object({
   completed: z.boolean(),
   /** Free-form id of the current step; null before it starts or once done. */
@@ -424,7 +432,7 @@ export const onboardingStateSchema = z.object({
 /** Ids of tips already dismissed; repeated ids collapse into one. */
 const tipsSeenSchema = z
   .array(z.string().trim().min(1).max(64))
-  .max(200, "Dicas demais")
+  .max(200, msg("tooManyTips"))
   .transform((ids) => [...new Set(ids)]);
 
 export const preferencesSchema = z.object({
@@ -433,10 +441,10 @@ export const preferencesSchema = z.object({
   currency: currencyCodeSchema,
   /** Day the "financial month" starts. Capped at 28 so every month has it. */
   monthStartDay: z
-    .number({ error: "Informe um dia entre 1 e 28" })
-    .int("Informe um dia entre 1 e 28")
-    .min(1, "Informe um dia entre 1 e 28")
-    .max(28, "Informe um dia entre 1 e 28"),
+    .number({ error: msg("monthStartDay") })
+    .int(msg("monthStartDay"))
+    .min(1, msg("monthStartDay"))
+    .max(28, msg("monthStartDay")),
   hideValues: z.boolean(),
   onboardingState: onboardingStateSchema,
   tipsSeen: tipsSeenSchema,
@@ -446,14 +454,13 @@ export const preferencesSchema = z.object({
 export const updatePreferencesSchema = preferencesSchema.partial();
 
 export type Theme = z.infer<typeof themeSchema>;
-export type Locale = z.infer<typeof localeSchema>;
 export type OnboardingState = z.infer<typeof onboardingStateSchema>;
 export type Preferences = z.infer<typeof preferencesSchema>;
 export type UpdatePreferencesInput = z.infer<typeof updatePreferencesSchema>;
 
 export const DEFAULT_PREFERENCES: Preferences = {
   theme: "DARK",
-  locale: "pt-BR",
+  locale: DEFAULT_LOCALE,
   currency: INITIAL_CURRENCY,
   monthStartDay: 1,
   hideValues: false,

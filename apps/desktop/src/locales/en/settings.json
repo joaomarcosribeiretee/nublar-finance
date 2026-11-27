@@ -1,1 +1,34 @@
-{}
+{
+  "eyebrow": "Fine-tune Nublar",
+  "title": "Settings",
+  "intro": "Everything you change here is saved right away.",
+  "profile": {
+    "title": "Profile",
+    "email": "Email",
+    "emailHint": "Used to sign in to Nublar.",
+    "session": "Session",
+    "signOut": "Sign out"
+  },
+  "about": {
+    "title": "About",
+    "version": "Version",
+    "source": "Source code",
+    "viewOnGitHub": "View on GitHub"
+  },
+  "appearance": {
+    "title": "Appearance",
+    "subtitle": "The theme changes right away, no reload needed.",
+    "theme": "Theme",
+    "dark": "Dark",
+    "darkHint": "Nublar's default",
+    "light": "Light",
+    "lightHint": "For bright rooms",
+    "system": "System",
+    "systemHint": "Follows your computer"
+  },
+  "language": {
+    "title": "Language",
+    "subtitle": "Changes right away, no restart needed.",
+    "label": "App language"
+  }
+}
