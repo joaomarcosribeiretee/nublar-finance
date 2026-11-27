@@ -1,1 +1,133 @@
-{}
+{
+  "of": "of {{amount}}",
+  "markerTitle": "How much of the month has passed",
+  "over": "Over",
+  "remaining": "Left",
+  "overview": {
+    "title": "{{month}} budgets",
+    "markerHint": "The mark shows how much of the month has passed",
+    "adjust": "Adjust limits",
+    "emptyTitle": "Set a monthly limit for each category",
+    "emptyHint": "Groceries, restaurants, leisure: see here how much you can still spend.",
+    "itemLabel": "{{name}}: {{spent}} of {{limit}}",
+    "more_one": "See {{count}} more category",
+    "more_other": "See {{count}} more categories"
+  },
+  "budgets": {
+    "new": "New budget",
+    "create": "Create budget",
+    "intro": "One limit per category, the same every month. Card purchases count in the statement's month.",
+    "empty": {
+      "title": "No budgets",
+      "description": "Set how much you want to spend per month on groceries, restaurants, leisure… and follow how much is already gone."
+    },
+    "spent": "Spent in budgeted categories",
+    "markerHint": "The mark shows how much of the month has passed.",
+    "unbudgeted": "Outside budgets:",
+    "byCategory": "By category",
+    "filter": {
+      "label": "Budget status",
+      "attention": "Near or over the limit"
+    },
+    "allGood": {
+      "title": "Everything within limits",
+      "description": "No category is near or over its budget."
+    },
+    "overBy": "Over by {{amount}}",
+    "usage": "{{used}} used · {{amount}} left",
+    "scheduled": "+ {{amount}} scheduled",
+    "form": {
+      "errors": {
+        "category": "Choose the category.",
+        "limit": "Enter the limit, for example 800,00."
+      },
+      "saved": "Budget saved",
+      "removed": "Budget removed",
+      "limit": "Monthly limit",
+      "useAverage": "Average of recent months: {{amount}}. Use this amount"
+    }
+  },
+  "goals": {
+    "eyebrow": "Emergency fund, a trip, a car down payment",
+    "new": "New goal",
+    "intro": "Link accounts or investments to a goal and the progress updates on its own.",
+    "filter": {
+      "label": "Goal status",
+      "active": "In progress ({{count}})",
+      "done": "Completed ({{count}})",
+      "all": "All"
+    },
+    "empty": {
+      "title": "No goals",
+      "description": "Say how much you want to save and by when. Nublar shows how much to set aside each month.",
+      "action": "Create goal"
+    },
+    "noneDone": {
+      "title": "Your next goals are on their way",
+      "description": "Goals you reach show up here."
+    },
+    "noneActive": {
+      "title": "No goals in progress",
+      "description": "Create a goal for your next plan."
+    },
+    "card": {
+      "reached": "Goal reached",
+      "late": "Past the deadline · {{amount}} to go",
+      "monthly": "Save <value>{{amount}}</value> a month until {{month}}",
+      "remaining": "{{amount}} to go"
+    },
+    "form": {
+      "errors": {
+        "name": "Give the goal a name.",
+        "target": "Enter how much you want to save, for example 10.000,00.",
+        "saved": "The amount already saved is invalid. Use something like 1.500,00."
+      },
+      "updated": "Goal updated",
+      "created": "Goal created",
+      "removed": "Goal removed",
+      "namePlaceholder": "E.g. Emergency fund",
+      "target": "How much you want to save",
+      "date": "By when (optional)",
+      "saved": "Already saved elsewhere (optional)",
+      "sources": {
+        "title": "What counts toward this goal",
+        "subtitle": "The balance of the checked accounts and the value of the checked investments count toward progress.",
+        "empty": "No accounts or investments added yet.",
+        "investment": "investment"
+      }
+    }
+  },
+  "calendar": {
+    "intro": "Past days show the actual balance; upcoming ones, the forecast with pending items and statements.",
+    "items_zero": "nothing",
+    "items_one": "{{count}} item",
+    "items_other": "{{count}} items",
+    "legend": {
+      "income": "Money in",
+      "expense": "Money out",
+      "other": "Due date / transfer"
+    },
+    "noEvents": "Nothing scheduled on this day.",
+    "pickDay": "Choose a marked day to see the details.",
+    "daily": {
+      "title": "Account balance, day by day",
+      "real": "Actual",
+      "balance": "Balance"
+    },
+    "projection": {
+      "title": "Balance forecast",
+      "subtitle": "Starts at {{start}} today. Adds recurring items, installments and statements and subtracts {{variable}}/month of variable spending (average of {{basedOn}}).",
+      "months_zero": "{{count}} months",
+      "months_one": "{{count}} month",
+      "months_other": "{{count}} months",
+      "horizon": "Horizon",
+      "endOf": "End of {{month}}",
+      "projected": "Forecast balance",
+      "income": "Income",
+      "fixed": "Fixed",
+      "variable": "Variable (average)",
+      "month": "Month",
+      "monthBalance": "Month's balance"
+    }
+  }
+}

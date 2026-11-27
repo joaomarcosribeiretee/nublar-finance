@@ -13,6 +13,7 @@ import {
   type Category,
   type CategoryKind,
 } from "@/lib/queries";
+import { categoryLabel } from "@/lib/categories";
 
 const columns: { kind: CategoryKind; title: TranslationKey; dot: string }[] = [
   { kind: "EXPENSE", title: "transactions.filters.expense", dot: "bg-negative" },
@@ -76,7 +77,7 @@ function CategoryColumn({
   const create = useCreateCategory();
   const remove = useDeleteCategory();
   const [name, setName] = useState("");
-  const visible = items.filter((item) => item.name.toLocaleLowerCase("pt-BR").includes(search.trim().toLocaleLowerCase("pt-BR"))).sort((a, b) => b.usage - a.usage || a.name.localeCompare(b.name, "pt-BR"));
+  const visible = items.filter((item) => categoryLabel(item.name).toLocaleLowerCase().includes(search.trim().toLocaleLowerCase())).sort((a, b) => b.usage - a.usage || categoryLabel(a.name).localeCompare(categoryLabel(b.name)));
 
   async function add(event: React.FormEvent) {
     event.preventDefault();
@@ -99,7 +100,7 @@ function CategoryColumn({
   async function destroy(category: Category) {
     try {
       await remove.mutateAsync(category.id);
-      toast(t("categories.removed", { name: category.name }));
+      toast(t("categories.removed", { name: categoryLabel(category.name) }));
     } catch (reason: unknown) {
       toast(errorMessage(reason), "error");
     }
@@ -120,7 +121,7 @@ function CategoryColumn({
                 key={category.id}
                 className="group flex items-center justify-between gap-3 rounded-xl px-3 py-2 transition-colors hover:bg-hover"
               >
-                <span className="truncate text-sm">{category.name}</span>
+                <span className="truncate text-sm">{categoryLabel(category.name)}</span>
                 <span className="flex shrink-0 items-center gap-2">
                   <span className="text-xs text-faint">
                     {category.usage > 0
@@ -130,7 +131,7 @@ function CategoryColumn({
                   {category.usage === 0 ? (
                     <button
                       type="button"
-                      aria-label={t("categories.remove", { name: category.name })}
+                      aria-label={t("categories.remove", { name: categoryLabel(category.name) })}
                       className="-my-1 flex h-8 w-8 items-center justify-center rounded-lg text-faint transition-[opacity,color,background-color] group-hover:opacity-100 hover:bg-negative/10 hover:text-negative focus-visible:opacity-100 hoverable:opacity-0"
                       disabled={remove.isPending}
                       onClick={() => void destroy(category)}

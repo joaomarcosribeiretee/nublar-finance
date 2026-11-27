@@ -1,1 +1,93 @@
-{}
+{
+  "accountType": {
+    "CHECKING": "Checking account",
+    "SAVINGS": "Savings / Savings pot",
+    "CASH": "Cash",
+    "BROKERAGE": "Brokerage cash",
+    "CRYPTO": "Crypto wallet",
+    "OTHER": "Other account"
+  },
+  "entryType": {
+    "INCOME": "Income",
+    "EXPENSE": "Expense",
+    "TRANSFER": "Transfer"
+  },
+  "assetClass": {
+    "FIXED_INCOME": "Fixed income",
+    "STOCK": "Stocks",
+    "FII": "REITs (FIIs)",
+    "ETF": "ETFs",
+    "CRYPTO": "Crypto",
+    "OTHER": "Other"
+  },
+  "invoiceStatus": {
+    "EMPTY": "No purchases",
+    "OPEN": "Open",
+    "CLOSED": "Closed",
+    "PAID": "Paid",
+    "OVERDUE": "Overdue"
+  },
+  "product": {
+    "CDB": "CDB",
+    "LCI": "LCI",
+    "LCA": "LCA",
+    "TESOURO_SELIC": "Tesouro Selic",
+    "TESOURO_IPCA": "Tesouro IPCA+",
+    "TESOURO_PREFIXADO": "Tesouro Prefixado",
+    "DEBENTURE": "Debenture",
+    "CRI_CRA": "CRI / CRA",
+    "FUND": "Fixed income fund",
+    "OTHER": "Other"
+  },
+  "indexer": {
+    "CDI": "% of CDI",
+    "IPCA": "IPCA +",
+    "PREFIXED": "Fixed rate",
+    "SELIC": "Selic +"
+  },
+  "liquidity": {
+    "DAILY": "Daily liquidity",
+    "AT_MATURITY": "At maturity"
+  },
+  "rate": {
+    "cdi": "{{rate}}% of CDI",
+    "ipca": "IPCA + {{rate}}%",
+    "prefixed": "{{rate}}% p.a.",
+    "selic": "Selic + {{rate}}%"
+  },
+  "rateSuffix": {
+    "cdi": "% CDI",
+    "yearly": "% p.a."
+  },
+  "category": {
+    "salary": "Salary",
+    "freelance": "Freelance",
+    "investmentIncome": "Investment income",
+    "refunds": "Refunds",
+    "giftsReceived": "Gifts received",
+    "otherIncome": "Other income",
+    "groceries": "Groceries",
+    "food": "Food",
+    "restaurants": "Restaurants and delivery",
+    "housing": "Housing",
+    "utilities": "Utilities",
+    "transport": "Transportation",
+    "fuel": "Fuel",
+    "health": "Health",
+    "pharmacy": "Pharmacy",
+    "education": "Education",
+    "leisure": "Leisure",
+    "travel": "Travel",
+    "shopping": "Shopping",
+    "clothing": "Clothing",
+    "beauty": "Beauty and personal care",
+    "subscriptions": "Subscriptions",
+    "pets": "Pets",
+    "gifts": "Gifts",
+    "insurance": "Insurance",
+    "taxes": "Taxes and fees",
+    "bankFees": "Bank fees",
+    "donations": "Donations",
+    "other": "Other"
+  }
+}

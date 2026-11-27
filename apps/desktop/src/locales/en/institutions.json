@@ -1,1 +1,70 @@
-{}
+{
+  "form": {
+    "color": "Color",
+    "colorOption": "Color {{index}}",
+    "updated": "Institution updated",
+    "removed": "Institution removed",
+    "name": "Name"
+  },
+  "account": {
+    "invalidBalance": "Invalid balance. Use something like 1.250,00 or -80,00.",
+    "updated": "Account updated",
+    "created": "Account created",
+    "deleted": "Account deleted",
+    "type": "Type",
+    "nickname": "Nickname (optional)",
+    "savingsPlaceholder": "E.g. Trip fund",
+    "balanceToday": "Balance today",
+    "openingBalance": "Opening balance",
+    "openingBalanceHint": "What it held when you started using Nublar. It doesn't count as income. Use a minus sign for an overdrawn account."
+  },
+  "add": {
+    "hints": {
+      "checking": "Where your salary lands and bills are paid",
+      "savings": "Emergency fund, savings pots",
+      "card": "Statements, installments and limit",
+      "brokerage": "Uninvested cash at the brokerage",
+      "crypto": "Balance on an exchange or wallet"
+    },
+    "errors": {
+      "nameRequired": "Enter the institution's name.",
+      "nameTaken": "You already have this institution. Add accounts and cards inside it.",
+      "invalidBalance": "Invalid balance in {{type}}.",
+      "invalidLimit": "Invalid card limit."
+    },
+    "other": "Other institution",
+    "otherPlaceholder": "Name of the bank, brokerage or wallet",
+    "added": "{{name}} added",
+    "question": "What do you have at <name>{{name}}</name>?",
+    "limit": "Limit",
+    "closingDay": "Closes on day",
+    "dueDay": "Due on day",
+    "note": "Today's balance goes into your net worth, not as income. Investments (CDBs, stocks, REITs) are added later, in Investments.",
+    "adding": "Adding…",
+    "submit": "Add {{name}}"
+  },
+  "eyebrow": "Banks, brokerages and wallets",
+  "cash": "Cash",
+  "newShort": "Institution",
+  "intro": "Money in accounts, not counting investments.",
+  "stats": {
+    "cash": "Available in accounts",
+    "investments": "In investments",
+    "count": "Institutions added"
+  },
+  "empty": {
+    "title": "Where is your money?",
+    "description": "Add your banks, brokerages and wallets. Inside each one you add accounts, savings pots and cards."
+  },
+  "new": "New institution",
+  "newCard": "New card",
+  "newAccount": "New account",
+  "panel": {
+    "loose": "Outside institutions",
+    "cardDebt": "Cards owe",
+    "edit": "Edit institution",
+    "card": "{{name}} card",
+    "available": "Available",
+    "invoice": "statement"
+  }
+}

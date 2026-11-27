@@ -1,1 +1,25 @@
-{}
+{
+  "screens": {
+    "home": "Home",
+    "transactions": "Transactions",
+    "accounts": "Institutions",
+    "investments": "Investments",
+    "analytics": "Analytics",
+    "cards": "Cards",
+    "invoices": "Statements",
+    "budgets": "Budgets",
+    "goals": "Goals",
+    "calendar": "Calendar",
+    "categories": "Categories",
+    "settings": "Settings"
+  },
+  "groups": {
+    "netWorth": "Net worth",
+    "planning": "Planning",
+    "organization": "Organization"
+  },
+  "mainNav": "Main",
+  "workspace": "My space",
+  "more": "More",
+  "allScreens": "All screens"
+}

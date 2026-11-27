@@ -1,1 +1,54 @@
-{}
+{
+  "netWorth": "Net worth",
+  "sparkline": {
+    "open": "See analytics",
+    "period": "12 months"
+  },
+  "title": "Home",
+  "onboarding": {
+    "eyebrow": "A simple start",
+    "title": "Your financial life.",
+    "titleAccent": "Now, all of it.",
+    "intro": "Start with the places where your money is: banks, brokerages, wallets.",
+    "addInstitution": "Add institution",
+    "addInstitutionHint": "Choose your bank and add your accounts and cards.",
+    "stepAccounts": "Bring your accounts together",
+    "stepDaily": "Record your day to day",
+    "stepPlans": "Follow your plans"
+  },
+  "result": {
+    "surplus": "Left over this month",
+    "deficit": "Short this month"
+  },
+  "flow": {
+    "income": "Came in",
+    "expense": "Went out",
+    "open": "See transactions: {{label}}"
+  },
+  "cashInAccounts": "{{amount}} in accounts",
+  "invested": "{{amount}} invested",
+  "categories": {
+    "title": "Where the money went",
+    "subtitle": "Biggest expenses this month",
+    "analytics": "Analytics",
+    "empty": "No expenses in {{month}}.",
+    "open": "See transactions for {{name}}"
+  },
+  "latest": {
+    "title": "Latest transactions",
+    "seeAll": "See all",
+    "empty": "No transactions this month.",
+    "register": "Record one now"
+  },
+  "delta": {
+    "same": "same as {{month}}",
+    "up": "up",
+    "down": "down",
+    "vs": "{{percent}}% vs {{month}}"
+  },
+  "attention": {
+    "title": "Needs attention",
+    "invoice": "{{name}} statement",
+    "due": "Due {{date}}"
+  }
+}

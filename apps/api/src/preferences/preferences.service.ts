@@ -4,6 +4,7 @@ import {
   localeSchema,
   onboardingStateSchema,
   updatePreferencesSchema,
+  type Locale,
   type Preferences,
 } from '@nublar/validation';
 import { parseBody } from '../common/parse-body';
@@ -29,8 +30,11 @@ function serialize(row: UserPreferences): Preferences {
 export class PreferencesService {
   constructor(private readonly prisma: PrismaService) {}
 
-  /** Creates the row with the defaults on first read. */
-  async get(userId: string): Promise<Preferences> {
+  /**
+   * Creates the row with the defaults on first read; `initialLocale` (the
+   * language of that first request) replaces the default language.
+   */
+  async get(userId: string, initialLocale?: Locale): Promise<Preferences> {
     const found = await this.prisma.db.userPreferences.findUnique({
       where: { userId },
     });
@@ -40,7 +44,7 @@ export class PreferencesService {
 
     // Concurrent first reads must not fail on each other.
     await this.prisma.db.userPreferences.createMany({
-      data: [{ userId }],
+      data: [initialLocale ? { userId, locale: initialLocale } : { userId }],
       skipDuplicates: true,
     });
     return serialize(

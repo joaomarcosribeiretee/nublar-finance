@@ -13,6 +13,8 @@ interface ImportMetaEnv {
 interface Window {
   nublar?: {
     platform: string;
+    /** System language from Electron's app.getLocale(), e.g. "en-US". */
+    locale?: string;
     setTheme: (source: "dark" | "light" | "system") => void;
   };
 }

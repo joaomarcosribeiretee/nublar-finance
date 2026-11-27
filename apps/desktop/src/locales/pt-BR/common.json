@@ -16,29 +16,6 @@
     "failed": "Não foi possível salvar"
   },
   "dates": {
-    "months": [
-      "Janeiro",
-      "Fevereiro",
-      "Março",
-      "Abril",
-      "Maio",
-      "Junho",
-      "Julho",
-      "Agosto",
-      "Setembro",
-      "Outubro",
-      "Novembro",
-      "Dezembro"
-    ],
-    "weekdays": [
-      "dom",
-      "seg",
-      "ter",
-      "qua",
-      "qui",
-      "sex",
-      "sáb"
-    ],
     "today": "Hoje",
     "yesterday": "Ontem"
   },

@@ -1,1 +1,59 @@
-{}
+{
+  "describe": {
+    "everyInvoice": "on every statement",
+    "everyDay": "every month on day {{day}}",
+    "until": "until {{month}}"
+  },
+  "groups": {
+    "income": "Fixed income",
+    "expense": "Fixed expenses",
+    "installments": "Installment plans"
+  },
+  "intro": "Salary, rent, subscriptions and installment plans. Every month Nublar creates the transaction and confirms it on its own on the date (on a card, when the statement closes). Until then you can adjust or skip it.",
+  "new": "New recurring item",
+  "edit": "Edit recurring item",
+  "search": {
+    "label": "Search recurring items",
+    "placeholder": "Search by description, category or account",
+    "count_zero": "{{count}} items",
+    "count_one": "{{count}} item",
+    "count_other": "{{count}} items"
+  },
+  "empty": {
+    "title": "No recurring items",
+    "description": "Add what repeats (salary, rent, Netflix on the card, a purchase in 10 installments) so you don't have to enter it by hand every month.",
+    "action": "Create recurring item"
+  },
+  "notFound": {
+    "title": "No recurring items found",
+    "description": "Check your search and try again.",
+    "clear": "Clear search"
+  },
+  "perMonth": "{{amount}} a month",
+  "total": "total {{amount}}",
+  "form": {
+    "errors": {
+      "amount": "Enter an amount, for example 49,90.",
+      "end": "The end must be after the start."
+    },
+    "updated": "Recurring item updated",
+    "created": "Recurring item created",
+    "removed": "Recurring item removed",
+    "placeholders": {
+      "income": "E.g. Salary",
+      "installments": "E.g. New fridge",
+      "expense": "E.g. Netflix"
+    },
+    "installments": "Number of installments",
+    "installmentsPreview": "{{count}}x of about {{amount}}",
+    "cardHint": "It goes on every statement, on its due date. No need to pick a day.",
+    "day": "Every month on day",
+    "start": {
+      "card": "Starting with the statement of",
+      "installments": "First installment in",
+      "monthly": "Starts in"
+    },
+    "end": "Ends in (optional)",
+    "editHint": "Changes update the pending items. What's already confirmed stays the same."
+  }
+}

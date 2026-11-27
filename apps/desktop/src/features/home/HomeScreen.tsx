@@ -20,6 +20,7 @@ import { ListSkeleton } from "@/features/transactions/TransactionsScreen";
 import { TransactionRow } from "@/features/transactions/TransactionRow";
 import { BudgetOverview } from "@/features/planning/BudgetOverview";
 import type { TransactionFilter } from "@/features/transactions/TransactionsScreen";
+import { categoryLabel } from "@/lib/categories";
 
 export function HomeScreen({
   month,
@@ -134,9 +135,9 @@ export function HomeScreen({
                 const share = percentOf(group.amount, data.expense);
                 return (
                   <li key={group.categoryId ?? "none"}>
-                    <button type="button" className="category-drill w-full rounded-xl p-2 text-left transition-colors hover:bg-hover" onClick={() => onSeeAll({ type: "EXPENSE", categoryId: group.categoryId, categoryName: group.name })} aria-label={t("home.categories.open", { name: group.name })}>
+                    <button type="button" className="category-drill w-full rounded-xl p-2 text-left transition-colors hover:bg-hover" onClick={() => onSeeAll({ type: "EXPENSE", categoryId: group.categoryId, categoryName: group.name })} aria-label={t("home.categories.open", { name: categoryLabel(group.name) })}>
                       <div className="flex items-baseline justify-between gap-3 text-sm">
-                        <span className="truncate">{group.name}</span>
+                        <span className="truncate">{categoryLabel(group.name)}</span>
                         <span className="flex shrink-0 items-baseline gap-2">
                           <span className="text-xs text-faint tabular">{Math.round(share)}%</span>
                           <Money amount={group.amount} />

@@ -24,6 +24,7 @@ import {
   type Card,
   type InvoiceStatus,
 } from "@/lib/queries";
+import { categoryLabel } from "@/lib/categories";
 
 const statusStyle: Record<InvoiceStatus, string> = {
   EMPTY: "bg-hover-strong text-muted",
@@ -226,11 +227,11 @@ function CardDetail({
                 <span className="block truncate text-sm">
                   {item.type === "CARD_PAYMENT"
                     ? t("cards.detail.payment", { account: item.account?.name ?? "" })
-                    : item.description || item.category?.name}
+                    : item.description || (item.category ? categoryLabel(item.category.name) : null)}
                 </span>
                 {item.type === "EXPENSE" ? (
                   <span className="block truncate text-xs text-muted">
-                    {item.category?.name}
+                    {item.category ? categoryLabel(item.category.name) : null}
                     {(item.installmentCount ?? 1) > 1
                       ? ` · ${t("cards.detail.installment", { number: item.installmentNumber, count: item.installmentCount })}`
                       : ""}

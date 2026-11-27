@@ -1,1 +1,50 @@
-{}
+{
+  "errors": {
+    "empty": "No transactions found in the file.",
+    "noAccount": "Add an account before importing a statement.",
+    "tooBig": "File too large. Export a shorter period (up to 5 MB).",
+    "unreadable": "Couldn't read the file. Try exporting the statement again.",
+    "missingCategory_one": "Choose the category for {{count}} transaction.",
+    "missingCategory_other": "Choose the category for {{count}} transactions."
+  },
+  "toast": {
+    "imported_zero": "{{count}} imported",
+    "imported_one": "{{count}} imported",
+    "imported_other": "{{count}} imported",
+    "skipped_one": ", {{count}} already existed",
+    "skipped_other": ", {{count}} already existed",
+    "learned_zero": "{{count}} rules learned.",
+    "learned_one": "{{count}} rule learned.",
+    "learned_other": "{{count}} rules learned."
+  },
+  "account": "Import into account",
+  "file": "Statement file",
+  "pickFile": "Choose .ofx or .csv",
+  "howTo": "In your bank's app or website, open the statement and look for “Export” or “Download”. OFX is the most reliable; CSV works too. Nothing is saved before you review it.",
+  "summary": {
+    "rows_zero": "{{count}} transactions",
+    "rows_one": "{{count}} transaction",
+    "rows_other": "{{count}} transactions",
+    "duplicates_one": "{{count}} looks already recorded (unchecked)",
+    "duplicates_other": "{{count}} look already recorded (unchecked)",
+    "noDuplicates": "no duplicates"
+  },
+  "changeFile": "Change file",
+  "row": {
+    "include": "Import {{name}}",
+    "duplicate": "Already recorded?",
+    "category": "Category for {{name}}"
+  },
+  "rulesHint": "The categories you choose become rules: next time you import, similar transactions come in already categorized. Transfers between your own accounts: uncheck them and record them as a transfer.",
+  "selected_zero": "{{count}} selected · in <income/> · out <expense/>",
+  "selected_one": "{{count}} selected · in <income/> · out <expense/>",
+  "selected_other": "{{count}} selected · in <income/> · out <expense/>",
+  "importing": "Importing…",
+  "submit": "Import {{count}}",
+  "csv": {
+    "column": "Column {{index}}",
+    "intro": "I didn't recognize the columns in this CSV. Tell me which is which:",
+    "invert": "Expenses show as positive in the file (common in card statements)",
+    "submit": "Read with these columns"
+  }
+}

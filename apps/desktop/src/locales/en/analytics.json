@@ -1,1 +1,90 @@
-{}
+{
+  "pace": {
+    "title": "Spending pace",
+    "subtitle": "Spending so far in {{month}}, compared with the average of the previous {{count}} months",
+    "thisMonth": "This month",
+    "usual": "Usual",
+    "empty": "No spending recorded in {{month}}.",
+    "untilDay": "through day {{day}}",
+    "noHistory": "no previous months to compare",
+    "same": "same as usual",
+    "above": "{{amount}} above usual",
+    "below": "{{amount}} below usual",
+    "tooltip": "Through day {{day}}"
+  },
+  "reserve": {
+    "title": "Emergency fund",
+    "subtitle": "How long the money you can withdraw today covers your usual spending",
+    "empty": "Record a full month of spending to calculate your emergency fund.",
+    "month": "month of spending",
+    "months": "months of spending",
+    "marker": "3 months",
+    "available": "Available to withdraw today",
+    "monthly": "Usual spending per month",
+    "hint": "Accounts + fixed income with daily liquidity, minus open statements.",
+    "above": "Above the 6 months usually recommended.",
+    "usual": "The usual advice is 3 to 6 months."
+  },
+  "split": {
+    "variable": "Day to day",
+    "invested": "Invested",
+    "left": "Left in the account",
+    "titleOut": "For every R$ 100 that went out",
+    "titleIn": "For every R$ 100 that came in",
+    "in": "In {{month}}",
+    "empty": "Nothing came in or went out in {{month}}.",
+    "over": "<value/> more went out than came in."
+  },
+  "range": "{{from}} to {{to}}",
+  "eyebrow": "Your financial progress",
+  "period": "Period",
+  "months24": "24 months",
+  "empty": {
+    "title": "Nothing to analyze yet",
+    "description": "Record income, expenses and investments. The charts appear as soon as there is a first entry."
+  },
+  "views": {
+    "label": "What to analyze",
+    "flow": "Money in and out",
+    "future": "Commitments"
+  },
+  "openMonth": "See the month's transactions",
+  "kpis": {
+    "label": "Financial summary for the period",
+    "since": "since {{month}}",
+    "firstMonth": "First month tracked",
+    "result": "Left over this month",
+    "resultDetail": "Came in {{income}} · savings {{rate}}"
+  },
+  "worth": {
+    "title": "Net worth over time",
+    "subtitleSince": "Accounts + investments − card debt, since {{month}}, when you started tracking",
+    "subtitle": "Accounts + investments − card debt, at the end of each month"
+  },
+  "allocation": {
+    "cash": "Accounts",
+    "title": "Where your net worth is",
+    "subtitle": "Accounts and investments today",
+    "empty": "Nothing to break down yet."
+  },
+  "flow": {
+    "title": "Income × expenses",
+    "subtitle": "By accrual month"
+  },
+  "savings": "Savings rate",
+  "categories": {
+    "subtitle": "{{month}} · mark = average of the previous 3 months",
+    "empty": "No expenses this month.",
+    "previous": "In {{month}}: {{amount}}",
+    "average": "Average: {{amount}}"
+  },
+  "commitments": {
+    "title": "Already committed",
+    "subtitle": "Next 6 months: recorded installments and recurring expenses",
+    "recurring": "Recurring",
+    "recurringIncome": "Recurring income"
+  },
+  "table": {
+    "title": "Month by month"
+  }
+}

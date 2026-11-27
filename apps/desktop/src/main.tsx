@@ -5,9 +5,11 @@ import "@fontsource/outfit/400.css";
 import "@fontsource/outfit/500.css";
 import "./i18n";
 import { App } from "./App";
-import { followSystemTheme } from "./lib/preferences";
+import { applyPreferences, followSystemTheme, readCachedPreferences } from "./lib/preferences";
 import "./index.css";
 
+// Theme and language before the first screen, sign-in included.
+applyPreferences(readCachedPreferences());
 followSystemTheme();
 
 const root = document.getElementById("root");

@@ -95,6 +95,8 @@ function createWindow() {
       contextIsolation: true,
       nodeIntegration: false,
       sandbox: true,
+      // The system language, for the app's first launch (preload.cjs).
+      additionalArguments: [`--nublar-locale=${app.getLocale()}`],
     },
   });
 

@@ -30,10 +30,21 @@ describe("i18n", () => {
     expect(t("transactions.title")).toBe("Lançamentos");
   });
 
-  it("shows pt-BR for anything English does not have yet", () => {
+  it("switches to English at runtime", () => {
     setLocale("en");
     expect(i18n.language).toBe("en");
-    expect(t("transactions.title")).toBe("Lançamentos");
+    expect(t("transactions.title")).toBe("Transactions");
+    expect(t("categories.usage", { count: 1 })).toBe("1 transaction");
+    expect(t("categories.usage", { count: 3 })).toBe("3 transactions");
+    expect(t("planning.calendar.items", { count: 0 })).toBe("nothing");
+  });
+
+  it("has every pt-BR key in English, none empty", () => {
+    for (const key of leaves(ptBR)) {
+      const value = valueAt(en, key);
+      expect(typeof value, key).toBe("string");
+      expect(String(value).trim().length, key).toBeGreaterThan(0);
+    }
   });
 
   it("pluralizes by count", () => {

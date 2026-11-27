@@ -7,6 +7,7 @@ import { errorMessage } from "@/lib/api";
 import { currentMonth, monthLabel, todayLocal } from "@/lib/dates";
 import { formatMinorUnits } from "@/lib/money";
 import { useBudgets, type BudgetStatus, type Budgets } from "@/lib/queries";
+import { categoryLabel } from "@/lib/categories";
 
 export const budgetTone: Record<BudgetStatus, "positive" | "warning" | "negative"> = {
   OK: "positive",
@@ -113,11 +114,11 @@ export function BudgetOverview({
                 <button
                   type="button"
                   onClick={() => (onCategory ? onCategory(item.category) : onManage())}
-                  aria-label={t("planning.overview.itemLabel", { name: item.category.name, spent: formatMinorUnits(item.spent), limit: formatMinorUnits(item.limit) })}
+                  aria-label={t("planning.overview.itemLabel", { name: categoryLabel(item.category.name), spent: formatMinorUnits(item.spent), limit: formatMinorUnits(item.limit) })}
                   className="w-full rounded-xl p-2 text-left transition-colors hover:bg-hover"
                 >
                   <span className="flex items-baseline justify-between gap-3 text-sm">
-                    <span className="truncate">{item.category.name}</span>
+                    <span className="truncate">{categoryLabel(item.category.name)}</span>
                     <span className="shrink-0 tabular">
                       <Money amount={item.spent} />
                       <span className="text-xs text-muted"> / {formatMinorUnits(item.limit)}</span>

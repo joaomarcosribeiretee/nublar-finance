@@ -1,5 +1,15 @@
 import { describe, expect, it } from "vitest";
-import { dayLabel, defaultDateFor, shiftMonth, todayLocal } from "./dates";
+import {
+  dayLabel,
+  defaultDateFor,
+  monthLabel,
+  monthNames,
+  shiftMonth,
+  shortDate,
+  shortMonthLabel,
+  todayLocal,
+  weekdayNames,
+} from "./dates";
 
 describe("dates", () => {
   it("uses the local calendar day, not UTC", () => {
@@ -18,6 +28,26 @@ describe("dates", () => {
     expect(dayLabel("2026-10-01", now)).toBe("Hoje");
     expect(dayLabel("2026-09-30", now)).toBe("Ontem");
     expect(dayLabel("2026-09-28", now)).toBe("seg, 28 set");
+  });
+
+  it("names months and weekdays through Intl in each language", () => {
+    expect(monthNames("pt-BR")).toEqual([
+      "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
+      "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro",
+    ]);
+    expect(monthNames("en")[0]).toBe("January");
+    expect(weekdayNames("pt-BR")).toEqual(["dom", "seg", "ter", "qua", "qui", "sex", "sáb"]);
+    expect(weekdayNames("en")).toEqual(["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]);
+  });
+
+  it("formats months and days in the order of each language", () => {
+    expect(monthLabel("2026-10", "pt-BR")).toBe("Outubro 2026");
+    expect(monthLabel("2026-10", "en")).toBe("October 2026");
+    expect(shortMonthLabel("2026-05", "pt-BR")).toBe("mai");
+    expect(shortMonthLabel("2026-09", "en")).toBe("Sep");
+    expect(shortDate("2026-10-10", "pt-BR")).toBe("10 out");
+    expect(shortDate("2026-10-10", "en")).toBe("Oct 10");
+    expect(dayLabel("2026-09-28", new Date(2026, 9, 1, 10), "en")).toBe("Mon, Sep 28");
   });
 
   it("defaults new entries into the month being browsed", () => {

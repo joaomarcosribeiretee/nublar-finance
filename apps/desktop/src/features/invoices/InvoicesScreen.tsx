@@ -20,6 +20,7 @@ import {
   type Transaction,
 } from "@/lib/queries";
 import type { FormPreset } from "@/features/transactions/TransactionForm";
+import { categoryLabel } from "@/lib/categories";
 
 type Actions = {
   onEdit: (transaction: Transaction) => void;
@@ -348,7 +349,7 @@ function Items({ items, onEdit }: { items: InvoiceItem[]; onEdit: Actions["onEdi
                       <span className="truncate">
                         {item.type === "CARD_PAYMENT"
                           ? t("cards.detail.payment", { account: item.account?.name ?? "" })
-                          : item.description || item.category?.name}
+                          : item.description || (item.category ? categoryLabel(item.category.name) : null)}
                       </span>
                       {item.status === "PENDING" ? (
                         <span className="shrink-0 rounded-full bg-hover-strong px-1.5 py-0.5 text-[10px] text-muted">{t("invoices.scheduledBadge")}</span>
@@ -356,7 +357,7 @@ function Items({ items, onEdit }: { items: InvoiceItem[]; onEdit: Actions["onEdi
                     </span>
                     {item.type === "EXPENSE" ? (
                       <span className="block truncate text-xs text-muted">
-                        {item.category?.name}
+                        {item.category ? categoryLabel(item.category.name) : null}
                         {(item.installmentCount ?? 1) > 1
                           ? ` · ${t("cards.detail.installment", { number: item.installmentNumber, count: item.installmentCount })} · ${
                               item.installmentNumber === item.installmentCount

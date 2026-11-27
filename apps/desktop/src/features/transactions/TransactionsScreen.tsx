@@ -24,6 +24,7 @@ import {
 import { TransactionRow } from "./TransactionRow";
 import { ImportFlow } from "@/features/imports/ImportFlow";
 import { RecurringScreen } from "@/features/recurring/RecurringScreen";
+import { categoryLabel } from "@/lib/categories";
 
 type Group = { key: string; date: string; title: string; items: Transaction[]; invoice: boolean };
 
@@ -144,7 +145,7 @@ export function TransactionsScreen({
       )}
       {category?.categoryId !== undefined ? (
         <div className="mt-3 flex items-center gap-2 text-sm text-muted">
-          {t("transactions.filter.category", { name: category.categoryName ?? t("transactions.noCategory") })}
+          {t("transactions.filter.category", { name: category.categoryName ? categoryLabel(category.categoryName) : t("transactions.noCategory") })}
           <Button variant="ghost" className="h-8 px-2 text-xs" onClick={() => setCategory(undefined)}>{t("transactions.filter.clear")} <Icon name="close" size={13} /></Button>
         </div>
       ) : null}
@@ -196,7 +197,7 @@ function matching(list: Transaction[], filter: Filter, query: string): Transacti
     }
     return [
       transaction.description,
-      transaction.category?.name,
+      transaction.category ? categoryLabel(transaction.category.name) : undefined,
       transaction.account?.name,
       transaction.destinationAccount?.name,
       transaction.card?.name,

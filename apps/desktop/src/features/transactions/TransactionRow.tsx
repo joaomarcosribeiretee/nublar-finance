@@ -8,6 +8,7 @@ import { errorMessage } from "@/lib/api";
 import { useConfirmTransaction, useSkipTransaction, type Transaction } from "@/lib/queries";
 import { shortDate } from "@/lib/dates";
 import { entryTypeLabels } from "@/lib/labels";
+import { categoryLabel } from "@/lib/categories";
 
 type Look = {
   icon: IconName;
@@ -60,7 +61,7 @@ function subtitleOf(transaction: Transaction): ReactNode {
   if (transaction.type === "REDEMPTION") {
     return route(transaction.investment?.name, transaction.account?.name);
   }
-  const category = transaction.category?.name ?? t("transactions.noCategory");
+  const category = transaction.category ? categoryLabel(transaction.category.name) : t("transactions.noCategory");
   if (transaction.card) {
     const installment =
       (transaction.installmentCount ?? 1) > 1
@@ -101,7 +102,7 @@ export function TransactionRow({
           <span className="flex items-center gap-2 text-sm">
             <span className={`truncate ${pending ? "text-muted" : ""}`}>
               {transaction.description ||
-                transaction.category?.name ||
+                (transaction.category ? categoryLabel(transaction.category.name) : null) ||
                 (transaction.type === "CARD_PAYMENT"
                   ? t("transactions.kind.cardPayment")
                   : transaction.type === "INVESTMENT"

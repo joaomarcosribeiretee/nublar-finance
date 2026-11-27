@@ -19,26 +19,39 @@ function memoryStorage(initial?: string) {
 
 describe("readCachedPreferences", () => {
   it("uses the defaults when nothing is cached", () => {
-    expect(readCachedPreferences(memoryStorage())).toEqual(DEFAULT_PREFERENCES);
+    expect(readCachedPreferences(memoryStorage(), "pt-BR")).toEqual(DEFAULT_PREFERENCES);
   });
 
   it("round-trips what was cached", () => {
     const storage = memoryStorage();
     const saved = { ...DEFAULT_PREFERENCES, theme: "LIGHT" as const, locale: "en" as const };
     cachePreferences(saved, storage);
-    expect(readCachedPreferences(storage)).toEqual(saved);
+    expect(readCachedPreferences(storage, "pt-BR")).toEqual(saved);
   });
 
   it("fills fields an older cache does not have", () => {
-    expect(readCachedPreferences(memoryStorage('{"theme":"SYSTEM"}'))).toEqual({
+    expect(readCachedPreferences(memoryStorage('{"theme":"SYSTEM"}'), "pt-BR")).toEqual({
       ...DEFAULT_PREFERENCES,
       theme: "SYSTEM",
     });
   });
 
+  it("starts in the system language when nothing is saved", () => {
+    expect(readCachedPreferences(memoryStorage(), "en").locale).toBe("en");
+    expect(readCachedPreferences(memoryStorage('{"theme":"LIGHT"}'), "en")).toEqual({
+      ...DEFAULT_PREFERENCES,
+      theme: "LIGHT",
+      locale: "en",
+    });
+  });
+
+  it("keeps a saved language over the system one", () => {
+    expect(readCachedPreferences(memoryStorage('{"locale":"pt-BR"}'), "en").locale).toBe("pt-BR");
+  });
+
   it("ignores a broken cache", () => {
-    expect(readCachedPreferences(memoryStorage("{not json"))).toEqual(DEFAULT_PREFERENCES);
-    expect(readCachedPreferences(memoryStorage('{"theme":"PINK"}'))).toEqual(DEFAULT_PREFERENCES);
+    expect(readCachedPreferences(memoryStorage("{not json"), "pt-BR")).toEqual(DEFAULT_PREFERENCES);
+    expect(readCachedPreferences(memoryStorage('{"theme":"PINK"}'), "pt-BR")).toEqual(DEFAULT_PREFERENCES);
   });
 });
 

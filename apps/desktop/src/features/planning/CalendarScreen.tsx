@@ -20,7 +20,7 @@ import { ErrorNote, PageHeader, Panel } from "@/components/Page";
 import { Segmented } from "@/components/Segmented";
 import { errorMessage } from "@/lib/api";
 import { plotValue } from "@/lib/chart";
-import { dayLabel, monthLabel, shortMonthLabel, todayLocal } from "@/lib/dates";
+import { dayLabel, monthLabel, shortMonthLabel, todayLocal, weekdayNames } from "@/lib/dates";
 import { formatMinorUnits } from "@/lib/money";
 import { useCalendar, useProjection, type CalendarEvent } from "@/lib/queries";
 
@@ -77,7 +77,7 @@ export function CalendarScreen({ month }: { month: string }) {
       {!calendar.isError ? <div className="grid items-start gap-4 @2xl:grid-cols-[1.5fr_1fr]">
         <Panel className="calendar-panel">
           <div className="grid grid-cols-7 gap-1 text-center text-[11px] text-faint uppercase">
-            {t("common.dates.weekdays", { returnObjects: true }).map((day) => (
+            {weekdayNames().map((day) => (
               <span key={day} className="pb-2">
                 {day}
               </span>
