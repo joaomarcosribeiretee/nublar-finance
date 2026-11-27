@@ -422,6 +422,12 @@ export type CreateTransactionInput = z.infer<typeof createTransactionSchema>;
 
 export const themeSchema = z.enum(["DARK", "LIGHT", "SYSTEM"]);
 
+/**
+ * Accent colors offered in Settings. A short fixed list keeps the app
+ * consistent; each one has a dark and a light step in tokens.css.
+ */
+export const accentSchema = z.enum(["GOLD", "GREEN", "BLUE", "VIOLET", "ROSE"]);
+
 export const onboardingStateSchema = z.object({
   completed: z.boolean(),
   /** Free-form id of the current step; null before it starts or once done. */
@@ -437,6 +443,7 @@ const tipsSeenSchema = z
 
 export const preferencesSchema = z.object({
   theme: themeSchema,
+  accent: accentSchema,
   locale: localeSchema,
   currency: currencyCodeSchema,
   /** Day the "financial month" starts. Capped at 28 so every month has it. */
@@ -454,12 +461,14 @@ export const preferencesSchema = z.object({
 export const updatePreferencesSchema = preferencesSchema.partial();
 
 export type Theme = z.infer<typeof themeSchema>;
+export type Accent = z.infer<typeof accentSchema>;
 export type OnboardingState = z.infer<typeof onboardingStateSchema>;
 export type Preferences = z.infer<typeof preferencesSchema>;
 export type UpdatePreferencesInput = z.infer<typeof updatePreferencesSchema>;
 
 export const DEFAULT_PREFERENCES: Preferences = {
   theme: "DARK",
+  accent: "GOLD",
   locale: DEFAULT_LOCALE,
   currency: INITIAL_CURRENCY,
   monthStartDay: 1,

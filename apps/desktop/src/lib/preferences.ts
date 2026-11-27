@@ -1,5 +1,7 @@
 import {
+  accentSchema,
   DEFAULT_PREFERENCES,
+  type Accent,
   updatePreferencesSchema,
   type Locale,
   type Preferences,
@@ -52,6 +54,14 @@ export function resolveTheme(theme: Theme, prefersLight: boolean): "dark" | "lig
   return theme === "LIGHT" ? "light" : "dark";
 }
 
+/** The accents offered in Settings, in the order they appear. */
+export const ACCENTS: readonly Accent[] = accentSchema.options;
+
+/** Value of the data-accent attribute that tokens.css reads. */
+export function accentAttribute(accent: Accent): string {
+  return accent.toLowerCase();
+}
+
 const lightQuery = "(prefers-color-scheme: light)";
 
 /** What Electron's nativeTheme.themeSource expects for each choice. */
@@ -62,6 +72,7 @@ export function nativeThemeSource(theme: Theme): "dark" | "light" | "system" {
 export function applyPreferences(preferences: Preferences): void {
   const root = document.documentElement;
   root.dataset.theme = resolveTheme(preferences.theme, matchMedia(lightQuery).matches);
+  root.dataset.accent = accentAttribute(preferences.accent);
   root.lang = preferences.locale;
   setLocale(preferences.locale);
   // Title bar and native menus (Electron only).

@@ -1,6 +1,8 @@
 import { DEFAULT_PREFERENCES } from "@nublar/validation";
 import { describe, expect, it } from "vitest";
 import {
+  accentAttribute,
+  ACCENTS,
   cachePreferences,
   nativeThemeSource,
   PREFERENCES_STORAGE_KEY,
@@ -52,6 +54,13 @@ describe("readCachedPreferences", () => {
   it("ignores a broken cache", () => {
     expect(readCachedPreferences(memoryStorage("{not json"), "pt-BR")).toEqual(DEFAULT_PREFERENCES);
     expect(readCachedPreferences(memoryStorage('{"theme":"PINK"}'), "pt-BR")).toEqual(DEFAULT_PREFERENCES);
+    expect(readCachedPreferences(memoryStorage('{"accent":"#ff00ff"}'), "pt-BR")).toEqual(DEFAULT_PREFERENCES);
+  });
+});
+
+describe("accentAttribute", () => {
+  it("gives the data-accent value tokens.css reads", () => {
+    expect(ACCENTS.map(accentAttribute)).toEqual(["gold", "green", "blue", "violet", "rose"]);
   });
 });
 

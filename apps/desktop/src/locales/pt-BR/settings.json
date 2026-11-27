@@ -17,14 +17,22 @@
   },
   "appearance": {
     "title": "Aparência",
-    "subtitle": "O tema muda na hora, sem recarregar.",
+    "subtitle": "Tema e cor mudam na hora, sem recarregar.",
     "theme": "Tema",
     "dark": "Escuro",
     "darkHint": "Padrão do Nublar",
     "light": "Claro",
     "lightHint": "Para ambientes iluminados",
     "system": "Sistema",
-    "systemHint": "Segue o computador"
+    "systemHint": "Segue o computador",
+    "accent": "Cor de destaque",
+    "accents": {
+      "gold": "Dourado (padrão)",
+      "green": "Verde",
+      "blue": "Azul",
+      "violet": "Violeta",
+      "rose": "Rosa"
+    }
   },
   "language": {
     "title": "Idioma",

@@ -1,5 +1,6 @@
 import { readFileSync } from "node:fs";
 import path from "node:path";
+import { accentSchema } from "@nublar/validation";
 import { describe, expect, it } from "vitest";
 
 /**
@@ -47,6 +48,7 @@ function contrast(a: string, b: string): number {
 
 const surfaces = ["background", "surface", "surface-2", "raised"];
 const text = ["foreground", "muted", "faint", "accent", "positive", "negative", "warning", "transfer"];
+const accents = accentSchema.options.map((accent) => `accent-${accent.toLowerCase()}`);
 const series = Array.from({ length: 8 }, (_, i) => `series-${i + 1}`);
 
 const themes = ["dark", "light"].map((name) => {
@@ -72,8 +74,40 @@ describe.each(themes)("%s theme", (_name, selector, colors) => {
     expect(contrast(colors["accent-fg"], colors.accent)).toBeGreaterThanOrEqual(4.5);
   });
 
+  it.each(accents)("--%s reads at 4.5:1 on every surface, with --accent-fg on it", (token) => {
+    for (const surface of surfaces) {
+      expect(
+        contrast(colors[token], colors[surface]),
+        `--${token} on --${surface}`,
+      ).toBeGreaterThanOrEqual(4.5);
+    }
+    expect(contrast(colors["accent-fg"], colors[token]), `--accent-fg on --${token}`).toBeGreaterThanOrEqual(4.5);
+  });
+
   it.each(series)("--%s reaches 3:1 on the chart surface", (token) => {
     expect(contrast(colors[token], colors.surface)).toBeGreaterThanOrEqual(3);
+  });
+});
+
+describe("accent choice", () => {
+  /** Every rule whose selector mentions data-accent, with what it declares. */
+  const code = css.replace(/\/\*[\s\S]*?\*\//g, "");
+  const rules = [...code.matchAll(/([^{}]*\[data-accent[^{]*)\{([^}]*)\}/g)].map((m) => ({
+    selector: m[1].trim(),
+    declared: [...m[2].matchAll(/--([\w-]+):/g)].map((d) => d[1]),
+  }));
+
+  it("has a rule for each accent the API accepts", () => {
+    for (const accent of accentSchema.options) {
+      expect(code, accent).toContain(`[data-accent="${accent.toLowerCase()}"] [data-theme]`);
+    }
+    expect(rules).toHaveLength(accentSchema.options.length);
+  });
+
+  it("only changes --accent, never the semantic colors", () => {
+    for (const rule of rules) {
+      expect(rule.declared, rule.selector).toEqual(["accent"]);
+    }
   });
 });
 

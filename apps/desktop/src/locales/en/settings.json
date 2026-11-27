@@ -17,14 +17,22 @@
   },
   "appearance": {
     "title": "Appearance",
-    "subtitle": "The theme changes right away, no reload needed.",
+    "subtitle": "Theme and color change right away, no reload needed.",
     "theme": "Theme",
     "dark": "Dark",
     "darkHint": "Nublar's default",
     "light": "Light",
     "lightHint": "For bright rooms",
     "system": "System",
-    "systemHint": "Follows your computer"
+    "systemHint": "Follows your computer",
+    "accent": "Accent color",
+    "accents": {
+      "gold": "Gold (default)",
+      "green": "Green",
+      "blue": "Blue",
+      "violet": "Violet",
+      "rose": "Rose"
+    }
   },
   "language": {
     "title": "Language",

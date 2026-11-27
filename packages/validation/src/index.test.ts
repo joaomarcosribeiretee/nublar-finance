@@ -178,6 +178,15 @@ describe("preferences", () => {
     );
   });
 
+  it("accepts only the offered accents", () => {
+    expect(updatePreferencesSchema.parse({ accent: "BLUE" })).toEqual({
+      accent: "BLUE",
+    });
+    expect(updatePreferencesSchema.safeParse({ accent: "#ff00ff" }).success).toBe(
+      false,
+    );
+  });
+
   it("collapses repeated tips", () => {
     expect(
       updatePreferencesSchema.parse({ tipsSeen: ["a", "b", "a"] }).tipsSeen,
