@@ -3,7 +3,7 @@ import { useTranslation } from "react-i18next";
 import { Area, AreaChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { AccountSelect } from "@/components/AccountSelect";
 import { Button } from "@/components/Button";
-import { axisProps, lineCursor, TooltipBox, yAxisMoney } from "@/components/charts";
+import { axisProps, lineCursor, TooltipBox, useMoneyChart } from "@/components/charts";
 import { controlClass, DecimalInput, Field, MoneyInput } from "@/components/Field";
 import { Icon } from "@/components/Icon";
 import { Money } from "@/components/Money";
@@ -13,7 +13,7 @@ import { useToast } from "@/components/Toast";
 import { errorMessage } from "@/lib/api";
 import { plotValue } from "@/lib/chart";
 import { monthLabel, shortDate, shortMonthLabel, todayLocal } from "@/lib/dates";
-import { formatMinorUnits, minorUnitsToInput, parseReaisToMinorUnits } from "@/lib/money";
+import { minorUnitsToInput, parseReaisToMinorUnits } from "@/lib/money";
 import {
   useAccounts,
   useAddValuation,
@@ -91,6 +91,7 @@ export function InvestmentDetail({ id, onClose }: { id: string; onClose: () => v
 
 function HistoryChart({ data }: { data: Detail }) {
   const { t } = useTranslation();
+  const chart = useMoneyChart();
   const fill = useId();
   const rows = data.history.map((point) => ({ ...point, plot: plotValue(point.value) }));
   if (rows.length < 2) {
@@ -107,8 +108,9 @@ function HistoryChart({ data }: { data: Detail }) {
             </linearGradient>
           </defs>
           <XAxis dataKey="month" tickFormatter={(m: string) => shortMonthLabel(m)} {...axisProps} minTickGap={24} />
-          <YAxis {...yAxisMoney} tickCount={4} />
+          <YAxis {...chart.yAxis} tickCount={4} />
           <Tooltip
+            {...chart.tooltip}
             cursor={lineCursor}
             content={({ active, payload }) => {
               const point = payload?.[0]?.payload as (typeof rows)[number] | undefined;
@@ -116,7 +118,7 @@ function HistoryChart({ data }: { data: Detail }) {
               return (
                 <TooltipBox
                   title={monthLabel(point.month)}
-                  rows={[{ label: t("transactions.form.amount.single"), color: "var(--series-1)", value: formatMinorUnits(point.value) }]}
+                  rows={[{ label: t("transactions.form.amount.single"), color: "var(--series-1)", value: <Money amount={point.value} /> }]}
                 />
               );
             }}

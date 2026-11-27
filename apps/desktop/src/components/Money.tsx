@@ -1,4 +1,5 @@
-import { formatMinorUnits } from "@/lib/money";
+import { useHideValues } from "@/hooks/useHideValues";
+import { formatMoney } from "@/lib/money";
 
 const tones = {
   plain: "",
@@ -9,8 +10,9 @@ const tones = {
 } as const;
 
 /**
- * Formats minor units. `sign` prefixes + or − explicitly; `auto` colors
- * by the sign of the value itself.
+ * The one place an amount is shown. Formats minor units, or "R$ ••••" in
+ * privacy mode. `sign` prefixes + or − explicitly; `auto` colors by the sign
+ * of the value itself.
  */
 export function Money({
   amount,
@@ -23,6 +25,7 @@ export function Money({
   sign?: "+" | "-";
   className?: string;
 }) {
+  const hidden = useHideValues();
   const negative = amount.startsWith("-");
   const color =
     tone === "auto"
@@ -32,7 +35,7 @@ export function Money({
           ? tones.positive
           : ""
       : tones[tone];
-  const text = formatMinorUnits(amount);
+  const text = formatMoney(amount, hidden);
 
   return (
     <span className={`tabular whitespace-nowrap ${color} ${className}`}>

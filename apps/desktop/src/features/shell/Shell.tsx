@@ -7,9 +7,10 @@ import { Button } from "@/components/Button";
 import { Modal } from "@/components/Modal";
 import { MonthPicker } from "@/components/MonthPicker";
 import { currentMonth } from "@/lib/dates";
-import { isSettingsShortcut } from "@/lib/shortcuts";
+import { isPrivacyShortcut, isSettingsShortcut } from "@/lib/shortcuts";
 import { getSupabase } from "@/lib/supabase";
 import { usePreferences } from "@/hooks/usePreferences";
+import { HideValuesContext } from "@/hooks/useHideValues";
 import type { Transaction } from "@/lib/queries";
 import { InstitutionsScreen } from "@/features/institutions/InstitutionsScreen";
 import { AnalyticsScreen } from "@/features/analytics/AnalyticsScreen";
@@ -64,7 +65,8 @@ const settingsKeys = window.nublar?.platform === "darwin" ? "⌘ ," : "Ctrl ,";
 
 export function Shell({ email }: { email: string }) {
   // Loads the saved theme and language and keeps them applied.
-  usePreferences();
+  const { preferences, update: updatePreferences } = usePreferences();
+  const hideValues = preferences.hideValues;
   const { t } = useTranslation();
   const [screen, setScreen] = useState<Screen>("home");
   const [month, setMonth] = useState(currentMonth);
@@ -95,6 +97,12 @@ export function Shell({ email }: { email: string }) {
 
   useEffect(() => {
     function onKey(event: KeyboardEvent) {
+      // Privacy first and everywhere, even over a dialog: someone just sat down.
+      if (isPrivacyShortcut(event)) {
+        event.preventDefault();
+        updatePreferences({ hideValues: !hideValues });
+        return;
+      }
       if (document.querySelector("dialog[open]")) {
         return;
       }
@@ -117,7 +125,7 @@ export function Shell({ email }: { email: string }) {
     }
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, []);
+  }, [hideValues, updatePreferences]);
 
   function goToNewAccount() {
     go("accounts");
@@ -182,186 +190,198 @@ export function Shell({ email }: { email: string }) {
   );
 
   return (
-    <div className="app-shell flex h-full">
-      <aside className="app-sidebar drag hidden w-64 shrink-0 flex-col px-5 pt-7 pb-5 lg:flex">
-        <div className="flex items-center gap-2.5 px-2">
-          <img src={logo} alt="" className="h-9 w-9 object-contain" />
-          <span className="font-display text-2xl tracking-tight">{t("common.appName")}</span>
-        </div>
-        <Button variant="primary" className="no-drag mt-7 w-full" onClick={openNew}>
-          <Icon name="plus" size={17} /> {t("transactions.new")}
-          <kbd className="ml-auto text-xs opacity-60">N</kbd>
-        </Button>
-
-        <nav aria-label={t("shell.mainNav")} className="no-drag scroll-quiet mt-6 flex min-h-0 flex-col gap-1 overflow-y-auto">
-          {navList}
-        </nav>
-
-        <div className="no-drag mt-auto shrink-0 border-t border-line pt-4">
-          {settingsItem}
-          <p className="mt-3 truncate px-3 text-xs text-faint" title={email}>
-            {email}
-          </p>
-          <button
-            className="mt-1 flex w-full items-center gap-3 rounded-xl px-3 py-2 text-left text-sm text-muted transition-colors hover:bg-hover hover:text-foreground"
-            type="button"
-            onClick={signOut}
-          >
-            <Icon name="logout" size={16} />
-            {t("settings.profile.signOut")}
-          </button>
-        </div>
-      </aside>
-
-      <div className="flex min-w-0 flex-1 flex-col">
-        {/* Desktop: the window's drag strip. Phone: the app bar. */}
-        <div className="app-toolbar drag flex h-14 shrink-0 items-center gap-2 border-b border-line px-4 lg:h-16 lg:px-10 lg:pr-40">
-          <img src={logo} alt="" className="h-7 w-7 object-contain lg:hidden" />
-          <span className="hidden items-center gap-2 text-xs text-muted lg:flex"><span className="h-1.5 w-1.5 rounded-full bg-accent" />{t("shell.workspace")}<span className="px-2 text-faint">/</span><span className="text-foreground">{t(screens[screen].label)}</span></span>
-          {monthly.includes(screen) ? (
-            <div className="ml-auto">
-              <MonthPicker month={month} onChange={setMonth} />
-            </div>
-          ) : (
-            <span className="font-display text-lg tracking-tight lg:hidden">{t("common.appName")}</span>
-          )}
-        </div>
-        <main ref={main} className="flex-1 overflow-x-hidden overflow-y-auto">
-          <div
-            key={screen}
-            className="app-content @container mx-auto max-w-7xl px-4 pt-7 pb-[calc(var(--tabbar)+env(safe-area-inset-bottom,0px)+32px)] sm:px-6 lg:px-10 lg:pt-9 lg:pb-16"
-          >
-            {screen === "home" ? (
-              <HomeScreen
-                month={month}
-                onNew={openNew}
-                onEdit={openEdit}
-                onSeeAll={(filter) => { go("transactions"); setTransactionFilter(filter); }}
-                onCreateAccount={goToNewAccount}
-                onCards={(cardId) => {
-                  setInvoiceCard(cardId ?? null);
-                  go("invoices");
-                }}
-                onAnalytics={() => go("analytics")}
-                onBudgets={() => go("budgets")}
-              />
-            ) : null}
-            {screen === "transactions" ? (
-              <TransactionsScreen month={month} onMonthChange={setMonth} onNew={openNew} onEdit={openEdit} initialFilter={transactionFilter} />
-            ) : null}
-            {screen === "accounts" ? (
-              <InstitutionsScreen
-                month={month}
-                adding={creatingAccount}
-                onAddingChange={setCreatingAccount}
-                onOpenCards={() => go("cards")}
-                onOpenInvestments={() => go("investments")}
-              />
-            ) : null}
-            {screen === "cards" ? (
-              <CardsScreen
-                onOpenInvoices={(cardId) => {
-                  setInvoiceCard(cardId);
-                  go("invoices");
-                }}
-              />
-            ) : null}
-            {screen === "invoices" ? (
-              <InvoicesScreen
-                cardId={invoiceCard}
-                onEdit={openEdit}
-                onAdd={(preset) => setForm({ open: true, editing: null, preset })}
-                onOpenCards={() => go("cards")}
-              />
-            ) : null}
-            {screen === "budgets" ? <BudgetsScreen month={month} /> : null}
-            {screen === "goals" ? <GoalsScreen /> : null}
-            {screen === "calendar" ? <CalendarScreen month={month} /> : null}
-            {screen === "investments" ? <InvestmentsScreen /> : null}
-            {screen === "analytics" ? (
-              <AnalyticsScreen
-                month={month}
-                onInspectMonth={(selectedMonth) => { setMonth(selectedMonth); go("transactions"); }}
-                onBudgets={() => go("budgets")}
-                onInspectCategory={(category) => {
-                  go("transactions");
-                  setTransactionFilter({ type: "EXPENSE", categoryId: category.id, categoryName: category.name });
-                }}
-              />
-            ) : null}
-            {screen === "categories" ? <CategoriesScreen /> : null}
-            {screen === "settings" ? <SettingsScreen email={email} onSignOut={signOut} /> : null}
+    <HideValuesContext value={hideValues}>
+      <div className="app-shell flex h-full">
+        <aside className="app-sidebar drag hidden w-64 shrink-0 flex-col px-5 pt-7 pb-5 lg:flex">
+          <div className="flex items-center gap-2.5 px-2">
+            <img src={logo} alt="" className="h-9 w-9 object-contain" />
+            <span className="font-display text-2xl tracking-tight">{t("common.appName")}</span>
           </div>
-        </main>
-      </div>
+          <Button variant="primary" className="no-drag mt-7 w-full" onClick={openNew}>
+            <Icon name="plus" size={17} /> {t("transactions.new")}
+            <kbd className="ml-auto text-xs opacity-60">N</kbd>
+          </Button>
 
-      <nav
-        aria-label={t("shell.mainNav")}
-        className="pb-safe fixed inset-x-0 bottom-0 z-40 border-t border-line bg-surface lg:hidden"
-      >
-        <div className="mx-auto grid h-(--tabbar) max-w-xl grid-cols-5 items-center px-1">
-          {tabs.slice(0, 2).map((item) => (
-            <Tab
-              key={item}
-              icon={screens[item].icon}
-              label={t(screens[item].label)}
-              active={screen === item && !menuOpen}
-              onClick={() => go(item)}
-            />
-          ))}
-          <button
-            type="button"
-            aria-label={t("transactions.new")}
-            className="mx-auto flex h-11 w-11 items-center justify-center rounded-2xl bg-accent text-accent-fg shadow-lg shadow-shadow/40 transition-[filter,scale] active:scale-95 active:brightness-95"
-            onClick={openNew}
-          >
-            <Icon name="plus" size={20} />
-          </button>
-          {tabs.slice(2).map((item) => (
-            <Tab
-              key={item}
-              icon={screens[item].icon}
-              label={t(screens[item].label)}
-              active={screen === item && !menuOpen}
-              onClick={() => go(item)}
-            />
-          ))}
-          <Tab
-            icon="grid"
-            label={t("shell.more")}
-            active={menuOpen || !tabs.includes(screen)}
-            onClick={() => setMenuOpen(true)}
-          />
+          <nav aria-label={t("shell.mainNav")} className="no-drag scroll-quiet mt-6 flex min-h-0 flex-col gap-1 overflow-y-auto">
+            {navList}
+          </nav>
+
+          <div className="no-drag mt-auto shrink-0 border-t border-line pt-4">
+            {settingsItem}
+            <p className="mt-3 truncate px-3 text-xs text-faint" title={email}>
+              {email}
+            </p>
+            <button
+              className="mt-1 flex w-full items-center gap-3 rounded-xl px-3 py-2 text-left text-sm text-muted transition-colors hover:bg-hover hover:text-foreground"
+              type="button"
+              onClick={signOut}
+            >
+              <Icon name="logout" size={16} />
+              {t("settings.profile.signOut")}
+            </button>
+          </div>
+        </aside>
+
+        <div className="flex min-w-0 flex-1 flex-col">
+          {/* Desktop: the window's drag strip. Phone: the app bar. */}
+          <div className="app-toolbar drag flex h-14 shrink-0 items-center gap-2 border-b border-line px-4 lg:h-16 lg:px-10 lg:pr-40">
+            <img src={logo} alt="" className="h-7 w-7 object-contain lg:hidden" />
+            <span className="hidden items-center gap-2 text-xs text-muted lg:flex"><span className="h-1.5 w-1.5 rounded-full bg-accent" />{t("shell.workspace")}<span className="px-2 text-faint">/</span><span className="text-foreground">{t(screens[screen].label)}</span></span>
+            {monthly.includes(screen) ? null : (
+              <span className="font-display text-lg tracking-tight lg:hidden">{t("common.appName")}</span>
+            )}
+            <div className="no-drag ml-auto flex items-center gap-1">
+              {monthly.includes(screen) ? <MonthPicker month={month} onChange={setMonth} /> : null}
+              <button
+                type="button"
+                aria-pressed={hideValues}
+                aria-keyshortcuts="Control+H"
+                aria-label={t("shell.privacy.hide")}
+                title={`${t(hideValues ? "shell.privacy.show" : "shell.privacy.hide")} (Ctrl H)`}
+                className={`flex h-9 w-9 items-center justify-center rounded-lg transition-colors hover:bg-hover hover:text-foreground ${hideValues ? "text-accent" : "text-muted"}`}
+                onClick={() => updatePreferences({ hideValues: !hideValues })}
+              >
+                <Icon name={hideValues ? "eyeOff" : "eye"} size={17} />
+              </button>
+            </div>
+          </div>
+          <main ref={main} className="flex-1 overflow-x-hidden overflow-y-auto">
+            <div
+              key={screen}
+              className="app-content @container mx-auto max-w-7xl px-4 pt-7 pb-[calc(var(--tabbar)+env(safe-area-inset-bottom,0px)+32px)] sm:px-6 lg:px-10 lg:pt-9 lg:pb-16"
+            >
+              {screen === "home" ? (
+                <HomeScreen
+                  month={month}
+                  onNew={openNew}
+                  onEdit={openEdit}
+                  onSeeAll={(filter) => { go("transactions"); setTransactionFilter(filter); }}
+                  onCreateAccount={goToNewAccount}
+                  onCards={(cardId) => {
+                    setInvoiceCard(cardId ?? null);
+                    go("invoices");
+                  }}
+                  onAnalytics={() => go("analytics")}
+                  onBudgets={() => go("budgets")}
+                />
+              ) : null}
+              {screen === "transactions" ? (
+                <TransactionsScreen month={month} onMonthChange={setMonth} onNew={openNew} onEdit={openEdit} initialFilter={transactionFilter} />
+              ) : null}
+              {screen === "accounts" ? (
+                <InstitutionsScreen
+                  month={month}
+                  adding={creatingAccount}
+                  onAddingChange={setCreatingAccount}
+                  onOpenCards={() => go("cards")}
+                  onOpenInvestments={() => go("investments")}
+                />
+              ) : null}
+              {screen === "cards" ? (
+                <CardsScreen
+                  onOpenInvoices={(cardId) => {
+                    setInvoiceCard(cardId);
+                    go("invoices");
+                  }}
+                />
+              ) : null}
+              {screen === "invoices" ? (
+                <InvoicesScreen
+                  cardId={invoiceCard}
+                  onEdit={openEdit}
+                  onAdd={(preset) => setForm({ open: true, editing: null, preset })}
+                  onOpenCards={() => go("cards")}
+                />
+              ) : null}
+              {screen === "budgets" ? <BudgetsScreen month={month} /> : null}
+              {screen === "goals" ? <GoalsScreen /> : null}
+              {screen === "calendar" ? <CalendarScreen month={month} /> : null}
+              {screen === "investments" ? <InvestmentsScreen /> : null}
+              {screen === "analytics" ? (
+                <AnalyticsScreen
+                  month={month}
+                  onInspectMonth={(selectedMonth) => { setMonth(selectedMonth); go("transactions"); }}
+                  onBudgets={() => go("budgets")}
+                  onInspectCategory={(category) => {
+                    go("transactions");
+                    setTransactionFilter({ type: "EXPENSE", categoryId: category.id, categoryName: category.name });
+                  }}
+                />
+              ) : null}
+              {screen === "categories" ? <CategoriesScreen /> : null}
+              {screen === "settings" ? <SettingsScreen email={email} onSignOut={signOut} /> : null}
+            </div>
+          </main>
         </div>
-      </nav>
 
-      <Modal open={menuOpen} onClose={() => setMenuOpen(false)} title={t("common.appName")}>
-        <nav aria-label={t("shell.allScreens")} className="flex flex-col gap-1">
-          {navList}
+        <nav
+          aria-label={t("shell.mainNav")}
+          className="pb-safe fixed inset-x-0 bottom-0 z-40 border-t border-line bg-surface lg:hidden"
+        >
+          <div className="mx-auto grid h-(--tabbar) max-w-xl grid-cols-5 items-center px-1">
+            {tabs.slice(0, 2).map((item) => (
+              <Tab
+                key={item}
+                icon={screens[item].icon}
+                label={t(screens[item].label)}
+                active={screen === item && !menuOpen}
+                onClick={() => go(item)}
+              />
+            ))}
+            <button
+              type="button"
+              aria-label={t("transactions.new")}
+              className="mx-auto flex h-11 w-11 items-center justify-center rounded-2xl bg-accent text-accent-fg shadow-lg shadow-shadow/40 transition-[filter,scale] active:scale-95 active:brightness-95"
+              onClick={openNew}
+            >
+              <Icon name="plus" size={20} />
+            </button>
+            {tabs.slice(2).map((item) => (
+              <Tab
+                key={item}
+                icon={screens[item].icon}
+                label={t(screens[item].label)}
+                active={screen === item && !menuOpen}
+                onClick={() => go(item)}
+              />
+            ))}
+            <Tab
+              icon="grid"
+              label={t("shell.more")}
+              active={menuOpen || !tabs.includes(screen)}
+              onClick={() => setMenuOpen(true)}
+            />
+          </div>
         </nav>
-        <div className="mt-5 border-t border-line pt-4">
-          {settingsItem}
-          <p className="mt-3 truncate px-3 text-xs text-faint">{email}</p>
-          <button
-            className="mt-1 flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm text-muted transition-colors hover:bg-hover hover:text-foreground"
-            type="button"
-            onClick={signOut}
-          >
-            <Icon name="logout" size={16} />
-            {t("settings.profile.signOut")}
-          </button>
-        </div>
-      </Modal>
 
-      <TransactionForm
-        open={form.open}
-        editing={form.editing}
-        preset={form.preset}
-        month={month}
-        onClose={() => setForm((current) => ({ ...current, open: false }))}
-        onNeedAccount={goToNewAccount}
-      />
-    </div>
+        <Modal open={menuOpen} onClose={() => setMenuOpen(false)} title={t("common.appName")}>
+          <nav aria-label={t("shell.allScreens")} className="flex flex-col gap-1">
+            {navList}
+          </nav>
+          <div className="mt-5 border-t border-line pt-4">
+            {settingsItem}
+            <p className="mt-3 truncate px-3 text-xs text-faint">{email}</p>
+            <button
+              className="mt-1 flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm text-muted transition-colors hover:bg-hover hover:text-foreground"
+              type="button"
+              onClick={signOut}
+            >
+              <Icon name="logout" size={16} />
+              {t("settings.profile.signOut")}
+            </button>
+          </div>
+        </Modal>
+
+        <TransactionForm
+          open={form.open}
+          editing={form.editing}
+          preset={form.preset}
+          month={month}
+          onClose={() => setForm((current) => ({ ...current, open: false }))}
+          onNeedAccount={goToNewAccount}
+        />
+      </div>
+    </HideValuesContext>
   );
 }
 

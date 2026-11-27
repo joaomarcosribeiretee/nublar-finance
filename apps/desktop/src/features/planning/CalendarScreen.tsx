@@ -12,7 +12,7 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import { axisProps, gridProps, Legend, lineCursor, TooltipBox, yAxisMoney } from "@/components/charts";
+import { axisProps, gridProps, Legend, lineCursor, TooltipBox, useMoneyChart } from "@/components/charts";
 import { Icon, type IconName } from "@/components/Icon";
 import { Button } from "@/components/Button";
 import { Money } from "@/components/Money";
@@ -21,7 +21,7 @@ import { Segmented } from "@/components/Segmented";
 import { errorMessage } from "@/lib/api";
 import { plotValue } from "@/lib/chart";
 import { dayLabel, monthLabel, shortMonthLabel, todayLocal, weekdayNames } from "@/lib/dates";
-import { formatMinorUnits } from "@/lib/money";
+import { useFormatMoney } from "@/hooks/useHideValues";
 import { useCalendar, useProjection, type CalendarEvent } from "@/lib/queries";
 
 /** How an event reads: money in, money out, a bill, a milestone. */
@@ -178,6 +178,7 @@ function DailyCashChart({
   dim: boolean;
 }) {
   const { t } = useTranslation();
+  const chart = useMoneyChart();
   // Two series of the same measure: real (solid) and projected (dashed),
   // joined at today so the line is continuous.
   const rows =
@@ -212,9 +213,10 @@ function DailyCashChart({
             <LineChart data={rows} margin={{ top: 8, right: 8, bottom: 0, left: 0 }}>
               <CartesianGrid {...gridProps} />
               <XAxis dataKey="date" tickFormatter={(d: string) => String(Number(d.slice(8, 10)))} {...axisProps} minTickGap={12} />
-              <YAxis {...yAxisMoney} />
+              <YAxis {...chart.yAxis} />
               {rows.some((r) => r.date === today) ? <ReferenceLine x={today} stroke="var(--line-strong)" /> : null}
               <Tooltip
+                {...chart.tooltip}
                 cursor={lineCursor}
                 content={({ active, payload }) => {
                   const day = payload?.[0]?.payload as Day | undefined;
@@ -226,7 +228,7 @@ function DailyCashChart({
                         {
                           label: day.projected ? t("invoices.scheduled") : t("planning.calendar.daily.balance"),
                           color: day.projected ? "var(--muted)" : "var(--accent)",
-                          value: formatMinorUnits(day.cash),
+                          value: <Money amount={day.cash} />,
                         },
                       ]}
                     />
@@ -255,6 +257,8 @@ function DailyCashChart({
 
 function ProjectionPanel() {
   const { t } = useTranslation();
+  const chart = useMoneyChart();
+  const money = useFormatMoney();
   const [months, setMonths] = useState<6 | 12>(6);
   const fill = useId();
   const projection = useProjection(months);
@@ -267,7 +271,7 @@ function ProjectionPanel() {
       title={t("planning.calendar.projection.title")}
       subtitle={
         data
-          ? t("planning.calendar.projection.subtitle", { start: formatMinorUnits(data.startCash), variable: formatMinorUnits(data.variableEstimate), basedOn: t("planning.calendar.projection.months", { count: data.basedOnMonths || 0 }) })
+          ? t("planning.calendar.projection.subtitle", { start: money(data.startCash), variable: money(data.variableEstimate), basedOn: t("planning.calendar.projection.months", { count: data.basedOnMonths || 0 }) })
           : undefined
       }
       actions={
@@ -297,9 +301,10 @@ function ProjectionPanel() {
                 </defs>
                 <CartesianGrid {...gridProps} />
                 <XAxis dataKey="month" tickFormatter={(m: string) => shortMonthLabel(m)} {...axisProps} />
-                <YAxis {...yAxisMoney} />
+                <YAxis {...chart.yAxis} />
                 <ReferenceLine y={0} stroke="var(--negative)" strokeOpacity={0.5} />
                 <Tooltip
+                  {...chart.tooltip}
                   cursor={lineCursor}
                   content={({ active, payload }) => {
                     const row = payload?.[0]?.payload as Row | undefined;
@@ -308,11 +313,11 @@ function ProjectionPanel() {
                       <TooltipBox
                         title={t("planning.calendar.projection.endOf", { month: monthLabel(row.month).toLowerCase() })}
                         rows={[
-                          { label: t("planning.calendar.projection.projected"), color: "var(--series-1)", value: formatMinorUnits(row.projectedCash) },
-                          { label: t("planning.calendar.projection.income"), value: formatMinorUnits(row.income), strong: false },
-                          { label: t("planning.calendar.projection.fixed"), value: `− ${formatMinorUnits(row.fixed)}`, strong: false },
-                          { label: t("invoices.groups.installments"), value: `− ${formatMinorUnits(row.installments)}`, strong: false },
-                          { label: t("planning.calendar.projection.variable"), value: `− ${formatMinorUnits(row.variableEstimate)}`, strong: false },
+                          { label: t("planning.calendar.projection.projected"), color: "var(--series-1)", value: <Money amount={row.projectedCash} /> },
+                          { label: t("planning.calendar.projection.income"), value: <Money amount={row.income} />, strong: false },
+                          { label: t("planning.calendar.projection.fixed"), value: <Money amount={row.fixed} sign="-" />, strong: false },
+                          { label: t("invoices.groups.installments"), value: <Money amount={row.installments} sign="-" />, strong: false },
+                          { label: t("planning.calendar.projection.variable"), value: <Money amount={row.variableEstimate} sign="-" />, strong: false },
                         ]}
                       />
                     );
@@ -338,7 +343,7 @@ function ProjectionPanel() {
               <tr key={row.month} className="border-t border-line">
                 <td className="py-1.5 text-left">{monthLabel(row.month)}</td>
                 <td className={`py-1.5 ${row.balance.startsWith("-") ? "text-negative" : "text-positive"}`}>
-                  {formatMinorUnits(row.balance)}
+                  <Money amount={row.balance} />
                 </td>
                 <td className={`py-1.5 ${row.projectedCash.startsWith("-") ? "text-negative" : ""}`}>
                   <Money amount={row.projectedCash} />

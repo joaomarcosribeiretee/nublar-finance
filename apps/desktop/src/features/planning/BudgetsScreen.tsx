@@ -12,7 +12,8 @@ import { useToast } from "@/components/Toast";
 import { errorMessage } from "@/lib/api";
 import { formatBps } from "@/lib/chart";
 import { monthLabel } from "@/lib/dates";
-import { formatMinorUnits, minorUnitsToInput, parseReaisToMinorUnits } from "@/lib/money";
+import { minorUnitsToInput, parseReaisToMinorUnits } from "@/lib/money";
+import { useFormatMoney } from "@/hooks/useHideValues";
 import {
   useAnalytics,
   useBudgets,
@@ -30,6 +31,7 @@ type Item = Budgets["items"][number];
 
 export function BudgetsScreen({ month }: { month: string }) {
   const { t } = useTranslation();
+  const money = useFormatMoney();
   const budgets = useBudgets(month);
   const [editing, setEditing] = useState<Item | "new" | null>(null);
   const data = budgets.data;
@@ -77,7 +79,7 @@ export function BudgetsScreen({ month }: { month: string }) {
                     <p className="text-xs text-muted">{t("planning.budgets.spent")}</p>
                     <p className="mt-1 text-xl @2xl:text-2xl">
                       <Money amount={data.totals.spent} />{" "}
-                      <span className="text-base text-muted">{t("planning.of", { amount: formatMinorUnits(data.totals.limit) })}</span>
+                      <span className="text-base text-muted">{t("planning.of", { amount: money(data.totals.limit) })}</span>
                     </p>
                   </div>
                   <div className="text-right text-sm">
@@ -130,18 +132,18 @@ export function BudgetsScreen({ month }: { month: string }) {
                           <span className="font-medium">{categoryLabel(item.category.name)}</span>
                           <span className="text-lg tabular">
                             <Money amount={item.spent} />
-                            <span className="block text-xs text-muted"> {t("planning.of", { amount: formatMinorUnits(item.limit) })}</span>
+                            <span className="block text-xs text-muted"> {t("planning.of", { amount: money(item.limit) })}</span>
                           </span>
                         </span>
                         {item.usedBps <= 10000 ? <div className="w-full"><ProgressBar value={item.usedBps / 100} tone={tone[item.status]} marker={pace} /></div> : null}
                         <span className="flex w-full flex-wrap justify-between gap-x-4 gap-y-1 text-xs">
                           <span className={item.status === "OVER" ? "text-negative" : item.status === "WARNING" ? "text-warning" : "text-faint"}>
                             {item.status === "OVER"
-                              ? t("planning.budgets.overBy", { amount: formatMinorUnits(item.remaining.replace("-", "")) })
-                              : t("planning.budgets.usage", { used: formatBps(item.usedBps), amount: formatMinorUnits(item.remaining) })}
+                              ? t("planning.budgets.overBy", { amount: money(item.remaining.replace("-", "")) })
+                              : t("planning.budgets.usage", { used: formatBps(item.usedBps), amount: money(item.remaining) })}
                           </span>
                           {BigInt(item.scheduled) > 0n ? (
-                            <span className="text-faint">{t("planning.budgets.scheduled", { amount: formatMinorUnits(item.scheduled) })}</span>
+                            <span className="text-faint">{t("planning.budgets.scheduled", { amount: money(item.scheduled) })}</span>
                           ) : null}
                         </span>
                       </button>
@@ -181,6 +183,7 @@ function BudgetForm({
   onDone: () => void;
 }) {
   const { t } = useTranslation();
+  const money = useFormatMoney();
   const toast = useToast();
   const categories = useCategories();
   const analytics = useAnalytics(month, 6);
@@ -253,7 +256,7 @@ function BudgetForm({
             className="self-start py-1 text-left text-xs text-accent hover:underline"
             onClick={() => setAmount(minorUnitsToInput(average))}
           >
-            {t("planning.budgets.form.useAverage", { amount: formatMinorUnits(average) })}
+            {t("planning.budgets.form.useAverage", { amount: money(average) })}
           </button>
         ) : null}
       </Field>

@@ -2,7 +2,7 @@ import { useMemo } from "react";
 import { Trans, useTranslation } from "react-i18next";
 import type { TranslationKey } from "@/i18n";
 import { CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
-import { axisProps, ChartCard, gridProps, Legend, lineCursor, TooltipBox, yAxisMoney } from "@/components/charts";
+import { axisProps, ChartCard, gridProps, Legend, lineCursor, TooltipBox, useMoneyChart } from "@/components/charts";
 import { Money } from "@/components/Money";
 import { ErrorNote, ProgressBar } from "@/components/Page";
 import { errorMessage } from "@/lib/api";
@@ -16,7 +16,7 @@ import {
   reserveTenths,
   type SplitPart,
 } from "@/lib/insights";
-import { formatMinorUnits } from "@/lib/money";
+import { useFormatMoney } from "@/hooks/useHideValues";
 import { usePortfolio, useSummary, useTransactionsFor, type Analytics, type Transaction } from "@/lib/queries";
 
 /** How many earlier months make "the usual" pace. */
@@ -39,6 +39,8 @@ function readPace(months: string[], lists: Transaction[][]) {
 /** Spending so far this month against the same day of the usual month. */
 export function SpendingPace({ month }: { month: string }) {
   const { t } = useTranslation();
+  const money = useFormatMoney();
+  const chart = useMoneyChart();
   const months = useMemo(
     () => [month, ...Array.from({ length: PACE_HISTORY }, (_, index) => shiftMonth(month, -(index + 1)))],
     [month],
@@ -96,8 +98,8 @@ export function SpendingPace({ month }: { month: string }) {
                   {" · "}
                   <span className={difference > 0n ? "text-negative" : "text-positive"}>
                     {difference > 0n
-                      ? t("analytics.pace.above", { amount: formatMinorUnits(difference.toString()) })
-                      : t("analytics.pace.below", { amount: formatMinorUnits((-difference).toString()) })}
+                      ? t("analytics.pace.above", { amount: money(difference.toString()) })
+                      : t("analytics.pace.below", { amount: money((-difference).toString()) })}
                   </span>
                 </>
               )}
@@ -108,8 +110,9 @@ export function SpendingPace({ month }: { month: string }) {
               <LineChart data={plotted} margin={{ top: 8, right: 8, bottom: 0, left: 0 }}>
                 <CartesianGrid {...gridProps} />
                 <XAxis dataKey="day" {...axisProps} minTickGap={16} />
-                <YAxis {...yAxisMoney} />
+                <YAxis {...chart.yAxis} />
                 <Tooltip
+                  {...chart.tooltip}
                   cursor={lineCursor}
                   content={({ active, payload }) => {
                     const row = payload?.[0]?.payload as Row | undefined;
@@ -119,10 +122,10 @@ export function SpendingPace({ month }: { month: string }) {
                         title={t("analytics.pace.tooltip", { day: row.day })}
                         rows={[
                           ...(row.spent !== null
-                            ? [{ label: t("analytics.pace.thisMonth"), color: "var(--accent)", value: formatMinorUnits(row.spent.toString()) }]
+                            ? [{ label: t("analytics.pace.thisMonth"), color: "var(--accent)", value: <Money amount={row.spent.toString()} /> }]
                             : []),
                           ...(row.usual !== null
-                            ? [{ label: t("analytics.pace.usual"), color: "var(--muted)", value: formatMinorUnits(row.usual.toString()), strong: false }]
+                            ? [{ label: t("analytics.pace.usual"), color: "var(--muted)", value: <Money amount={row.usual.toString()} />, strong: false }]
                             : []),
                         ]}
                       />

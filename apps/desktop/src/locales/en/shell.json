@@ -21,5 +21,9 @@
   "mainNav": "Main",
   "workspace": "My space",
   "more": "More",
-  "allScreens": "All screens"
+  "allScreens": "All screens",
+  "privacy": {
+    "hide": "Hide amounts",
+    "show": "Show amounts"
+  }
 }

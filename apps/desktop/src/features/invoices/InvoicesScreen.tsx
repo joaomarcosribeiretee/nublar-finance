@@ -10,7 +10,8 @@ import { Segmented } from "@/components/Segmented";
 import { PayForm, StatusPill } from "@/features/cards/CardsScreen";
 import { errorMessage } from "@/lib/api";
 import { monthLabel, shiftMonth, shortDate, shortMonthLabel, todayLocal } from "@/lib/dates";
-import { formatMinorUnits, percentOf } from "@/lib/money";
+import { percentOf } from "@/lib/money";
+import { useFormatMoney } from "@/hooks/useHideValues";
 import {
   useCards,
   useInvoice,
@@ -241,6 +242,7 @@ function CardInvoices({ card, onEdit, onAdd }: { card: Card } & Actions) {
 /** Neighbouring bills as bars; the browsed one is highlighted. */
 function Timeline({ invoice, onPick }: { invoice: Invoice; onPick: (month: string) => void }) {
   const { t } = useTranslation();
+  const money = useFormatMoney();
   const max = invoice.timeline.reduce((top, item) => {
     const value = BigInt(item.total);
     return value > top ? value : top;
@@ -259,7 +261,7 @@ function Timeline({ invoice, onPick }: { invoice: Invoice; onPick: (month: strin
               onClick={() => onPick(item.month)}
               aria-current={active ? "true" : undefined}
               className="group flex h-full min-w-0 flex-1 flex-col items-center justify-end gap-1.5"
-              title={`${monthLabel(item.month)}: ${formatMinorUnits(item.total)}`}
+              title={`${monthLabel(item.month)}: ${money(item.total)}`}
             >
               <span
                 className={`w-full rounded-md transition-colors ${

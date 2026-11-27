@@ -7,7 +7,8 @@ import { ErrorNote, PageHeader, Panel, ProgressBar } from "@/components/Page";
 import { errorMessage } from "@/lib/api";
 import { monthLabel, shortDate, shortMonthLabel, shiftMonth } from "@/lib/dates";
 import { invoiceStatusLabels } from "@/lib/labels";
-import { formatMinorUnits, percentOf } from "@/lib/money";
+import { percentOf } from "@/lib/money";
+import { useFormatMoney } from "@/hooks/useHideValues";
 import {
   useAccounts,
   useSummary,
@@ -42,6 +43,7 @@ export function HomeScreen({
   onBudgets: () => void;
 }) {
   const { t } = useTranslation();
+  const money = useFormatMoney();
   const summary = useSummary(month);
   const transactions = useTransactions(month);
   const accounts = useAccounts();
@@ -106,8 +108,8 @@ export function HomeScreen({
           </div>
           {data ? (
             <p className="mt-1 text-xs text-muted">
-              {t("home.cashInAccounts", { amount: formatMinorUnits(data.cash) })}
-              {BigInt(data.investments) > 0n ? ` · ${t("home.invested", { amount: formatMinorUnits(data.investments) })}` : ""}
+              {t("home.cashInAccounts", { amount: money(data.cash) })}
+              {BigInt(data.investments) > 0n ? ` · ${t("home.invested", { amount: money(data.investments) })}` : ""}
             </p>
           ) : null}
           <NetWorthSparkline month={month} onOpen={onAnalytics} />
