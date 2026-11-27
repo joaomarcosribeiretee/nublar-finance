@@ -1,3 +1,5 @@
+import { t } from "@/i18n";
+
 /**
  * Discreet "Salvo" feedback for settings that save on change. Several changes
  * can be in flight at once: "Salvo" only shows when none of them failed, since
@@ -24,8 +26,8 @@ export function saveReducer(state: SaveState, event: SaveEvent): SaveState {
 }
 
 export function saveLabel(state: SaveState): string | null {
-  if (state.pending > 0) return "Salvando…";
-  if (state.last === "saved") return "Salvo";
-  if (state.last === "error") return "Não foi possível salvar";
+  if (state.pending > 0) return t("common.save.saving");
+  if (state.last === "saved") return t("common.save.saved");
+  if (state.last === "error") return t("common.save.failed");
   return null;
 }

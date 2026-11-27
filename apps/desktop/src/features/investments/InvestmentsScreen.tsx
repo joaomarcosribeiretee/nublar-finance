@@ -1,4 +1,6 @@
 import { useState } from "react";
+import { Trans, useTranslation } from "react-i18next";
+import { t } from "@/i18n";
 import { Button } from "@/components/Button";
 import { ErrorNote, PageHeader } from "@/components/Page";
 import { StatTile } from "@/components/charts";
@@ -21,6 +23,7 @@ import { liquidityLabels, rateLabel } from "@/lib/rates";
 const classOrder: AssetClass[] = ["FIXED_INCOME", "STOCK", "FII", "ETF", "CRYPTO", "OTHER"];
 
 export function InvestmentsScreen() {
+  const { t } = useTranslation();
   const portfolio = usePortfolio();
   const [creating, setCreating] = useState(false);
   const [openId, setOpenId] = useState<string | null>(null);
@@ -32,18 +35,18 @@ export function InvestmentsScreen() {
   return (
     <section className="animate-enter space-y-6">
       <PageHeader
-        eyebrow="Renda fixa, ações, FIIs, cripto"
-        title="Investimentos"
+        eyebrow={t("investments.eyebrow")}
+        title={t("shell.screens.investments")}
         actions={
           <>
             {data && data.items.length > 0 ? (
               <Button variant="ghost" onClick={() => setUpdating(true)}>
-                Atualizar valores
+                {t("investments.updateValues")}
               </Button>
             ) : null}
             <Button variant="primary" onClick={() => setCreating(true)}>
               <Icon name="plus" size={16} />
-              Novo investimento
+              {t("investments.new")}
             </Button>
           </>
         }
@@ -54,35 +57,35 @@ export function InvestmentsScreen() {
       ) : data && data.items.length === 0 ? (
         <EmptyState
           icon="trend"
-          title="Nenhum investimento"
-          description="Basta dizer quanto você tem hoje em cada aplicação. Depois é só atualizar o valor de vez em quando."
+          title={t("investments.empty.title")}
+          description={t("investments.empty.description")}
           action={
             <Button variant="primary" onClick={() => setCreating(true)}>
-              Cadastrar investimento
+              {t("investments.empty.action")}
             </Button>
           }
         />
       ) : (
         <>
           <div className="grid grid-cols-2 gap-3 @2xl:grid-cols-4">
-            <StatTile label="Valor atual" loading={!totals} value={totals ? <Money amount={totals.current} /> : null} />
+            <StatTile label={t("investments.stats.current")} loading={!totals} value={totals ? <Money amount={totals.current} /> : null} />
             <StatTile
-              label="Aplicado"
+              label={t("investments.stats.applied")}
               loading={!totals}
               value={totals ? <Money amount={totals.applied} /> : null}
-              detail={totals && BigInt(totals.redeemed) > 0n ? <>resgatado <Money amount={totals.redeemed} /></> : null}
+              detail={totals && BigInt(totals.redeemed) > 0n ? <>{t("investments.stats.redeemed")} <Money amount={totals.redeemed} /></> : null}
             />
             <StatTile
-              label="Ganho"
+              label={t("investments.stats.gain")}
               loading={!totals}
               value={totals ? <Money amount={totals.gain} tone="auto" /> : null}
-              detail="valor + resgates − aplicado"
+              detail={t("investments.stats.gainDetail")}
             />
             <StatTile
-              label="Rentabilidade"
+              label={t("investments.stats.return")}
               loading={!totals}
               value={totals ? <GainText gain={totals.gain} bps={totals.gainBps} /> : null}
-              detail="sobre o aplicado"
+              detail={t("investments.stats.returnDetail")}
             />
           </div>
 
@@ -94,8 +97,8 @@ export function InvestmentsScreen() {
 
           <div className="space-y-4">
             <div className="flex items-center justify-between gap-3">
-              <h2 className="text-base font-medium">{assetFilter ? assetClassLabels[assetFilter] : "Sua carteira"}</h2>
-              {assetFilter ? <Button variant="ghost" className="h-8 text-xs" onClick={() => setAssetFilter(null)}>Ver todas as classes <Icon name="close" size={13} /></Button> : null}
+              <h2 className="text-base font-medium">{assetFilter ? t(assetClassLabels[assetFilter]) : t("investments.portfolio")}</h2>
+              {assetFilter ? <Button variant="ghost" className="h-8 text-xs" onClick={() => setAssetFilter(null)}>{t("investments.allClasses")} <Icon name="close" size={13} /></Button> : null}
             </div>
             {!data
               ? [0, 1].map((i) => <div key={i} className="skeleton h-32 rounded-3xl" />)
@@ -116,16 +119,16 @@ export function InvestmentsScreen() {
         </>
       )}
 
-      <Modal open={updating} onClose={() => setUpdating(false)} title="Atualizar valores" width={560}>
+      <Modal open={updating} onClose={() => setUpdating(false)} title={t("investments.updateValues")} width={560}>
         {data ? <BulkValuations items={data.items} onDone={() => setUpdating(false)} /> : null}
       </Modal>
-      <Modal open={creating} onClose={() => setCreating(false)} title="Novo investimento" width={600}>
+      <Modal open={creating} onClose={() => setCreating(false)} title={t("investments.new")} width={600}>
         <InvestmentForm investment={null} onDone={() => setCreating(false)} />
       </Modal>
       <Modal
         open={openId !== null}
         onClose={() => setOpenId(null)}
-        title={data?.items.find((i) => i.id === openId)?.name ?? "Investimento"}
+        title={data?.items.find((i) => i.id === openId)?.name ?? t("transactions.form.investment")}
         width={720}
       >
         {openId ? <InvestmentDetail id={openId} onClose={() => setOpenId(null)} /> : null}
@@ -146,9 +149,10 @@ function AllocationBar({
   selected: AssetClass | null;
   onSelect: (value: AssetClass | null) => void;
 }) {
+  const { t } = useTranslation();
   return (
     <article className="min-w-0 rounded-3xl border border-line bg-surface p-4 @2xl:p-5">
-      <h2 className="text-sm">Distribuição</h2>
+      <h2 className="text-sm">{t("investments.allocation")}</h2>
       <div className="mt-4 flex h-3 gap-[2px] overflow-hidden rounded-full">
         {data.map((slice) => (
           <div
@@ -159,7 +163,7 @@ function AllocationBar({
               opacity: selected && selected !== slice.assetClass ? 0.25 : 1,
               background: allocationColors[slice.assetClass],
             }}
-            title={`${slice.name}: ${Math.round(percentOf(slice.value, total))}%`}
+            title={`${t(assetClassLabels[slice.assetClass])}: ${Math.round(percentOf(slice.value, total))}%`}
           />
         ))}
       </div>
@@ -168,7 +172,7 @@ function AllocationBar({
           <li key={slice.assetClass}>
             <button type="button" aria-pressed={selected === slice.assetClass} onClick={() => onSelect(selected === slice.assetClass ? null : slice.assetClass)} className={`flex flex-wrap items-center gap-2 rounded-xl px-3 py-2 text-left transition-colors ${selected === slice.assetClass ? "bg-raised text-foreground" : "text-muted hover:bg-hover"}`}>
             <span className="h-2.5 w-2.5 rounded-[3px]" style={{ background: allocationColors[slice.assetClass] }} />
-            {slice.name}
+            {t(assetClassLabels[slice.assetClass])}
             <span className="text-xs text-faint tabular">{Math.round(percentOf(slice.value, total))}%</span>
             <Money amount={slice.value} className="text-xs text-muted" />
             </button>
@@ -188,12 +192,13 @@ function ClassGroup({
   items: InvestmentItem[];
   onOpen: (item: InvestmentItem) => void;
 }) {
+  const { t } = useTranslation();
   const total = items.reduce((sum, item) => sum + BigInt(item.current), 0n).toString();
   return (
     <article className="min-w-0 rounded-3xl border border-line bg-surface p-2 @2xl:p-3">
       <header className="flex items-center gap-2 px-3 pt-2 pb-2">
         <span className="h-2.5 w-2.5 rounded-[3px]" style={{ background: allocationColors[assetClass] }} />
-        <h2 className="text-sm text-muted">{assetClassLabels[assetClass]}</h2>
+        <h2 className="text-sm text-muted">{t(assetClassLabels[assetClass])}</h2>
         <Money amount={total} className="ml-auto text-sm" />
       </header>
       <ul>
@@ -239,9 +244,9 @@ function ClassGroup({
 function describe(item: InvestmentItem): string {
   const parts = [
     item.assetClass === "FIXED_INCOME" ? rateLabel(item.indexer, item.rateBps) : null,
-    item.liquidity ? liquidityLabels[item.liquidity].toLowerCase() : null,
-    item.maturityDate ? `vence ${shortDate(item.maturityDate)} ${item.maturityDate.slice(2, 4)}` : null,
-    item.lastValuation ? `atualizado ${shortDate(item.lastValuation)}` : "sem valor",
+    item.liquidity ? t(liquidityLabels[item.liquidity]).toLowerCase() : null,
+    item.maturityDate ? t("investments.describe.matures", { date: `${shortDate(item.maturityDate)} ${item.maturityDate.slice(2, 4)}` }) : null,
+    item.lastValuation ? t("investments.bulk.updatedOn", { date: shortDate(item.lastValuation) }) : t("investments.describe.noValue"),
   ];
   return parts.filter(Boolean).join(" · ");
 }
@@ -254,30 +259,31 @@ function FixedIncomePanel({
   summary: NonNullable<ReturnType<typeof usePortfolio>["data"]>["fixedIncome"];
   onOpen: (id: string) => void;
 }) {
+  const { t } = useTranslation();
   const unknown = BigInt(summary.unknown);
   return (
     <article className="grid gap-px overflow-hidden rounded-3xl border border-line bg-line @2xl:grid-cols-[1fr_1.2fr]">
       <div className="space-y-4 bg-surface p-4 @2xl:p-5">
-        <h2 className="text-sm">Renda fixa: quando dá para sacar</h2>
+        <h2 className="text-sm">{t("investments.fixedIncome.title")}</h2>
         <div>
-          <p className="text-xs text-muted">A qualquer momento</p>
+          <p className="text-xs text-muted">{t("investments.fixedIncome.daily")}</p>
           <Money amount={summary.daily} className="text-2xl" />
-          <p className="mt-0.5 text-[11px] text-faint">Bom lugar para a reserva de emergência.</p>
+          <p className="mt-0.5 text-[11px] text-faint">{t("investments.fixedIncome.dailyHint")}</p>
         </div>
         <div>
-          <p className="text-xs text-muted">Só no vencimento</p>
+          <p className="text-xs text-muted">{t("investments.fixedIncome.atMaturity")}</p>
           <Money amount={summary.atMaturity} className="text-lg" />
         </div>
         {unknown > 0n ? (
           <p className="text-[11px] text-faint">
-            <Money amount={summary.unknown} /> sem liquidez informada. Edite o investimento para classificar.
+            <Trans i18nKey="investments.fixedIncome.unknown" components={{ value: <Money amount={summary.unknown} /> }} />
           </p>
         ) : null}
       </div>
       <div className="min-w-0 bg-surface p-4 @2xl:p-5">
-        <h2 className="text-sm">Vencimentos nos próximos 12 meses</h2>
+        <h2 className="text-sm">{t("investments.fixedIncome.maturities")}</h2>
         {summary.maturities.length === 0 ? (
-          <p className="mt-4 text-sm text-faint">Nada vence nos próximos 12 meses.</p>
+          <p className="mt-4 text-sm text-faint">{t("investments.fixedIncome.noMaturities")}</p>
         ) : (
           <ul className="mt-3 space-y-1">
             {summary.maturities.map((maturity) => (

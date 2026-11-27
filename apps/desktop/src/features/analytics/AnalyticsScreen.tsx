@@ -1,4 +1,7 @@
 import { useId, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
+import { t } from "@/i18n";
+import { assetClassLabels } from "@/lib/labels";
 import {
   Area,
   AreaChart,
@@ -35,7 +38,7 @@ import { allocationColors, formatBps, plotValue } from "@/lib/chart";
 import { monthLabel, shiftMonth, shortMonthLabel } from "@/lib/dates";
 import { formatMinorUnits, percentOf } from "@/lib/money";
 import { activeSeries } from "@/lib/insights";
-import { useAnalytics, type Analytics } from "@/lib/queries";
+import { useAnalytics, type Analytics, type AssetClass } from "@/lib/queries";
 import { IncomeSplitCard, ReserveCard, SpendingPace } from "./Insights";
 import { BudgetOverview } from "@/features/planning/BudgetOverview";
 
@@ -50,6 +53,12 @@ const colors = {
   savings: "var(--series-3)",
   worth: "var(--accent)",
 };
+
+/** The API names slices in pt-BR; the key says what each one is. */
+function sliceName(slice: { key: string; name: string }): string {
+  if (slice.key === "CASH") return t("analytics.allocation.cash");
+  return slice.key in assetClassLabels ? t(assetClassLabels[slice.key as AssetClass]) : slice.name;
+}
 
 /** "out" or "jan 26" at year boundaries. */
 function axisMonth(month: string): string {
@@ -69,6 +78,7 @@ export function AnalyticsScreen({
   onBudgets: () => void;
   onInspectCategory: (category: { id: string; name: string }) => void;
 }) {
+  const { t } = useTranslation();
   const [months, setMonths] = useState<6 | 12 | 24>(12);
   const [view, setView] = useState<"worth" | "flow" | "future">("worth");
   const analytics = useAnalytics(month, months);
@@ -78,17 +88,17 @@ export function AnalyticsScreen({
   return (
     <section className="animate-enter space-y-6">
       <PageHeader
-        eyebrow={data ? `${monthLabel(data.from)} a ${monthLabel(data.to)}` : "Sua evolução financeira"}
-        title="Análises"
+        eyebrow={data ? t("analytics.range", { from: monthLabel(data.from), to: monthLabel(data.to) }) : t("analytics.eyebrow")}
+        title={t("shell.screens.analytics")}
         actions={
           <Segmented
             size="sm"
-            label="Período"
+            label={t("analytics.period")}
             value={String(months) as "6" | "12" | "24"}
             options={[
-              { value: "6", label: "6 meses" },
-              { value: "12", label: "12 meses" },
-              { value: "24", label: "24 meses" },
+              { value: "6", label: t("investments.horizons.sixMonths") },
+              { value: "12", label: t("home.sparkline.period") },
+              { value: "24", label: t("analytics.months24") },
             ]}
             onChange={(value) => setMonths(Number(value) as 6 | 12 | 24)}
           />
@@ -100,19 +110,19 @@ export function AnalyticsScreen({
       ) : data && data.kpis.trackedMonths === 0 ? (
         <EmptyState
           icon="chart"
-          title="Ainda não há o que analisar"
-          description="Registre receitas, despesas e investimentos. Os gráficos aparecem assim que existir o primeiro lançamento."
+          title={t("analytics.empty.title")}
+          description={t("analytics.empty.description")}
         />
       ) : (
         <>
           <Kpis data={data} />
           <div className="flex flex-wrap items-center justify-between gap-3">
-            <Segmented label="Assunto da análise" value={view} options={[
-              { value: "worth", label: "Patrimônio" },
-              { value: "flow", label: "Entradas e saídas" },
-              { value: "future", label: "Compromissos" },
+            <Segmented label={t("analytics.views.label")} value={view} options={[
+              { value: "worth", label: t("home.netWorth") },
+              { value: "flow", label: t("analytics.views.flow") },
+              { value: "future", label: t("analytics.views.future") },
             ]} onChange={setView} />
-            <Button variant="ghost" onClick={() => onInspectMonth(month)}>Ver lançamentos do mês <Icon name="chevronRight" size={15} /></Button>
+            <Button variant="ghost" onClick={() => onInspectMonth(month)}>{t("analytics.openMonth")} <Icon name="chevronRight" size={15} /></Button>
           </div>
           <div key={view} className="animate-enter space-y-4">
             {view === "worth" ? <>
@@ -136,6 +146,7 @@ export function AnalyticsScreen({
 
 /** The browsed month up front; the period average only as a reference. */
 function Kpis({ data }: { data: Analytics | undefined }) {
+  const { t } = useTranslation();
   const k = data?.kpis;
   const point = data?.series.find((p) => p.month === data.to);
   // Measured from when tracking began: a percentage over the near-empty
@@ -148,9 +159,9 @@ function Kpis({ data }: { data: Analytics | undefined }) {
   const result = income - expense;
   const loading = !k || !point;
   return (
-    <div role="region" aria-label="Resumo financeiro do período" tabIndex={0} className="analysis-metrics grid grid-cols-1 gap-3 @2xl:grid-cols-2">
+    <div role="region" aria-label={t("analytics.kpis.label")} tabIndex={0} className="analysis-metrics grid grid-cols-1 gap-3 @2xl:grid-cols-2">
       <StatTile
-        label="Patrimônio"
+        label={t("home.netWorth")}
         loading={!k}
         value={k ? <Money amount={k.netWorth} /> : null}
         detail={
@@ -160,24 +171,25 @@ function Kpis({ data }: { data: Analytics | undefined }) {
                 {change > 0n ? "+" : ""}
                 {formatMinorUnits(change.toString()).replace("-", "−")}
               </span>{" "}
-              desde {monthLabel(since.month).toLowerCase()}
+              {t("analytics.kpis.since", { month: monthLabel(since.month).toLowerCase() })}
             </>
           ) : k ? (
-            "Primeiro mês acompanhado"
+            t("analytics.kpis.firstMonth")
           ) : null
         }
       />
       <StatTile
-        label="Sobrou no mês"
+        label={t("analytics.kpis.result")}
         loading={loading}
         value={point ? <Money amount={result.toString()} tone="auto" /> : null}
-        detail={point ? `Entrou ${formatMinorUnits(point.income)} · poupança ${formatBps(point.savingsRateBps)}` : null}
+        detail={point ? t("analytics.kpis.resultDetail", { income: formatMinorUnits(point.income), rate: formatBps(point.savingsRateBps) }) : null}
       />
     </div>
   );
 }
 
 function NetWorthChart({ data, dim }: { data: Analytics | undefined; dim: boolean }) {
+  const { t } = useTranslation();
   const fill = useId();
   const rows = useMemo(
     () => (data ? activeSeries(data.series) : []).map((p) => ({ ...p, plot: plotValue(p.netWorth) })),
@@ -186,11 +198,11 @@ function NetWorthChart({ data, dim }: { data: Analytics | undefined; dim: boolea
   const trimmed = data ? rows.length < data.series.length : false;
   return (
     <ChartCard
-      title="Evolução do patrimônio"
+      title={t("analytics.worth.title")}
       subtitle={
         trimmed && rows[0]
-          ? `Contas + investimentos − dívida dos cartões, desde ${monthLabel(rows[0].month).toLowerCase()}, quando você começou a acompanhar`
-          : "Contas + investimentos − dívida dos cartões, no fim de cada mês"
+          ? t("analytics.worth.subtitleSince", { month: monthLabel(rows[0].month).toLowerCase() })
+          : t("analytics.worth.subtitle")
       }
       dim={dim}
     >
@@ -216,10 +228,10 @@ function NetWorthChart({ data, dim }: { data: Analytics | undefined; dim: boolea
                     <TooltipBox
                       title={monthLabel(point.month)}
                       rows={[
-                        { label: "Patrimônio", color: colors.worth, value: formatMinorUnits(point.netWorth) },
-                        { label: "Contas", value: formatMinorUnits(point.cash), strong: false },
-                        { label: "Investimentos", value: formatMinorUnits(point.investments), strong: false },
-                        { label: "Cartões", value: `− ${formatMinorUnits(point.cardDebt)}`, strong: false },
+                        { label: t("home.netWorth"), color: colors.worth, value: formatMinorUnits(point.netWorth) },
+                        { label: t("analytics.allocation.cash"), value: formatMinorUnits(point.cash), strong: false },
+                        { label: t("shell.screens.investments"), value: formatMinorUnits(point.investments), strong: false },
+                        { label: t("shell.screens.cards"), value: `− ${formatMinorUnits(point.cardDebt)}`, strong: false },
                       ]}
                     />
                   );
@@ -244,6 +256,7 @@ function NetWorthChart({ data, dim }: { data: Analytics | undefined; dim: boolea
 }
 
 function IncomeExpenseChart({ data, dim }: { data: Analytics | undefined; dim: boolean }) {
+  const { t } = useTranslation();
   const rows = useMemo(
     () =>
       (data ? activeSeries(data.series) : []).map((p) => ({
@@ -255,13 +268,13 @@ function IncomeExpenseChart({ data, dim }: { data: Analytics | undefined; dim: b
   );
   return (
     <ChartCard
-      title="Receitas × despesas"
-      subtitle="Por mês de competência"
+      title={t("analytics.flow.title")}
+      subtitle={t("analytics.flow.subtitle")}
       right={
         <Legend
           items={[
-            { label: "Receitas", color: colors.income },
-            { label: "Despesas", color: colors.expense },
+            { label: t("transactions.filters.income"), color: colors.income },
+            { label: t("transactions.filters.expense"), color: colors.expense },
           ]}
         />
       }
@@ -283,10 +296,10 @@ function IncomeExpenseChart({ data, dim }: { data: Analytics | undefined; dim: b
                     <TooltipBox
                       title={monthLabel(point.month)}
                       rows={[
-                        { label: "Receitas", color: colors.income, value: formatMinorUnits(point.income) },
-                        { label: "Despesas", color: colors.expense, value: formatMinorUnits(point.expense) },
-                        { label: "Resultado", value: formatMinorUnits(point.result) },
-                        { label: "Poupança", value: formatBps(point.savingsRateBps), strong: false },
+                        { label: t("transactions.filters.income"), color: colors.income, value: formatMinorUnits(point.income) },
+                        { label: t("transactions.filters.expense"), color: colors.expense, value: formatMinorUnits(point.expense) },
+                        { label: t("transactions.result"), value: formatMinorUnits(point.result) },
+                        { label: t("analytics.savings"), value: formatBps(point.savingsRateBps), strong: false },
                       ]}
                     />
                   );
@@ -305,6 +318,7 @@ function IncomeExpenseChart({ data, dim }: { data: Analytics | undefined; dim: b
 }
 
 function CategoriesCard({ data, dim }: { data: Analytics | undefined; dim: boolean }) {
+  const { t } = useTranslation();
   const items = data?.categories.slice(0, 8) ?? [];
   const max = items.reduce((m, c) => {
     for (const v of [c.amount, c.average]) if (BigInt(v) > BigInt(m)) m = v;
@@ -314,8 +328,8 @@ function CategoriesCard({ data, dim }: { data: Analytics | undefined; dim: boole
 
   return (
     <ChartCard
-      title="Para onde foi o dinheiro"
-      subtitle={data ? `${monthLabel(data.to)} · marca = média dos 3 meses anteriores` : undefined}
+      title={t("home.categories.title")}
+      subtitle={data ? t("analytics.categories.subtitle", { month: monthLabel(data.to) }) : undefined}
       dim={dim}
     >
       {!data ? (
@@ -325,7 +339,7 @@ function CategoriesCard({ data, dim }: { data: Analytics | undefined; dim: boole
           ))}
         </div>
       ) : items.length === 0 ? (
-        <p className="py-8 text-center text-sm text-faint">Nenhuma despesa no mês.</p>
+        <p className="py-8 text-center text-sm text-faint">{t("analytics.categories.empty")}</p>
       ) : (
         <ul className="space-y-3.5">
           {items.map((category) => {
@@ -342,10 +356,10 @@ function CategoriesCard({ data, dim }: { data: Analytics | undefined; dim: boole
                     {deltaBps !== null && delta !== 0n ? (
                       <span
                         className={`flex items-center gap-0.5 text-[11px] ${delta > 0n ? "text-negative" : "text-positive"}`}
-                        title={`Em ${previousMonth}: ${formatMinorUnits(category.previous)}`}
+                        title={t("analytics.categories.previous", { month: previousMonth, amount: formatMinorUnits(category.previous) })}
                       >
                         <Icon name={delta > 0n ? "arrowUp" : "arrowDown"} size={11} />
-                        <span className="sr-only">{delta > 0n ? "subiu " : "caiu "}</span>
+                        <span className="sr-only">{delta > 0n ? t("home.delta.up") : t("home.delta.down")}{" "}</span>
                         {formatBps(Math.abs(deltaBps))}
                       </span>
                     ) : null}
@@ -356,7 +370,7 @@ function CategoriesCard({ data, dim }: { data: Analytics | undefined; dim: boole
                   <ProgressBar
                     value={share}
                     marker={BigInt(category.average) > 0n ? avgShare : undefined}
-                    markerTitle={`Média: ${formatMinorUnits(category.average)}`}
+                    markerTitle={t("analytics.categories.average", { amount: formatMinorUnits(category.average) })}
                   />
                 </div>
               </li>
@@ -369,16 +383,17 @@ function CategoriesCard({ data, dim }: { data: Analytics | undefined; dim: boole
 }
 
 function AllocationCard({ data, dim }: { data: Analytics | undefined; dim: boolean }) {
+  const { t } = useTranslation();
   const slices = data?.allocation ?? [];
   const total = slices.reduce((sum, s) => sum + BigInt(s.value), 0n).toString();
   const rows = slices.map((s) => ({ ...s, plot: plotValue(s.value) }));
 
   return (
-    <ChartCard title="Onde está o patrimônio" subtitle="Contas e investimentos hoje" dim={dim}>
+    <ChartCard title={t("analytics.allocation.title")} subtitle={t("analytics.allocation.subtitle")} dim={dim}>
       {!data ? (
         <div className="skeleton h-48" />
       ) : slices.length === 0 ? (
-        <p className="py-8 text-center text-sm text-faint">Nada para distribuir ainda.</p>
+        <p className="py-8 text-center text-sm text-faint">{t("analytics.allocation.empty")}</p>
       ) : (
         <div className="flex flex-wrap items-center justify-center gap-4">
           <div className="relative h-44 w-44 shrink-0">
@@ -404,7 +419,7 @@ function AllocationCard({ data, dim }: { data: Analytics | undefined; dim: boole
                     if (!active || !slice) return null;
                     return (
                       <TooltipBox
-                        title={slice.name}
+                        title={sliceName(slice)}
                         rows={[
                           {
                             label: `${Math.round(percentOf(slice.value, total))}%`,
@@ -419,7 +434,7 @@ function AllocationCard({ data, dim }: { data: Analytics | undefined; dim: boole
               </PieChart>
             </ResponsiveContainer>
             <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
-              <span className="text-[10px] text-muted uppercase">Total</span>
+              <span className="text-[10px] text-muted uppercase">{t("cards.detail.total")}</span>
               <Money amount={total} className="text-sm" />
             </div>
           </div>
@@ -430,7 +445,7 @@ function AllocationCard({ data, dim }: { data: Analytics | undefined; dim: boole
                   className="h-2.5 w-2.5 shrink-0 rounded-[3px]"
                   style={{ background: allocationColors[slice.key] }}
                 />
-                <span className="truncate">{slice.name}</span>
+                <span className="truncate">{sliceName(slice)}</span>
                 <span className="ml-auto text-xs text-faint tabular">
                   {Math.round(percentOf(slice.value, total))}%
                 </span>
@@ -444,6 +459,7 @@ function AllocationCard({ data, dim }: { data: Analytics | undefined; dim: boole
 }
 
 function CommitmentsChart({ data, dim }: { data: Analytics | undefined; dim: boolean }) {
+  const { t } = useTranslation();
   const rows = useMemo(
     () =>
       data?.commitments.map((c) => ({
@@ -456,13 +472,13 @@ function CommitmentsChart({ data, dim }: { data: Analytics | undefined; dim: boo
   type Row = (typeof rows)[number];
   return (
     <ChartCard
-      title="Já comprometido"
-      subtitle="Próximos 6 meses: parcelas lançadas e despesas recorrentes"
+      title={t("analytics.commitments.title")}
+      subtitle={t("analytics.commitments.subtitle")}
       right={
         <Legend
           items={[
-            { label: "Recorrentes", color: colors.fixed },
-            { label: "Parcelas", color: colors.installments },
+            { label: t("analytics.commitments.recurring"), color: colors.fixed },
+            { label: t("invoices.groups.installments"), color: colors.installments },
           ]}
         />
       }
@@ -484,10 +500,10 @@ function CommitmentsChart({ data, dim }: { data: Analytics | undefined; dim: boo
                     <TooltipBox
                       title={monthLabel(row.month)}
                       rows={[
-                        { label: "Parcelas", color: colors.installments, value: formatMinorUnits(row.installments) },
-                        { label: "Recorrentes", color: colors.fixed, value: formatMinorUnits(row.recurringExpense) },
-                        { label: "Receitas recorrentes", value: formatMinorUnits(row.recurringIncome), strong: false },
-                        { label: "Saldo previsto", value: formatMinorUnits(row.balance), strong: false },
+                        { label: t("invoices.groups.installments"), color: colors.installments, value: formatMinorUnits(row.installments) },
+                        { label: t("analytics.commitments.recurring"), color: colors.fixed, value: formatMinorUnits(row.recurringExpense) },
+                        { label: t("analytics.commitments.recurringIncome"), value: formatMinorUnits(row.recurringIncome), strong: false },
+                        { label: t("planning.calendar.projection.projected"), value: formatMinorUnits(row.balance), strong: false },
                       ]}
                     />
                   );
@@ -515,6 +531,7 @@ function CommitmentsChart({ data, dim }: { data: Analytics | undefined; dim: boo
 
 /** Table view: every number in the charts, reachable without hovering. */
 function MonthlyTable({ data, onInspectMonth }: { data: Analytics | undefined; onInspectMonth: (month: string) => void }) {
+  const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   if (!data) return null;
   return (
@@ -525,7 +542,7 @@ function MonthlyTable({ data, onInspectMonth }: { data: Analytics | undefined; o
         className="flex w-full items-center justify-between gap-3 rounded-3xl px-4 py-4 text-left text-sm @2xl:px-5"
         aria-expanded={open}
       >
-        Tabela mês a mês
+        {t("analytics.table.title")}
         <Icon name="chevronRight" size={15} className={`text-muted transition-transform ${open ? "rotate-90" : ""}`} />
       </button>
       {open ? (
@@ -533,7 +550,7 @@ function MonthlyTable({ data, onInspectMonth }: { data: Analytics | undefined; o
           <table className="w-full text-right text-xs whitespace-nowrap tabular">
             <thead className="text-muted">
               <tr>
-                {["Mês", "Receitas", "Despesas", "Resultado", "Poupança", "Investido", "Patrimônio"].map((h, i) => (
+                {[t("planning.calendar.projection.month"), t("transactions.filters.income"), t("transactions.filters.expense"), t("transactions.result"), t("analytics.savings"), t("analytics.split.invested"), t("home.netWorth")].map((h, i) => (
                   <th key={h} className={`px-3 py-2 font-normal ${i === 0 ? "text-left" : ""}`}>
                     {h}
                   </th>
@@ -543,7 +560,7 @@ function MonthlyTable({ data, onInspectMonth }: { data: Analytics | undefined; o
             <tbody>
               {[...activeSeries(data.series)].reverse().map((p) => (
                 <tr key={p.month} className="border-t border-line">
-                  <td className="px-3 py-2 text-left"><button type="button" className="rounded-md py-1 text-accent hover:underline" onClick={() => onInspectMonth(p.month)} aria-label={`Ver lançamentos de ${monthLabel(p.month)}`}>{monthLabel(p.month)}</button></td>
+                  <td className="px-3 py-2 text-left"><button type="button" className="rounded-md py-1 text-accent hover:underline" onClick={() => onInspectMonth(p.month)} aria-label={t("home.categories.open", { name: monthLabel(p.month) })}>{monthLabel(p.month)}</button></td>
                   <td className="px-3 py-2">{formatMinorUnits(p.income)}</td>
                   <td className="px-3 py-2">{formatMinorUnits(p.expense)}</td>
                   <td className="px-3 py-2">{formatMinorUnits(p.result)}</td>

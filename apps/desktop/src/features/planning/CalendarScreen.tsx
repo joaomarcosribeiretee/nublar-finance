@@ -1,4 +1,5 @@
 import { useId, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
   Area,
   AreaChart,
@@ -23,8 +24,6 @@ import { dayLabel, monthLabel, shortMonthLabel, todayLocal } from "@/lib/dates";
 import { formatMinorUnits } from "@/lib/money";
 import { useCalendar, useProjection, type CalendarEvent } from "@/lib/queries";
 
-const weekdays = ["dom", "seg", "ter", "qua", "qui", "sex", "sáb"];
-
 /** How an event reads: money in, money out, a bill, a milestone. */
 function look(event: CalendarEvent): { icon: IconName; dot: string; sign: "+" | "-" | null } {
   switch (event.kind) {
@@ -43,6 +42,7 @@ function look(event: CalendarEvent): { icon: IconName; dot: string; sign: "+" | 
 }
 
 export function CalendarScreen({ month }: { month: string }) {
+  const { t } = useTranslation();
   const calendar = useCalendar(month);
   const data = calendar.data;
   const today = todayLocal();
@@ -68,8 +68,8 @@ export function CalendarScreen({ month }: { month: string }) {
 
   return (
     <section className="animate-enter space-y-6">
-      <PageHeader eyebrow={monthLabel(month)} title="Calendário" actions={month === today.slice(0, 7) ? <Button onClick={() => setSelected(today)}>Hoje</Button> : undefined}>
-        Dias passados mostram o saldo real; os próximos, o previsto com pendentes e faturas.
+      <PageHeader eyebrow={monthLabel(month)} title={t("shell.screens.calendar")} actions={month === today.slice(0, 7) ? <Button onClick={() => setSelected(today)}>{t("common.dates.today")}</Button> : undefined}>
+        {t("planning.calendar.intro")}
       </PageHeader>
 
       {calendar.isError ? <ErrorNote>{errorMessage(calendar.error)}</ErrorNote> : null}
@@ -77,7 +77,7 @@ export function CalendarScreen({ month }: { month: string }) {
       {!calendar.isError ? <div className="grid items-start gap-4 @2xl:grid-cols-[1.5fr_1fr]">
         <Panel className="calendar-panel">
           <div className="grid grid-cols-7 gap-1 text-center text-[11px] text-faint uppercase">
-            {weekdays.map((day) => (
+            {t("common.dates.weekdays", { returnObjects: true }).map((day) => (
               <span key={day} className="pb-2">
                 {day}
               </span>
@@ -98,7 +98,7 @@ export function CalendarScreen({ month }: { month: string }) {
                     isFocus ? "border-accent/50 bg-accent/10" : "border-transparent hover:border-line hover:bg-hover"
                   } ${date < today ? "text-muted" : ""}`}
                   aria-pressed={isFocus}
-                  aria-label={`${dayLabel(date)}: ${events.length === 0 ? "nada" : events.length === 1 ? "1 item" : `${events.length} itens`}`}
+                  aria-label={`${dayLabel(date)}: ${t("planning.calendar.items", { count: events.length })}`}
                 >
                   <span className={`text-xs ${isToday ? "rounded-full bg-accent px-1.5 font-medium text-accent-fg" : ""}`}>
                     {Number(date.slice(8, 10))}
@@ -118,18 +118,18 @@ export function CalendarScreen({ month }: { month: string }) {
           <div className="mt-4">
             <Legend
               items={[
-                { label: "Entrada", color: "var(--positive)" },
-                { label: "Saída", color: "var(--negative)" },
-                { label: "Fatura", color: "var(--accent)" },
-                { label: "Vencimento / transferência", color: "var(--transfer)" },
+                { label: t("planning.calendar.legend.income"), color: "var(--positive)" },
+                { label: t("planning.calendar.legend.expense"), color: "var(--negative)" },
+                { label: t("transactions.form.invoice"), color: "var(--accent)" },
+                { label: t("planning.calendar.legend.other"), color: "var(--transfer)" },
               ]}
             />
           </div>
         </Panel>
 
-        <Panel flush className="day-agenda" title={dayLabel(focus)} subtitle={data && focusEvents.length === 0 ? "Nenhum compromisso neste dia." : undefined}>
+        <Panel flush className="day-agenda" title={dayLabel(focus)} subtitle={data && focusEvents.length === 0 ? t("planning.calendar.noEvents") : undefined}>
           {!data ? <div className="skeleton m-3 h-24" /> : null}
-          {data && focusEvents.length === 0 ? <div className="flex items-center gap-3 p-4 text-muted"><Icon name="calendar" size={24} /><p className="text-sm">Escolha um dia marcado para ver os detalhes.</p></div> : null}
+          {data && focusEvents.length === 0 ? <div className="flex items-center gap-3 p-4 text-muted"><Icon name="calendar" size={24} /><p className="text-sm">{t("planning.calendar.pickDay")}</p></div> : null}
           <ul>
             {focusEvents.map((event) => {
               const style = look(event);
@@ -141,7 +141,7 @@ export function CalendarScreen({ month }: { month: string }) {
                   <span className="min-w-0 flex-1">
                     <span className="block truncate text-sm">{event.title}</span>
                     <span className="block truncate text-xs text-muted">
-                      {event.status === "PENDING" ? "Previsto · " : ""}
+                      {event.status === "PENDING" ? `${t("invoices.scheduled")} · ` : ""}
                       {event.subtitle}
                     </span>
                   </span>
@@ -177,6 +177,7 @@ function DailyCashChart({
   today: string;
   dim: boolean;
 }) {
+  const { t } = useTranslation();
   // Two series of the same measure: real (solid) and projected (dashed),
   // joined at today so the line is continuous.
   const rows =
@@ -193,13 +194,13 @@ function DailyCashChart({
 
   return (
     <Panel
-      title="Saldo em contas, dia a dia"
+      title={t("planning.calendar.daily.title")}
       actions={
         hasProjection ? (
           <Legend
             items={[
-              { label: "Real", color: "var(--accent)", shape: "line" },
-              { label: "Previsto", color: "var(--muted)", shape: "line" },
+              { label: t("planning.calendar.daily.real"), color: "var(--accent)", shape: "line" },
+              { label: t("invoices.scheduled"), color: "var(--muted)", shape: "line" },
             ]}
           />
         ) : null
@@ -223,7 +224,7 @@ function DailyCashChart({
                       title={dayLabel(day.date)}
                       rows={[
                         {
-                          label: day.projected ? "Previsto" : "Saldo",
+                          label: day.projected ? t("invoices.scheduled") : t("planning.calendar.daily.balance"),
                           color: day.projected ? "var(--muted)" : "var(--accent)",
                           value: formatMinorUnits(day.cash),
                         },
@@ -253,6 +254,7 @@ function DailyCashChart({
 }
 
 function ProjectionPanel() {
+  const { t } = useTranslation();
   const [months, setMonths] = useState<6 | 12>(6);
   const fill = useId();
   const projection = useProjection(months);
@@ -262,20 +264,20 @@ function ProjectionPanel() {
 
   return (
     <Panel
-      title="Projeção de saldo"
+      title={t("planning.calendar.projection.title")}
       subtitle={
         data
-          ? `Começa em ${formatMinorUnits(data.startCash)} hoje. Soma recorrências, parcelas e faturas e desconta ${formatMinorUnits(data.variableEstimate)}/mês de gasto variável (média de ${data.basedOnMonths || 0} ${data.basedOnMonths === 1 ? "mês" : "meses"}).`
+          ? t("planning.calendar.projection.subtitle", { start: formatMinorUnits(data.startCash), variable: formatMinorUnits(data.variableEstimate), basedOn: t("planning.calendar.projection.months", { count: data.basedOnMonths || 0 }) })
           : undefined
       }
       actions={
         <Segmented
           size="sm"
-          label="Horizonte"
+          label={t("planning.calendar.projection.horizon")}
           value={String(months) as "6" | "12"}
           options={[
-            { value: "6", label: "6 meses" },
-            { value: "12", label: "12 meses" },
+            { value: "6", label: t("investments.horizons.sixMonths") },
+            { value: "12", label: t("home.sparkline.period") },
           ]}
           onChange={(value) => setMonths(Number(value) as 6 | 12)}
         />
@@ -304,13 +306,13 @@ function ProjectionPanel() {
                     if (!active || !row) return null;
                     return (
                       <TooltipBox
-                        title={`Fim de ${monthLabel(row.month).toLowerCase()}`}
+                        title={t("planning.calendar.projection.endOf", { month: monthLabel(row.month).toLowerCase() })}
                         rows={[
-                          { label: "Saldo previsto", color: "var(--series-1)", value: formatMinorUnits(row.projectedCash) },
-                          { label: "Entradas", value: formatMinorUnits(row.income), strong: false },
-                          { label: "Fixos", value: `− ${formatMinorUnits(row.fixed)}`, strong: false },
-                          { label: "Parcelas", value: `− ${formatMinorUnits(row.installments)}`, strong: false },
-                          { label: "Variável (média)", value: `− ${formatMinorUnits(row.variableEstimate)}`, strong: false },
+                          { label: t("planning.calendar.projection.projected"), color: "var(--series-1)", value: formatMinorUnits(row.projectedCash) },
+                          { label: t("planning.calendar.projection.income"), value: formatMinorUnits(row.income), strong: false },
+                          { label: t("planning.calendar.projection.fixed"), value: `− ${formatMinorUnits(row.fixed)}`, strong: false },
+                          { label: t("invoices.groups.installments"), value: `− ${formatMinorUnits(row.installments)}`, strong: false },
+                          { label: t("planning.calendar.projection.variable"), value: `− ${formatMinorUnits(row.variableEstimate)}`, strong: false },
                         ]}
                       />
                     );
@@ -326,9 +328,9 @@ function ProjectionPanel() {
         <table className="w-full self-start text-right text-xs whitespace-nowrap tabular">
           <thead className="text-muted">
             <tr>
-              <th className="py-1.5 text-left font-normal">Mês</th>
-              <th className="py-1.5 font-normal">Saldo do mês</th>
-              <th className="py-1.5 font-normal">Saldo previsto</th>
+              <th className="py-1.5 text-left font-normal">{t("planning.calendar.projection.month")}</th>
+              <th className="py-1.5 font-normal">{t("planning.calendar.projection.monthBalance")}</th>
+              <th className="py-1.5 font-normal">{t("planning.calendar.projection.projected")}</th>
             </tr>
           </thead>
           <tbody>

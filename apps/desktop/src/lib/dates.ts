@@ -1,19 +1,14 @@
-const monthNames = [
-  "Janeiro",
-  "Fevereiro",
-  "Março",
-  "Abril",
-  "Maio",
-  "Junho",
-  "Julho",
-  "Agosto",
-  "Setembro",
-  "Outubro",
-  "Novembro",
-  "Dezembro",
-];
+import { t } from "@/i18n";
 
-const weekdays = ["dom", "seg", "ter", "qua", "qui", "sex", "sáb"];
+/** Full month names, January first. */
+function monthNames(): string[] {
+  return t("common.dates.months", { returnObjects: true });
+}
+
+/** Short weekday names, Sunday first. */
+function weekdays(): string[] {
+  return t("common.dates.weekdays", { returnObjects: true });
+}
 
 function pad(value: number): string {
   return String(value).padStart(2, "0");
@@ -36,33 +31,33 @@ export function shiftMonth(month: string, delta: number): string {
 
 export function monthLabel(month: string): string {
   const [year, monthNumber] = month.split("-").map(Number);
-  return `${monthNames[monthNumber - 1]} ${year}`;
+  return `${monthNames()[monthNumber - 1]} ${year}`;
 }
 
 export function shortMonthLabel(month: string): string {
   const [, monthNumber] = month.split("-").map(Number);
-  return monthNames[monthNumber - 1].slice(0, 3).toLowerCase();
+  return monthNames()[monthNumber - 1].slice(0, 3).toLowerCase();
 }
 
 /** "10 out" */
 export function shortDate(date: string): string {
   const [, month, day] = date.split("-").map(Number);
-  return `${day} ${monthNames[month - 1].slice(0, 3).toLowerCase()}`;
+  return `${day} ${monthNames()[month - 1].slice(0, 3).toLowerCase()}`;
 }
 
 /** "Hoje", "Ontem" or "seg, 29 set". */
 export function dayLabel(date: string, now = new Date()): string {
   const today = todayLocal(now);
   if (date === today) {
-    return "Hoje";
+    return t("common.dates.today");
   }
   const yesterday = new Date(now);
   yesterday.setDate(now.getDate() - 1);
   if (date === todayLocal(yesterday)) {
-    return "Ontem";
+    return t("common.dates.yesterday");
   }
   const [year, month, day] = date.split("-").map(Number);
-  const weekday = weekdays[new Date(year, month - 1, day).getDay()];
+  const weekday = weekdays()[new Date(year, month - 1, day).getDay()];
   return `${weekday}, ${day} ${shortMonthLabel(date.slice(0, 7))}`;
 }
 

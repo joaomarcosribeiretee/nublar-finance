@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Button } from "@/components/Button";
 import { controlClass, DecimalInput, Field, MoneyInput, TextInput } from "@/components/Field";
 import { FormFooter } from "@/components/Modal";
@@ -20,6 +21,7 @@ import {
 } from "@/lib/queries";
 import {
   bpsToPercentInput,
+  indexerLabels,
   liquidityLabels,
   parsePercentToBps,
   productDefaults,
@@ -67,6 +69,7 @@ export function InvestmentForm({
   onDone: () => void;
   onDeleted?: () => void;
 }) {
+  const { t } = useTranslation();
   const toast = useToast();
   const institutions = useInstitutions();
   const create = useCreateInvestment();
@@ -96,10 +99,10 @@ export function InvestmentForm({
 
   // A sensible name when the user does not type one: "CDB Nubank 110% do CDI".
   const suggestedName = fixedIncome
-    ? [product ? productLabels[product] : "Renda fixa", institutionName, rateBps !== null ? rateLabel(indexer, rateBps) : null]
+    ? [product ? t(productLabels[product]) : t("labels.assetClass.FIXED_INCOME"), institutionName, rateBps !== null ? rateLabel(indexer, rateBps) : null]
         .filter(Boolean)
         .join(" ")
-    : assetClassLabels[assetClass];
+    : t(assetClassLabels[assetClass]);
 
   function chooseProduct(next: FixedIncomeProduct) {
     setProduct(next);
@@ -113,7 +116,7 @@ export function InvestmentForm({
   async function submit(event: React.FormEvent) {
     event.preventDefault();
     if (rate.trim() && rateBps === null) {
-      setError("Taxa inválida. Use algo como 110 ou 6,5.");
+      setError(t("investments.form.errors.rate"));
       return;
     }
     const details = {
@@ -133,24 +136,24 @@ export function InvestmentForm({
     try {
       if (investment) {
         await update.mutateAsync({ id: investment.id, input: details });
-        toast("Investimento atualizado");
+        toast(t("investments.form.updated"));
       } else {
         const currentValue = parseNonNegative(current);
         if (currentValue === null) {
-          setError("Informe quanto você tem hoje.");
+          setError(t("investments.form.errors.current"));
           return;
         }
         if (knowsHistory) {
           const openingApplied = parseNonNegative(applied);
           if (openingApplied === null) {
-            setError("Informe quanto você aplicou.");
+            setError(t("investments.form.errors.applied"));
             return;
           }
           await create.mutateAsync({ ...details, currentValue, openingApplied, startDate });
         } else {
           await create.mutateAsync({ ...details, currentValue });
         }
-        toast("Investimento cadastrado");
+        toast(t("investments.form.created"));
       }
       onDone();
     } catch (reason: unknown) {
@@ -166,7 +169,7 @@ export function InvestmentForm({
     }
     try {
       await remove.mutateAsync(investment.id);
-      toast("Investimento excluído");
+      toast(t("investments.form.deleted"));
       onDeleted?.();
     } catch (reason: unknown) {
       setConfirmDelete(false);
@@ -176,7 +179,7 @@ export function InvestmentForm({
 
   return (
     <form onSubmit={(event) => void submit(event)} className="space-y-5">
-      <Field label="Classe">
+      <Field label={t("investments.form.class")}>
         <div className="flex flex-wrap gap-1.5">
           {classes.map((value) => (
             <button
@@ -186,14 +189,14 @@ export function InvestmentForm({
               className={chip(assetClass === value)}
               onClick={() => setAssetClass(value)}
             >
-              {assetClassLabels[value]}
+              {t(assetClassLabels[value])}
             </button>
           ))}
         </div>
       </Field>
 
       {fixedIncome ? (
-        <Field label="Produto">
+        <Field label={t("investments.form.product")}>
           <div className="flex flex-wrap gap-1.5">
             {products.map((value) => (
               <button
@@ -203,7 +206,7 @@ export function InvestmentForm({
                 className={chip(product === value)}
                 onClick={() => chooseProduct(value)}
               >
-                {productLabels[value]}
+                {t(productLabels[value])}
               </button>
             ))}
           </div>
@@ -212,9 +215,9 @@ export function InvestmentForm({
 
       {investment ? null : (
         <label className="block rounded-2xl border border-line bg-surface-2 px-4 py-3 transition-colors focus-within:border-accent/60">
-          <span className="text-xs text-muted">Quanto você tem hoje</span>
+          <span className="text-xs text-muted">{t("investments.form.current")}</span>
           <div className="mt-1 flex items-baseline gap-2">
-            <span className="text-lg text-muted">R$</span>
+            <span className="text-lg text-muted">{t("common.money.symbol")}</span>
             <MoneyInput
               autoFocus
               className="tabular w-full min-w-0 bg-transparent font-display text-3xl outline-none placeholder:text-faint focus-visible:outline-none"
@@ -223,18 +226,18 @@ export function InvestmentForm({
             />
           </div>
           <span className="mt-1 block text-[11px] text-faint">
-            O valor que aparece hoje no app do banco ou da corretora. Entra no patrimônio, não como despesa.
+            {t("investments.form.currentHint")}
           </span>
         </label>
       )}
 
       <div className="grid gap-3 sm:grid-cols-[1fr_200px]">
-        <Field label="Nome (opcional)">
+        <Field label={t("investments.form.name")}>
           <TextInput placeholder={suggestedName} value={name} maxLength={80} onChange={setName} />
         </Field>
-        <Field label="Instituição">
+        <Field label={t("cards.form.institution")}>
           <select className={controlClass} value={institutionId} onChange={(event) => setInstitutionId(event.target.value)}>
-            <option value="">Nenhuma</option>
+            <option value="">{t("common.none")}</option>
             {institutions.data?.map((institution) => (
               <option key={institution.id} value={institution.id}>
                 {institution.name}
@@ -246,18 +249,18 @@ export function InvestmentForm({
 
       {fixedIncome ? (
         <>
-          <Field label="Rentabilidade contratada (opcional)">
+          <Field label={t("investments.form.rate")}>
             <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
               <Segmented
                 size="sm"
-                label="Indexador"
+                label={t("investments.form.indexer")}
                 value={indexer ?? ""}
                 options={[
-                  { value: "", label: "Não sei" },
-                  { value: "CDI", label: "% do CDI" },
-                  { value: "IPCA", label: "IPCA +" },
-                  { value: "PREFIXED", label: "Prefixado" },
-                  { value: "SELIC", label: "Selic +" },
+                  { value: "", label: t("investments.form.unknown") },
+                  { value: "CDI", label: t(indexerLabels.CDI) },
+                  { value: "IPCA", label: t(indexerLabels.IPCA) },
+                  { value: "PREFIXED", label: t(indexerLabels.PREFIXED) },
+                  { value: "SELIC", label: t(indexerLabels.SELIC) },
                 ]}
                 onChange={(value) => {
                   setIndexer(value === "" ? null : value);
@@ -267,7 +270,7 @@ export function InvestmentForm({
               {indexer ? (
                 <div className="animate-enter relative w-32">
                   <DecimalInput
-                    aria-label="Taxa"
+                    aria-label={t("investments.form.rateValue")}
                     className={`${controlClass} tabular pr-14`}
                     wholeDigits={3}
                     placeholder={indexer === "CDI" ? "92" : indexer === "IPCA" ? "6,5" : indexer === "SELIC" ? "0,1" : "12"}
@@ -275,7 +278,7 @@ export function InvestmentForm({
                     onChange={setRate}
                   />
                   <span className="pointer-events-none absolute top-1/2 right-3 -translate-y-1/2 text-xs text-faint">
-                    {indexer === "CDI" ? "% CDI" : indexer === "PREFIXED" ? "% a.a." : "%"}
+                    {indexer === "CDI" ? t("labels.rateSuffix.cdi") : indexer === "PREFIXED" ? t("labels.rateSuffix.yearly") : "%"}
                   </span>
                 </div>
               ) : null}
@@ -284,24 +287,24 @@ export function InvestmentForm({
               ) : null}
             </div>
             <span className="text-[11px] text-faint">
-              Só informativo. Está nos detalhes da aplicação no app do banco (ex.: “92% do CDI”).
+              {t("investments.form.rateHint")}
             </span>
           </Field>
           <div className="grid gap-3 sm:grid-cols-2">
-            <Field label="Quando dá para sacar">
+            <Field label={t("investments.form.liquidity")}>
               <Segmented
                 size="sm"
-                label="Liquidez"
+                label={t("investments.form.liquidityLabel")}
                 value={liquidity ?? ""}
                 options={[
-                  { value: "", label: "Não sei" },
-                  { value: "DAILY", label: liquidityLabels.DAILY },
-                  { value: "AT_MATURITY", label: liquidityLabels.AT_MATURITY },
+                  { value: "", label: t("investments.form.unknown") },
+                  { value: "DAILY", label: t(liquidityLabels.DAILY) },
+                  { value: "AT_MATURITY", label: t(liquidityLabels.AT_MATURITY) },
                 ]}
                 onChange={(value) => setLiquidity(value === "" ? null : value)}
               />
             </Field>
-            <Field label="Vencimento (opcional)">
+            <Field label={t("investments.form.maturity")}>
               <input
                 className={controlClass}
                 type="date"
@@ -313,7 +316,7 @@ export function InvestmentForm({
         </>
       ) : listed ? (
         <div className="grid grid-cols-2 gap-3">
-          <Field label="Código (opcional)">
+          <Field label={t("investments.form.ticker")}>
             <input
               className={controlClass}
               placeholder={assetClass === "CRYPTO" ? "BTC" : "PETR4"}
@@ -323,7 +326,7 @@ export function InvestmentForm({
               onChange={(event) => setTicker(sanitizeTicker(event.target.value))}
             />
           </Field>
-          <Field label="Quantidade (opcional)">
+          <Field label={t("investments.form.quantity")}>
             <DecimalInput placeholder="100" decimals={8} wholeDigits={12} value={quantity} onChange={setQuantity} />
           </Field>
         </div>
@@ -343,18 +346,18 @@ export function InvestmentForm({
               {knowsHistory ? <Icon name="check" size={13} /> : null}
             </span>
             <span className="flex-1">
-              <span className="block text-sm">Sei quanto e quando apliquei</span>
+              <span className="block text-sm">{t("investments.form.history")}</span>
               <span className="block text-xs text-faint">
-                Opcional. Sem isso, o rendimento passa a ser contado a partir de hoje.
+                {t("investments.form.historyHint")}
               </span>
             </span>
           </button>
           {knowsHistory ? (
             <div className="animate-enter grid gap-3 px-4 pb-4 sm:grid-cols-2 sm:pl-12">
-              <Field label="Valor aplicado">
+              <Field label={t("investments.form.applied")}>
                 <MoneyInput value={applied} onChange={setApplied} />
               </Field>
-              <Field label="Desde">
+              <Field label={t("investments.form.since")}>
                 <input
                   className={controlClass}
                   type="date"
@@ -377,15 +380,15 @@ export function InvestmentForm({
             onBlur={() => setConfirmDelete(false)}
             disabled={remove.isPending}
           >
-            {confirmDelete ? "Confirmar exclusão" : "Excluir"}
+            {confirmDelete ? t("common.actions.confirmDelete") : t("common.actions.delete")}
           </Button>
         ) : null}
         <div className="flex-1" />
         <Button variant="ghost" onClick={onDone}>
-          {investment ? "Voltar" : "Cancelar"}
+          {investment ? t("common.actions.back") : t("common.actions.cancel")}
         </Button>
         <Button variant="primary" type="submit" disabled={create.isPending || update.isPending}>
-          {create.isPending || update.isPending ? "Salvando…" : "Salvar"}
+          {create.isPending || update.isPending ? t("common.save.saving") : t("common.actions.save")}
         </Button>
       </FormFooter>
     </form>

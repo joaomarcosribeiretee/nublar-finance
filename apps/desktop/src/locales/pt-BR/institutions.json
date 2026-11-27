@@ -1,0 +1,70 @@
+{
+  "form": {
+    "color": "Cor",
+    "colorOption": "Cor {{index}}",
+    "updated": "Instituição atualizada",
+    "removed": "Instituição removida",
+    "name": "Nome"
+  },
+  "account": {
+    "invalidBalance": "Saldo inválido. Use algo como 1.250,00 ou -80,00.",
+    "updated": "Conta atualizada",
+    "created": "Conta criada",
+    "deleted": "Conta excluída",
+    "type": "Tipo",
+    "nickname": "Apelido (opcional)",
+    "savingsPlaceholder": "Ex.: Caixinha da viagem",
+    "balanceToday": "Saldo hoje",
+    "openingBalance": "Saldo inicial",
+    "openingBalanceHint": "Quanto havia quando você começou a usar o Nublar. Não conta como receita. Use o sinal de menos para conta no negativo."
+  },
+  "add": {
+    "hints": {
+      "checking": "Onde o salário cai e as contas saem",
+      "savings": "Reserva, caixinhas, cofrinhos",
+      "card": "Faturas, parcelas e limite",
+      "brokerage": "Dinheiro parado na corretora",
+      "crypto": "Saldo em exchange ou carteira"
+    },
+    "errors": {
+      "nameRequired": "Digite o nome da instituição.",
+      "nameTaken": "Você já tem essa instituição. Adicione contas e cartões dentro dela.",
+      "invalidBalance": "Saldo inválido em {{type}}.",
+      "invalidLimit": "Limite do cartão inválido."
+    },
+    "other": "Outra instituição",
+    "otherPlaceholder": "Nome do banco, corretora ou carteira",
+    "added": "{{name}} adicionado",
+    "question": "O que você tem no <name>{{name}}</name>?",
+    "limit": "Limite",
+    "closingDay": "Fecha dia",
+    "dueDay": "Vence dia",
+    "note": "O saldo de hoje entra no seu patrimônio, não como receita. Aplicações (CDB, ações, FIIs) são cadastradas depois, em Investimentos.",
+    "adding": "Adicionando…",
+    "submit": "Adicionar {{name}}"
+  },
+  "eyebrow": "Bancos, corretoras e carteiras",
+  "cash": "Dinheiro em espécie",
+  "newShort": "Instituição",
+  "intro": "Dinheiro em contas, sem contar investimentos.",
+  "stats": {
+    "cash": "Disponível em contas",
+    "investments": "Em investimentos",
+    "count": "Instituições cadastradas"
+  },
+  "empty": {
+    "title": "Onde está seu dinheiro?",
+    "description": "Adicione seus bancos, corretoras e carteiras. Dentro de cada um você coloca contas, caixinhas e cartões."
+  },
+  "new": "Nova instituição",
+  "newCard": "Novo cartão",
+  "newAccount": "Nova conta",
+  "panel": {
+    "loose": "Fora de instituições",
+    "cardDebt": "Cartões devem",
+    "edit": "Editar instituição",
+    "card": "Cartão {{name}}",
+    "available": "Disponível",
+    "invoice": "fatura"
+  }
+}

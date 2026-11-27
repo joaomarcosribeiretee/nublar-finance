@@ -1,4 +1,5 @@
 import { useId, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Area, AreaChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { AccountSelect } from "@/components/AccountSelect";
 import { Button } from "@/components/Button";
@@ -30,6 +31,7 @@ import { InvestmentForm } from "./InvestmentForm";
 type Action = "none" | "INVESTMENT" | "REDEMPTION" | "value" | "edit";
 
 export function InvestmentDetail({ id, onClose }: { id: string; onClose: () => void }) {
+  const { t } = useTranslation();
   const investment = useInvestment(id);
   const [action, setAction] = useState<Action>("none");
   const data = investment.data;
@@ -49,10 +51,10 @@ export function InvestmentDetail({ id, onClose }: { id: string; onClose: () => v
       <StatStrip
         columns="grid-cols-2 sm:grid-cols-4"
         items={[
-          { label: "Valor atual", value: <Money amount={data.current} /> },
-          { label: "Aplicado", value: <Money amount={data.applied} /> },
-          { label: "Ganho", value: <Money amount={data.gain} tone="auto" /> },
-          { label: "Rentabilidade", value: <GainText gain={data.gain} bps={data.gainBps} /> },
+          { label: t("investments.stats.current"), value: <Money amount={data.current} /> },
+          { label: t("investments.stats.applied"), value: <Money amount={data.applied} /> },
+          { label: t("investments.stats.gain"), value: <Money amount={data.gain} tone="auto" /> },
+          { label: t("investments.stats.return"), value: <GainText gain={data.gain} bps={data.gainBps} /> },
         ]}
       />
 
@@ -66,14 +68,14 @@ export function InvestmentDetail({ id, onClose }: { id: string; onClose: () => v
         <div className="flex flex-wrap gap-2">
           <Button variant="primary" onClick={() => setAction("INVESTMENT")}>
             <Icon name="plus" size={15} />
-            Aportar
+            {t("investments.detail.invest")}
           </Button>
-          <Button onClick={() => setAction("REDEMPTION")}>Resgatar</Button>
-          <Button onClick={() => setAction("value")}>Atualizar valor</Button>
+          <Button onClick={() => setAction("REDEMPTION")}>{t("investments.detail.redeem")}</Button>
+          <Button onClick={() => setAction("value")}>{t("investments.detail.updateValue")}</Button>
           <div className="flex-1" />
           <Button variant="ghost" onClick={() => setAction("edit")}>
             <Icon name="pencil" size={14} />
-            Editar dados
+            {t("investments.detail.edit")}
           </Button>
         </div>
       ) : action === "value" ? (
@@ -88,6 +90,7 @@ export function InvestmentDetail({ id, onClose }: { id: string; onClose: () => v
 }
 
 function HistoryChart({ data }: { data: Detail }) {
+  const { t } = useTranslation();
   const fill = useId();
   const rows = data.history.map((point) => ({ ...point, plot: plotValue(point.value) }));
   if (rows.length < 2) {
@@ -113,7 +116,7 @@ function HistoryChart({ data }: { data: Detail }) {
               return (
                 <TooltipBox
                   title={monthLabel(point.month)}
-                  rows={[{ label: "Valor", color: "var(--series-1)", value: formatMinorUnits(point.value) }]}
+                  rows={[{ label: t("transactions.form.amount.single"), color: "var(--series-1)", value: formatMinorUnits(point.value) }]}
                 />
               );
             }}
@@ -141,6 +144,7 @@ function MovementForm({
   type: "INVESTMENT" | "REDEMPTION";
   onDone: () => void;
 }) {
+  const { t } = useTranslation();
   const toast = useToast();
   const accounts = useAccounts();
   const move = useMoveInvestment();
@@ -154,16 +158,16 @@ function MovementForm({
     event.preventDefault();
     const minor = parseReaisToMinorUnits(amount);
     if (!minor) {
-      setError("Informe um valor, por exemplo 500,00.");
+      setError(t("investments.detail.errors.amount"));
       return;
     }
     if (!chosen) {
-      setError("Cadastre uma conta antes: o dinheiro precisa sair de algum lugar ou voltar para ele.");
+      setError(t("investments.detail.errors.noAccount"));
       return;
     }
     try {
       await move.mutateAsync({ id: data.id, type, accountId: chosen, amount: minor, date });
-      toast(type === "INVESTMENT" ? "Aporte registrado" : "Resgate registrado");
+      toast(type === "INVESTMENT" ? t("investments.detail.invested") : t("investments.detail.redeemed"));
       onDone();
     } catch (reason: unknown) {
       setError(errorMessage(reason));
@@ -172,18 +176,18 @@ function MovementForm({
 
   return (
     <form onSubmit={(event) => void submit(event)} className="animate-enter space-y-3 rounded-2xl bg-surface-2 p-4">
-      <p className="text-sm">{type === "INVESTMENT" ? "Aportar" : "Resgatar"}</p>
+      <p className="text-sm">{type === "INVESTMENT" ? t("investments.detail.invest") : t("investments.detail.redeem")}</p>
       <div className="grid gap-3 sm:grid-cols-3">
         <AccountSelect
-          label={type === "INVESTMENT" ? "Sai de" : "Volta para"}
+          label={type === "INVESTMENT" ? t("investments.detail.from") : t("investments.detail.to")}
           accounts={accounts.data ?? []}
           value={chosen}
           onChange={setAccountId}
         />
-        <Field label="Valor">
+        <Field label={t("transactions.form.amount.single")}>
           <MoneyInput autoFocus value={amount} onChange={setAmount} />
         </Field>
-        <Field label="Data">
+        <Field label={t("transactions.form.date")}>
           <input
             className={controlClass}
             type="date"
@@ -193,7 +197,7 @@ function MovementForm({
           />
         </Field>
       </div>
-      <p className="text-[11px] text-faint">Só muda o dinheiro de lugar: não é despesa nem receita.</p>
+      <p className="text-[11px] text-faint">{t("investments.detail.movementHint")}</p>
       {error ? (
         <p role="alert" className="text-sm text-negative">
           {error}
@@ -201,10 +205,10 @@ function MovementForm({
       ) : null}
       <div className="flex flex-wrap justify-end gap-2">
         <Button variant="ghost" onClick={onDone}>
-          Cancelar
+          {t("common.actions.cancel")}
         </Button>
         <Button variant="primary" type="submit" disabled={move.isPending}>
-          {type === "INVESTMENT" ? "Registrar aporte" : "Registrar resgate"}
+          {type === "INVESTMENT" ? t("investments.detail.submitInvest") : t("investments.detail.submitRedeem")}
         </Button>
       </div>
     </form>
@@ -212,6 +216,7 @@ function MovementForm({
 }
 
 function ValuationForm({ data, onDone }: { data: Detail; onDone: () => void }) {
+  const { t } = useTranslation();
   const toast = useToast();
   const add = useAddValuation();
   const [value, setValue] = useState(minorUnitsToInput(data.current));
@@ -221,17 +226,17 @@ function ValuationForm({ data, onDone }: { data: Detail; onDone: () => void }) {
   async function submit(event: React.FormEvent) {
     event.preventDefault();
     if (!value.trim()) {
-      setError("Informe quanto a aplicação vale na data.");
+      setError(t("investments.detail.errors.value"));
       return;
     }
     const minor = /^[0.,\s]*$/.test(value) ? "0" : parseReaisToMinorUnits(value);
     if (minor === null) {
-      setError("Valor inválido. Use algo como 1.250,00.");
+      setError(t("investments.detail.errors.invalidValue"));
       return;
     }
     try {
       await add.mutateAsync({ id: data.id, value: minor, date });
-      toast("Valor atualizado");
+      toast(t("investments.detail.valueUpdated"));
       onDone();
     } catch (reason: unknown) {
       setError(errorMessage(reason));
@@ -240,12 +245,12 @@ function ValuationForm({ data, onDone }: { data: Detail; onDone: () => void }) {
 
   return (
     <form onSubmit={(event) => void submit(event)} className="animate-enter space-y-3 rounded-2xl bg-surface-2 p-4">
-      <p className="text-sm">Quanto vale agora?</p>
+      <p className="text-sm">{t("investments.detail.valueQuestion")}</p>
       <div className="grid gap-3 sm:grid-cols-2">
-        <Field label="Valor na data">
+        <Field label={t("investments.detail.valueOnDate")}>
           <MoneyInput autoFocus value={value} onChange={setValue} />
         </Field>
-        <Field label="Data">
+        <Field label={t("transactions.form.date")}>
           <input
             className={controlClass}
             type="date"
@@ -256,7 +261,7 @@ function ValuationForm({ data, onDone }: { data: Detail; onDone: () => void }) {
           />
         </Field>
       </div>
-      <p className="text-[11px] text-faint">Copie o valor do app do banco ou da corretora. Aportes futuros somam sobre ele.</p>
+      <p className="text-[11px] text-faint">{t("investments.detail.valueHint")}</p>
       {error ? (
         <p role="alert" className="text-sm text-negative">
           {error}
@@ -264,10 +269,10 @@ function ValuationForm({ data, onDone }: { data: Detail; onDone: () => void }) {
       ) : null}
       <div className="flex flex-wrap justify-end gap-2">
         <Button variant="ghost" onClick={onDone}>
-          Cancelar
+          {t("common.actions.cancel")}
         </Button>
         <Button variant="primary" type="submit" disabled={add.isPending}>
-          Salvar valor
+          {t("investments.detail.saveValue")}
         </Button>
       </div>
     </form>
@@ -275,6 +280,7 @@ function ValuationForm({ data, onDone }: { data: Detail; onDone: () => void }) {
 }
 
 function Timeline({ data }: { data: Detail }) {
+  const { t } = useTranslation();
   const toast = useToast();
   const removeMovement = useDeleteTransaction();
   const removeValuation = useDeleteValuation();
@@ -293,43 +299,43 @@ function Timeline({ data }: { data: Detail }) {
     <div>
       <Segmented
         size="sm"
-        label="Histórico"
+        label={t("investments.detail.history")}
         value={tab}
         options={[
-          { value: "movements", label: `Aportes e resgates (${data.movements.length})` },
-          { value: "valuations", label: `Valores (${data.valuations.length})` },
+          { value: "movements", label: t("investments.detail.movements", { count: data.movements.length }) },
+          { value: "valuations", label: t("investments.detail.valuations", { count: data.valuations.length }) },
         ]}
         onChange={setTab}
       />
       <ul className="-mx-2 mt-3">
         {tab === "movements" && data.movements.length === 0 ? (
-          <li className="py-6 text-center text-sm text-faint">Nenhum aporte ou resgate ainda.</li>
+          <li className="py-6 text-center text-sm text-faint">{t("investments.detail.noMovements")}</li>
         ) : null}
         {tab === "movements"
           ? data.movements.map((movement) => (
               <li key={movement.id} className="group flex items-center gap-3 rounded-xl px-2 py-2">
                 <span className="w-14 shrink-0 text-xs text-faint">{shortDate(movement.date)}</span>
                 <span className="min-w-0 flex-1 truncate text-sm">
-                  {movement.type === "INVESTMENT" ? "Aporte" : "Resgate"}
+                  {movement.type === "INVESTMENT" ? t("transactions.kind.investment") : t("transactions.kind.redemption")}
                   <span className="text-muted"> · {movement.account?.name}</span>
                 </span>
                 <Money amount={movement.amount} sign={movement.type === "INVESTMENT" ? "+" : "-"} className="text-sm" />
                 <DeleteButton
-                  label="Excluir movimentação"
-                  onConfirm={() => run(() => removeMovement.mutateAsync(movement.id), "Excluído")}
+                  label={t("investments.detail.deleteMovement")}
+                  onConfirm={() => run(() => removeMovement.mutateAsync(movement.id), t("transactions.form.toasts.movementDeleted"))}
                 />
               </li>
             ))
           : data.valuations.map((valuation) => (
               <li key={valuation.id} className="group flex items-center gap-3 rounded-xl px-2 py-2">
                 <span className="w-14 shrink-0 text-xs text-faint">{shortDate(valuation.date)}</span>
-                <span className="flex-1 text-sm text-muted">Valor informado</span>
+                <span className="flex-1 text-sm text-muted">{t("investments.detail.reportedValue")}</span>
                 <Money amount={valuation.value} className="text-sm" />
                 {data.valuations.length > 1 ? (
                   <DeleteButton
-                    label="Excluir valor"
+                    label={t("investments.detail.deleteValue")}
                     onConfirm={() =>
-                      run(() => removeValuation.mutateAsync({ id: data.id, valuationId: valuation.id }), "Valor excluído")
+                      run(() => removeValuation.mutateAsync({ id: data.id, valuationId: valuation.id }), t("investments.detail.valueDeleted"))
                     }
                   />
                 ) : (
@@ -344,6 +350,7 @@ function Timeline({ data }: { data: Detail }) {
 
 /** Two clicks to delete: the first arms, the second confirms. */
 function DeleteButton({ label, onConfirm }: { label: string; onConfirm: () => void }) {
+  const { t } = useTranslation();
   const [armed, setArmed] = useState(false);
   return (
     <button
@@ -357,19 +364,20 @@ function DeleteButton({ label, onConfirm }: { label: string; onConfirm: () => vo
           : "text-faint group-hover:opacity-100 hover:bg-negative/10 hover:text-negative focus-visible:opacity-100 hoverable:opacity-0"
       }`}
     >
-      {armed ? "Excluir?" : <Icon name="trash" size={14} />}
+      {armed ? t("investments.detail.deleteConfirm") : <Icon name="trash" size={14} />}
     </button>
   );
 }
 
 /** "CDB · 110% do CDI · Liquidez diária · Vence 10 mar 28" as quiet chips. */
 function FixedIncomeFacts({ data }: { data: Detail }) {
+  const { t } = useTranslation();
   if (data.assetClass !== "FIXED_INCOME") return null;
   const facts = [
-    data.product ? productLabels[data.product] : null,
+    data.product ? t(productLabels[data.product]) : null,
     rateLabel(data.indexer, data.rateBps),
-    data.liquidity ? liquidityLabels[data.liquidity] : null,
-    data.maturityDate ? `Vence ${shortDate(data.maturityDate)} ${data.maturityDate.slice(2, 4)}` : null,
+    data.liquidity ? t(liquidityLabels[data.liquidity]) : null,
+    data.maturityDate ? t("investments.detail.matures", { date: `${shortDate(data.maturityDate)} ${data.maturityDate.slice(2, 4)}` }) : null,
   ].filter((fact): fact is string => Boolean(fact));
   if (facts.length === 0) return null;
   return (
@@ -385,6 +393,7 @@ function FixedIncomeFacts({ data }: { data: Detail }) {
 
 /** What a CDI-indexed position would earn at a CDI the user can adjust. */
 function CdiPreview({ data }: { data: Detail }) {
+  const { t } = useTranslation();
   const [cdiBps, setCdiBps] = useState(loadCdiBps);
   const [cdiInput, setCdiInput] = useState(() => bpsToPercentInput(loadCdiBps()));
   if (data.assetClass !== "FIXED_INCOME" || data.indexer !== "CDI" || BigInt(data.current) <= 0n) {
@@ -420,15 +429,15 @@ function CdiPreview({ data }: { data: Detail }) {
     <div className="rounded-2xl border border-line p-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="min-w-0">
-          <p className="text-sm">Prévia de rendimento</p>
+          <p className="text-sm">{t("investments.preview.title")}</p>
           <p className="mt-0.5 text-xs text-muted">
-            {bpsToPercentInput(percentOfCdi)}% do CDI sobre o valor atual · {exempt ? "isento de IR" : "líquido de IR"}
+            {t("investments.preview.subtitle", { rate: bpsToPercentInput(percentOfCdi) })} · {exempt ? t("investments.preview.exempt") : t("investments.preview.net")}
           </p>
         </div>
         <label className="flex items-center gap-2 text-xs text-muted">
-          CDI
+          {t("investments.preview.cdi")}
           <DecimalInput
-            aria-label="CDI anual"
+            aria-label={t("investments.preview.cdiLabel")}
             className={`${controlClass} !h-9 !w-20 text-right tabular`}
             wholeDigits={2}
             value={cdiInput}
@@ -438,7 +447,7 @@ function CdiPreview({ data }: { data: Detail }) {
               if (event.key === "Enter") commit(event.currentTarget.value);
             }}
           />
-          % a.a.
+          {t("labels.rateSuffix.yearly")}
         </label>
       </div>
       <dl className="mt-4 grid grid-cols-2 gap-px overflow-hidden rounded-xl border border-line bg-line sm:grid-cols-4">
@@ -450,14 +459,14 @@ function CdiPreview({ data }: { data: Detail }) {
             </dd>
             {!exempt ? (
               <dd className="text-[11px] text-faint">
-                bruto <Money amount={horizon.gross} />
+                {t("investments.preview.gross")} <Money amount={horizon.gross} />
               </dd>
             ) : null}
           </div>
         ))}
       </dl>
       <p className="mt-2 text-[11px] text-faint">
-        Estimativa com CDI constante; não altera o valor da posição, que segue pelas suas atualizações.
+        {t("investments.preview.note")}
       </p>
     </div>
   );

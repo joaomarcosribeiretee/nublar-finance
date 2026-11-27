@@ -1,0 +1,54 @@
+{
+  "netWorth": "Patrimônio",
+  "sparkline": {
+    "open": "Ver análises",
+    "period": "12 meses"
+  },
+  "title": "Início",
+  "onboarding": {
+    "eyebrow": "Um começo simples",
+    "title": "Sua vida financeira.",
+    "titleAccent": "Agora, por inteiro.",
+    "intro": "Comece pelos lugares onde seu dinheiro está: bancos, corretoras, carteiras.",
+    "addInstitution": "Adicionar instituição",
+    "addInstitutionHint": "Escolha seu banco e adicione suas contas e cartões.",
+    "stepAccounts": "Reúna suas contas",
+    "stepDaily": "Registre seu dia a dia",
+    "stepPlans": "Acompanhe seus planos"
+  },
+  "result": {
+    "surplus": "Sobrou este mês",
+    "deficit": "Faltou este mês"
+  },
+  "flow": {
+    "income": "Entrou",
+    "expense": "Saiu",
+    "open": "Ver lançamentos: {{label}}"
+  },
+  "cashInAccounts": "{{amount}} em contas",
+  "invested": "{{amount}} investidos",
+  "categories": {
+    "title": "Para onde foi o dinheiro",
+    "subtitle": "Maiores despesas do mês",
+    "analytics": "Análises",
+    "empty": "Nenhuma despesa em {{month}}.",
+    "open": "Ver lançamentos de {{name}}"
+  },
+  "latest": {
+    "title": "Últimos lançamentos",
+    "seeAll": "Ver todos",
+    "empty": "Nenhum lançamento neste mês.",
+    "register": "Registrar agora"
+  },
+  "delta": {
+    "same": "igual a {{month}}",
+    "up": "subiu",
+    "down": "caiu",
+    "vs": "{{percent}}% vs {{month}}"
+  },
+  "attention": {
+    "title": "Precisa de atenção",
+    "invoice": "Fatura {{name}}",
+    "due": "Vence {{date}}"
+  }
+}

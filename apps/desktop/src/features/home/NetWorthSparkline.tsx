@@ -1,4 +1,5 @@
 import { useId } from "react";
+import { useTranslation } from "react-i18next";
 import { Area, AreaChart, ResponsiveContainer, Tooltip } from "recharts";
 import { TooltipBox } from "@/components/charts";
 import { formatBps, plotValue } from "@/lib/chart";
@@ -8,6 +9,7 @@ import { useAnalytics } from "@/lib/queries";
 
 /** Last 12 months of net worth, as a quiet trend next to the headline. */
 export function NetWorthSparkline({ month, onOpen }: { month: string; onOpen: () => void }) {
+  const { t } = useTranslation();
   const analytics = useAnalytics(month, 12);
   const fill = useId();
   const data = analytics.data;
@@ -22,7 +24,7 @@ export function NetWorthSparkline({ month, onOpen }: { month: string; onOpen: ()
       type="button"
       onClick={onOpen}
       className="-mx-3 flex items-end gap-3 rounded-2xl px-3 py-2 text-left transition-colors hover:bg-hover @2xl:mx-0 @2xl:ml-auto"
-      aria-label="Ver análises"
+      aria-label={t("home.sparkline.open")}
     >
       <div className="h-12 w-40">
         <ResponsiveContainer>
@@ -41,7 +43,7 @@ export function NetWorthSparkline({ month, onOpen }: { month: string; onOpen: ()
                 return (
                   <TooltipBox
                     title={monthLabel(point.month)}
-                    rows={[{ label: "Patrimônio", color: "var(--accent)", value: formatMinorUnits(point.netWorth) }]}
+                    rows={[{ label: t("home.netWorth"), color: "var(--accent)", value: formatMinorUnits(point.netWorth) }]}
                   />
                 );
               }}
@@ -59,7 +61,7 @@ export function NetWorthSparkline({ month, onOpen }: { month: string; onOpen: ()
         </ResponsiveContainer>
       </div>
       <div className="pb-0.5 text-xs">
-        <p className="text-muted">12 meses</p>
+        <p className="text-muted">{t("home.sparkline.period")}</p>
         <p className={change > 0n ? "text-positive" : change < 0n ? "text-negative" : "text-muted"}>
           {data.kpis.netWorthChangeBps !== null ? formatBps(data.kpis.netWorthChangeBps, true) : formatMinorUnits(data.kpis.netWorthChange)}
         </p>

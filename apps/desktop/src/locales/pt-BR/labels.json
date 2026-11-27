@@ -1,0 +1,62 @@
+{
+  "accountType": {
+    "CHECKING": "Conta corrente",
+    "SAVINGS": "Poupança / Caixinha",
+    "CASH": "Dinheiro",
+    "BROKERAGE": "Saldo na corretora",
+    "CRYPTO": "Carteira cripto",
+    "OTHER": "Outra conta"
+  },
+  "entryType": {
+    "INCOME": "Receita",
+    "EXPENSE": "Despesa",
+    "TRANSFER": "Transferência"
+  },
+  "assetClass": {
+    "FIXED_INCOME": "Renda fixa",
+    "STOCK": "Ações",
+    "FII": "FIIs",
+    "ETF": "ETFs",
+    "CRYPTO": "Cripto",
+    "OTHER": "Outros"
+  },
+  "invoiceStatus": {
+    "EMPTY": "Sem compras",
+    "OPEN": "Aberta",
+    "CLOSED": "Fechada",
+    "PAID": "Paga",
+    "OVERDUE": "Vencida"
+  },
+  "product": {
+    "CDB": "CDB",
+    "LCI": "LCI",
+    "LCA": "LCA",
+    "TESOURO_SELIC": "Tesouro Selic",
+    "TESOURO_IPCA": "Tesouro IPCA+",
+    "TESOURO_PREFIXADO": "Tesouro Prefixado",
+    "DEBENTURE": "Debênture",
+    "CRI_CRA": "CRI / CRA",
+    "FUND": "Fundo de renda fixa",
+    "OTHER": "Outro"
+  },
+  "indexer": {
+    "CDI": "% do CDI",
+    "IPCA": "IPCA +",
+    "PREFIXED": "Prefixado",
+    "SELIC": "Selic +"
+  },
+  "liquidity": {
+    "DAILY": "Liquidez diária",
+    "AT_MATURITY": "No vencimento"
+  },
+  "rate": {
+    "cdi": "{{rate}}% do CDI",
+    "ipca": "IPCA + {{rate}}%",
+    "prefixed": "{{rate}}% a.a.",
+    "selic": "Selic + {{rate}}%"
+  },
+  "rateSuffix": {
+    "cdi": "% CDI",
+    "yearly": "% a.a."
+  }
+}

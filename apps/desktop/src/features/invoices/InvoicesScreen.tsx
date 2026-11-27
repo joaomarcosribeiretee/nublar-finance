@@ -1,4 +1,6 @@
 import { useState } from "react";
+import { Trans, useTranslation } from "react-i18next";
+import type { TranslationKey } from "@/i18n";
 import { Button } from "@/components/Button";
 import { EmptyState } from "@/components/EmptyState";
 import { Icon } from "@/components/Icon";
@@ -31,6 +33,7 @@ export function InvoicesScreen({
   onAdd,
   onOpenCards,
 }: { cardId?: string | null; onOpenCards: () => void } & Actions) {
+  const { t } = useTranslation();
   const cards = useCards();
   const [cardId, setCardId] = useState(initialCard ?? "");
   const list = cards.data ?? [];
@@ -39,21 +42,21 @@ export function InvoicesScreen({
   return (
     <section className="animate-enter">
       <PageHeader
-        eyebrow="Cartão de crédito"
-        title="Faturas"
+        eyebrow={t("transactions.form.payWith.card")}
+        title={t("shell.screens.invoices")}
         actions={
           list.length > 1 && card ? (
             list.length <= 4 ? (
               <Segmented
                 size="sm"
-                label="Cartão"
+                label={t("transactions.form.card")}
                 value={card.id}
                 options={list.map((item) => ({ value: item.id, label: item.name }))}
                 onChange={setCardId}
               />
             ) : (
               <select
-                aria-label="Cartão"
+                aria-label={t("transactions.form.card")}
                 className="h-10 max-w-full rounded-xl border border-line bg-surface-2 px-3 text-sm outline-none transition-colors hover:border-line-strong focus:border-accent/60"
                 value={card.id}
                 onChange={(event) => setCardId(event.target.value)}
@@ -77,11 +80,11 @@ export function InvoicesScreen({
         ) : !card ? (
           <EmptyState
             icon="receipt"
-            title="Nenhum cartão"
-            description="Cadastre um cartão para acompanhar as faturas aqui."
+            title={t("cards.empty.title")}
+            description={t("invoices.empty.description")}
             action={
               <Button variant="primary" onClick={onOpenCards}>
-                Ir para Cartões
+                {t("invoices.empty.action")}
               </Button>
             }
           />
@@ -95,6 +98,7 @@ export function InvoicesScreen({
 }
 
 function CardInvoices({ card, onEdit, onAdd }: { card: Card } & Actions) {
+  const { t } = useTranslation();
   const [month, setMonth] = useState(card.currentInvoice.month);
   const [paying, setPaying] = useState(false);
   const invoice = useInvoice(card.id, month);
@@ -117,8 +121,8 @@ function CardInvoices({ card, onEdit, onAdd }: { card: Card } & Actions) {
           <Stepper
             className="-ml-2"
             label={monthLabel(month)}
-            previousLabel="Fatura anterior"
-            nextLabel="Próxima fatura"
+            previousLabel={t("cards.detail.previous")}
+            nextLabel={t("cards.detail.next")}
             onPrevious={() => goTo(shiftMonth(month, -1))}
             onNext={() => goTo(shiftMonth(month, 1))}
           />
@@ -127,7 +131,7 @@ function CardInvoices({ card, onEdit, onAdd }: { card: Card } & Actions) {
 
         <div className="mt-5 flex flex-wrap items-end justify-between gap-x-6 gap-y-4">
           <div className="min-w-0">
-            <p className="text-xs text-muted">{paid ? "Fatura paga" : "A pagar"}</p>
+            <p className="text-xs text-muted">{paid ? t("cards.pay.paid") : t("invoices.toPay")}</p>
             <p className={`mt-1 flex items-center gap-2 font-display text-3xl tracking-tight @2xl:text-4xl ${paid ? "text-positive" : ""}`}>
               {data ? (
                 <>
@@ -141,24 +145,29 @@ function CardInvoices({ card, onEdit, onAdd }: { card: Card } & Actions) {
             {data ? (
               <p className="mt-2 text-xs text-faint">
                 {paid && lastPayment
-                  ? `Paga em ${shortDate(lastPayment.date)}${lastPayment.account ? ` com ${lastPayment.account.name}` : ""}`
-                  : `Fecha em ${shortDate(data.closingDate)} · vence em ${shortDate(data.dueDate)}`}
+                  ? lastPayment.account
+                    ? t("invoices.paidOnWith", { date: shortDate(lastPayment.date), account: lastPayment.account.name })
+                    : t("invoices.paidOn", { date: shortDate(lastPayment.date) })
+                  : t("cards.detail.dates", { closing: shortDate(data.closingDate), due: shortDate(data.dueDate) })}
               </p>
             ) : null}
             {partlyPaid ? (
               <p className="mt-1 text-xs text-accent">
-                Já pago <Money amount={data.paid} /> de <Money amount={data.total} />
+                <Trans
+                  i18nKey="invoices.partlyPaid"
+                  components={{ paid: <Money amount={data.paid} />, total: <Money amount={data.total} /> }}
+                />
               </p>
             ) : null}
           </div>
           {data && !paid && BigInt(data.remaining) > 0n && !paying ? (
             <Button variant="primary" onClick={() => setPaying(true)}>
-              {partlyPaid ? "Pagar o restante" : "Pagar fatura"}
+              {partlyPaid ? t("invoices.payRest") : t("cards.pay.action")}
             </Button>
           ) : null}
           {paid ? (
             <Button variant="ghost" onClick={() => goTo(shiftMonth(month, 1))}>
-              Próxima fatura
+              {t("cards.detail.next")}
               <Icon name="chevronRight" size={14} />
             </Button>
           ) : null}
@@ -168,10 +177,10 @@ function CardInvoices({ card, onEdit, onAdd }: { card: Card } & Actions) {
           <StatStrip
             columns="grid-cols-2 @2xl:grid-cols-4"
             items={[
-              { label: "Total", value: data?.total },
-              { label: "Pago", value: data?.paid },
-              { label: "Restante", value: data?.remaining },
-              { label: "Previsto", value: data?.scheduled, hint: "Recorrências ainda não confirmadas" },
+              { label: t("cards.detail.total"), value: data?.total },
+              { label: t("cards.detail.paid"), value: data?.paid },
+              { label: t("cards.detail.remaining"), value: data?.remaining },
+              { label: t("invoices.scheduled"), value: data?.scheduled, hint: t("invoices.scheduledHint") },
             ].map((stat) => ({
               label: stat.label,
               hint: stat.hint,
@@ -188,13 +197,16 @@ function CardInvoices({ card, onEdit, onAdd }: { card: Card } & Actions) {
         ) : null}
 
         <div className="mt-6 space-y-2">
-          {used <= 100 ? <ProgressBar value={used} tone={used > 90 ? "negative" : "accent"} /> : <p className="text-sm text-negative">Limite excedido em <Money amount={(BigInt(card.debt) - BigInt(card.limit)).toString()} /></p>}
+          {used <= 100 ? <ProgressBar value={used} tone={used > 90 ? "negative" : "accent"} /> : <p className="text-sm text-negative">{t("cards.tile.overLimit")} <Money amount={(BigInt(card.debt) - BigInt(card.limit)).toString()} /></p>}
           <p className="flex flex-wrap justify-between gap-x-4 gap-y-1 text-[11px] text-faint">
             <span>
-              Usado <Money amount={card.debt} /> · disponível <Money amount={card.available} />
+              <Trans
+                i18nKey="invoices.usage"
+                components={{ used: <Money amount={card.debt} />, available: <Money amount={card.available} /> }}
+              />
             </span>
             <span>
-              Limite <Money amount={card.limit} />
+              {t("institutions.add.limit")} <Money amount={card.limit} />
             </span>
           </p>
         </div>
@@ -206,14 +218,14 @@ function CardInvoices({ card, onEdit, onAdd }: { card: Card } & Actions) {
         <>
           <div className="flex flex-wrap items-center justify-between gap-2 px-1">
             <p className="text-xs text-faint">
-              {data.items.length > 0 ? "Toque em um item para editar." : ""}
+              {data.items.length > 0 ? t("invoices.tapToEdit") : ""}
             </p>
             <Button
               variant="ghost"
               onClick={() => onAdd({ cardId: card.id, date: purchaseDateFor(data) })}
             >
               <Icon name="plus" size={15} />
-              Adicionar compra
+              {t("invoices.addPurchase")}
             </Button>
           </div>
           <Items items={data.items} onEdit={onEdit} />
@@ -227,13 +239,14 @@ function CardInvoices({ card, onEdit, onAdd }: { card: Card } & Actions) {
 
 /** Neighbouring bills as bars; the browsed one is highlighted. */
 function Timeline({ invoice, onPick }: { invoice: Invoice; onPick: (month: string) => void }) {
+  const { t } = useTranslation();
   const max = invoice.timeline.reduce((top, item) => {
     const value = BigInt(item.total);
     return value > top ? value : top;
   }, 0n);
 
   return (
-    <Panel title="Próximas e anteriores" subtitle="Inclui parcelas e recorrências já previstas">
+    <Panel title={t("invoices.timeline.title")} subtitle={t("invoices.timeline.subtitle")}>
       <div className="flex h-28 items-end gap-1 @2xl:gap-2">
         {invoice.timeline.map((item) => {
           const height = max > 0n ? Number((BigInt(item.total) * 100n) / max) : 0;
@@ -264,23 +277,23 @@ function Timeline({ invoice, onPick }: { invoice: Invoice; onPick: (month: strin
   );
 }
 
-const groups: { key: string; title: string; match: (item: InvoiceItem) => boolean }[] = [
+const groups: { key: string; title: TranslationKey; match: (item: InvoiceItem) => boolean }[] = [
   {
     key: "installments",
-    title: "Parcelas",
+    title: "invoices.groups.installments",
     match: (item) => item.type === "EXPENSE" && (item.installmentCount ?? 1) > 1,
   },
   {
     key: "fixed",
-    title: "Assinaturas e fixos",
+    title: "invoices.groups.fixed",
     match: (item) => item.type === "EXPENSE" && item.recurring && (item.installmentCount ?? 1) <= 1,
   },
   {
     key: "purchases",
-    title: "Compras",
+    title: "invoices.groups.purchases",
     match: (item) => item.type === "EXPENSE" && !item.recurring && (item.installmentCount ?? 1) <= 1,
   },
-  { key: "payments", title: "Pagamentos", match: (item) => item.type === "CARD_PAYMENT" },
+  { key: "payments", title: "invoices.groups.payments", match: (item) => item.type === "CARD_PAYMENT" },
 ];
 
 /**
@@ -299,10 +312,11 @@ function purchaseDateFor(invoice: Invoice): string {
 }
 
 function Items({ items, onEdit }: { items: InvoiceItem[]; onEdit: Actions["onEdit"] }) {
+  const { t } = useTranslation();
   if (items.length === 0) {
     return (
       <Panel>
-        <p className="py-8 text-center text-sm text-faint">Nada nesta fatura.</p>
+        <p className="py-8 text-center text-sm text-faint">{t("invoices.empty.items")}</p>
       </Panel>
     );
   }
@@ -317,7 +331,7 @@ function Items({ items, onEdit }: { items: InvoiceItem[]; onEdit: Actions["onEdi
           <Panel
             key={group.key}
             flush
-            title={`${group.title} · ${rows.length}`}
+            title={`${t(group.title)} · ${rows.length}`}
             actions={<Money amount={total.toString()} className="text-sm text-muted" />}
           >
             <ul>
@@ -333,21 +347,21 @@ function Items({ items, onEdit }: { items: InvoiceItem[]; onEdit: Actions["onEdi
                     <span className="flex items-center gap-2 text-sm">
                       <span className="truncate">
                         {item.type === "CARD_PAYMENT"
-                          ? `Pagamento · ${item.account?.name ?? ""}`
+                          ? t("cards.detail.payment", { account: item.account?.name ?? "" })
                           : item.description || item.category?.name}
                       </span>
                       {item.status === "PENDING" ? (
-                        <span className="shrink-0 rounded-full bg-hover-strong px-1.5 py-0.5 text-[10px] text-muted">previsto</span>
+                        <span className="shrink-0 rounded-full bg-hover-strong px-1.5 py-0.5 text-[10px] text-muted">{t("invoices.scheduledBadge")}</span>
                       ) : null}
                     </span>
                     {item.type === "EXPENSE" ? (
                       <span className="block truncate text-xs text-muted">
                         {item.category?.name}
                         {(item.installmentCount ?? 1) > 1
-                          ? ` · parcela ${item.installmentNumber}/${item.installmentCount}${
+                          ? ` · ${t("cards.detail.installment", { number: item.installmentNumber, count: item.installmentCount })} · ${
                               item.installmentNumber === item.installmentCount
-                                ? " · última"
-                                : ` · faltam ${(item.installmentCount ?? 0) - (item.installmentNumber ?? 0)}`
+                                ? t("invoices.lastInstallment")
+                                : t("invoices.installmentsLeft", { count: (item.installmentCount ?? 0) - (item.installmentNumber ?? 0) })
                             }`
                           : ""}
                       </span>

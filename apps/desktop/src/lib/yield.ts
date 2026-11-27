@@ -1,3 +1,5 @@
+import { t } from "@/i18n";
+
 import type { FixedIncomeProduct } from "./rates";
 
 /**
@@ -94,12 +96,12 @@ export function cdiPreview(input: {
   const untilMaturity = input.maturityDate ? daysBetween(input.today, input.maturityDate) : null;
   // Past maturity the money stops earning this rate.
   const horizons: { label: string; days: number }[] = [
-    { label: "1 mês", days: 30 },
-    { label: "6 meses", days: 182 },
-    { label: "1 ano", days: 365 },
+    { label: t("investments.horizons.oneMonth"), days: 30 },
+    { label: t("investments.horizons.sixMonths"), days: 182 },
+    { label: t("investments.horizons.oneYear"), days: 365 },
   ].filter((horizon) => untilMaturity === null || horizon.days < untilMaturity);
   if (untilMaturity !== null) {
-    horizons.push({ label: "Até o vencimento", days: untilMaturity });
+    horizons.push({ label: t("investments.horizons.maturity"), days: untilMaturity });
   }
   const held = daysBetween(input.startDate, input.today);
   const exempt = isTaxExempt(input.product);

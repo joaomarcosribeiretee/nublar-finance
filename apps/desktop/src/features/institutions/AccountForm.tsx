@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Button } from "@/components/Button";
 import { controlClass, Field, MoneyInput, TextInput } from "@/components/Field";
 import { FormFooter } from "@/components/Modal";
@@ -29,6 +30,7 @@ export function AccountForm({
   fixedType?: AccountType;
   onDone: () => void;
 }) {
+  const { t } = useTranslation();
   const toast = useToast();
   const create = useCreateAccount();
   const update = useUpdateAccount();
@@ -45,13 +47,13 @@ export function AccountForm({
     event.preventDefault();
     const openingBalance = parseSignedReaisToMinorUnits(opening);
     if (openingBalance === null) {
-      setError("Saldo inválido. Use algo como 1.250,00 ou -80,00.");
+      setError(t("institutions.account.invalidBalance"));
       return;
     }
     try {
       if (account) {
         await update.mutateAsync({ id: account.id, name: name.trim(), openingBalance });
-        toast("Conta atualizada");
+        toast(t("institutions.account.updated"));
       } else {
         await create.mutateAsync({
           name: name.trim(),
@@ -59,7 +61,7 @@ export function AccountForm({
           institutionId: institution?.id ?? null,
           openingBalance,
         });
-        toast("Conta criada");
+        toast(t("institutions.account.created"));
       }
       onDone();
     } catch (reason: unknown) {
@@ -75,7 +77,7 @@ export function AccountForm({
     }
     try {
       await remove.mutateAsync(account.id);
-      toast("Conta excluída");
+      toast(t("institutions.account.deleted"));
       onDone();
     } catch (reason: unknown) {
       setConfirmDelete(false);
@@ -87,11 +89,11 @@ export function AccountForm({
     <form onSubmit={(event) => void submit(event)} className="space-y-5">
       {account ? (
         <div className="flex items-center justify-between rounded-2xl bg-surface-2 px-4 py-3">
-          <span className="text-sm text-muted">{accountTypeLabels[account.type]}</span>
+          <span className="text-sm text-muted">{t(accountTypeLabels[account.type])}</span>
           <Money amount={account.balance} className="text-lg" />
         </div>
       ) : fixedType ? null : (
-        <Field label="Tipo">
+        <Field label={t("institutions.account.type")}>
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
             {institutionTypes.map((value) => (
               <button
@@ -105,16 +107,16 @@ export function AccountForm({
                 }`}
                 onClick={() => setType(value)}
               >
-                {accountTypeLabels[value]}
+                {t(accountTypeLabels[value])}
               </button>
             ))}
           </div>
         </Field>
       )}
-      <Field label="Apelido (opcional)">
+      <Field label={t("institutions.account.nickname")}>
         <TextInput
           autoFocus
-          placeholder={type === "SAVINGS" ? "Ex.: Caixinha da viagem" : accountTypeLabels[type]}
+          placeholder={type === "SAVINGS" ? t("institutions.account.savingsPlaceholder") : t(accountTypeLabels[type])}
           value={name}
           maxLength={80}
           onChange={setName}
@@ -129,15 +131,15 @@ export function AccountForm({
             onBlur={() => setConfirmDelete(false)}
             disabled={remove.isPending}
           >
-            {confirmDelete ? "Confirmar exclusão" : "Excluir"}
+            {confirmDelete ? t("common.actions.confirmDelete") : t("common.actions.delete")}
           </Button>
         ) : null}
         <div className="flex-1" />
         <Button variant="ghost" onClick={onDone}>
-          Cancelar
+          {t("common.actions.cancel")}
         </Button>
         <Button variant="primary" type="submit" disabled={create.isPending || update.isPending}>
-          {create.isPending || update.isPending ? "Salvando…" : "Salvar"}
+          {create.isPending || update.isPending ? t("common.save.saving") : t("common.actions.save")}
         </Button>
       </FormFooter>
     </form>
@@ -153,18 +155,18 @@ export function OpeningBalanceField({
   onChange: (value: string) => void;
   compact?: boolean;
 }) {
+  const { t } = useTranslation();
   return (
-    <Field label={compact ? "Saldo hoje" : "Saldo inicial"}>
+    <Field label={compact ? t("institutions.account.balanceToday") : t("institutions.account.openingBalance")}>
       <div className="relative">
         <span className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-sm text-faint">
-          R$
+          {t("common.money.symbol")}
         </span>
         <MoneyInput signed className={`${controlClass} tabular pl-9`} value={value} onChange={onChange} />
       </div>
       {compact ? null : (
         <span className="text-[11px] text-faint">
-          Quanto havia quando você começou a usar o Nublar. Não conta como receita. Use o sinal de menos
-          para conta no negativo.
+          {t("institutions.account.openingBalanceHint")}
         </span>
       )}
     </Field>

@@ -1,0 +1,133 @@
+{
+  "of": "de {{amount}}",
+  "markerTitle": "Quanto do mês já passou",
+  "over": "Passou",
+  "remaining": "Restam",
+  "overview": {
+    "title": "Orçamentos de {{month}}",
+    "markerHint": "A marca mostra quanto do mês já passou",
+    "adjust": "Ajustar limites",
+    "emptyTitle": "Defina um limite por mês para cada categoria",
+    "emptyHint": "Mercado, restaurantes, lazer: veja aqui quanto ainda pode gastar.",
+    "itemLabel": "{{name}}: {{spent}} de {{limit}}",
+    "more_one": "Ver mais {{count}} categoria",
+    "more_other": "Ver mais {{count}} categorias"
+  },
+  "budgets": {
+    "new": "Novo orçamento",
+    "create": "Criar orçamento",
+    "intro": "Um limite por categoria, o mesmo todo mês. Compras no cartão contam no mês da fatura.",
+    "empty": {
+      "title": "Nenhum orçamento",
+      "description": "Defina quanto quer gastar por mês em mercado, restaurantes, lazer… e acompanhe o quanto já foi."
+    },
+    "spent": "Gasto nas categorias com orçamento",
+    "markerHint": "A marca mostra quanto do mês já passou.",
+    "unbudgeted": "Fora dos orçamentos:",
+    "byCategory": "Por categoria",
+    "filter": {
+      "label": "Estado do orçamento",
+      "attention": "Perto ou acima do limite"
+    },
+    "allGood": {
+      "title": "Tudo dentro dos limites",
+      "description": "Nenhuma categoria está perto ou acima do orçamento."
+    },
+    "overBy": "Passou {{amount}}",
+    "usage": "{{used}} usado · restam {{amount}}",
+    "scheduled": "+ {{amount}} previsto",
+    "form": {
+      "errors": {
+        "category": "Escolha a categoria.",
+        "limit": "Informe o limite, por exemplo 800,00."
+      },
+      "saved": "Orçamento salvo",
+      "removed": "Orçamento removido",
+      "limit": "Limite por mês",
+      "useAverage": "Média dos últimos meses: {{amount}}. Usar esse valor"
+    }
+  },
+  "goals": {
+    "eyebrow": "Reserva, viagem, entrada do carro",
+    "new": "Nova meta",
+    "intro": "Ligue contas ou investimentos a uma meta e o progresso se atualiza sozinho.",
+    "filter": {
+      "label": "Estado das metas",
+      "active": "Em andamento ({{count}})",
+      "done": "Concluídas ({{count}})",
+      "all": "Todas"
+    },
+    "empty": {
+      "title": "Nenhuma meta",
+      "description": "Diga quanto quer juntar e até quando. O Nublar mostra quanto guardar por mês.",
+      "action": "Criar meta"
+    },
+    "noneDone": {
+      "title": "Seus próximos objetivos estão a caminho",
+      "description": "As metas atingidas aparecem aqui."
+    },
+    "noneActive": {
+      "title": "Nenhuma meta em andamento",
+      "description": "Crie uma meta para o seu próximo plano."
+    },
+    "card": {
+      "reached": "Meta atingida",
+      "late": "Prazo passou · faltam {{amount}}",
+      "monthly": "Guarde <value>{{amount}}</value> por mês até {{month}}",
+      "remaining": "Faltam {{amount}}"
+    },
+    "form": {
+      "errors": {
+        "name": "Dê um nome para a meta.",
+        "target": "Informe quanto quer juntar, por exemplo 10.000,00.",
+        "saved": "O valor já guardado está inválido. Use algo como 1.500,00."
+      },
+      "updated": "Meta atualizada",
+      "created": "Meta criada",
+      "removed": "Meta removida",
+      "namePlaceholder": "Ex.: Reserva de emergência",
+      "target": "Quanto quer juntar",
+      "date": "Até quando (opcional)",
+      "saved": "Já guardado fora daqui (opcional)",
+      "sources": {
+        "title": "O que conta para esta meta",
+        "subtitle": "O saldo das contas e o valor dos investimentos marcados entram no progresso.",
+        "empty": "Nenhuma conta ou investimento cadastrado ainda.",
+        "investment": "investimento"
+      }
+    }
+  },
+  "calendar": {
+    "intro": "Dias passados mostram o saldo real; os próximos, o previsto com pendentes e faturas.",
+    "items_zero": "nada",
+    "items_one": "{{count}} item",
+    "items_other": "{{count}} itens",
+    "legend": {
+      "income": "Entrada",
+      "expense": "Saída",
+      "other": "Vencimento / transferência"
+    },
+    "noEvents": "Nenhum compromisso neste dia.",
+    "pickDay": "Escolha um dia marcado para ver os detalhes.",
+    "daily": {
+      "title": "Saldo em contas, dia a dia",
+      "real": "Real",
+      "balance": "Saldo"
+    },
+    "projection": {
+      "title": "Projeção de saldo",
+      "subtitle": "Começa em {{start}} hoje. Soma recorrências, parcelas e faturas e desconta {{variable}}/mês de gasto variável (média de {{basedOn}}).",
+      "months_zero": "{{count}} meses",
+      "months_one": "{{count}} mês",
+      "months_other": "{{count}} meses",
+      "horizon": "Horizonte",
+      "endOf": "Fim de {{month}}",
+      "projected": "Saldo previsto",
+      "income": "Entradas",
+      "fixed": "Fixos",
+      "variable": "Variável (média)",
+      "month": "Mês",
+      "monthBalance": "Saldo do mês"
+    }
+  }
+}

@@ -1,4 +1,6 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
+import type { TranslationKey } from "@/i18n";
 import { Icon } from "@/components/Icon";
 import { ErrorNote, PageHeader } from "@/components/Page";
 import { sanitizeText } from "@/lib/input";
@@ -12,23 +14,24 @@ import {
   type CategoryKind,
 } from "@/lib/queries";
 
-const columns: { kind: CategoryKind; title: string; dot: string }[] = [
-  { kind: "EXPENSE", title: "Despesas", dot: "bg-negative" },
-  { kind: "INCOME", title: "Receitas", dot: "bg-positive" },
+const columns: { kind: CategoryKind; title: TranslationKey; dot: string }[] = [
+  { kind: "EXPENSE", title: "transactions.filters.expense", dot: "bg-negative" },
+  { kind: "INCOME", title: "transactions.filters.income", dot: "bg-positive" },
 ];
 
 export function CategoriesScreen() {
+  const { t } = useTranslation();
   const categories = useCategories();
   const [search, setSearch] = useState("");
 
   return (
     <section className="animate-enter">
-      <PageHeader eyebrow="Organize seus lançamentos" title="Categorias">
-        As mais usadas aparecem primeiro nos formulários.
+      <PageHeader eyebrow={t("categories.eyebrow")} title={t("shell.screens.categories")}>
+        {t("categories.intro")}
       </PageHeader>
       <div className="filter-toolbar mt-6 flex items-center gap-3">
         <Icon name="search" size={17} className="shrink-0 text-muted" />
-        <input type="search" aria-label="Buscar categorias" placeholder="Buscar categoria" value={search} onChange={(event) => setSearch(event.target.value)} maxLength={80} className="min-w-0 flex-1 bg-transparent py-2 text-sm outline-none" />
+        <input type="search" aria-label={t("categories.search.label")} placeholder={t("categories.search.placeholder")} value={search} onChange={(event) => setSearch(event.target.value)} maxLength={80} className="min-w-0 flex-1 bg-transparent py-2 text-sm outline-none" />
       </div>
 
       {categories.isError ? (
@@ -42,6 +45,7 @@ export function CategoriesScreen() {
           <CategoryColumn
             key={column.kind}
             {...column}
+            title={t(column.title)}
             items={(categories.data ?? []).filter((c) => c.kind === column.kind)}
             loading={categories.isPending}
             search={search}
@@ -67,6 +71,7 @@ function CategoryColumn({
   loading: boolean;
   search: string;
 }) {
+  const { t } = useTranslation();
   const toast = useToast();
   const create = useCreateCategory();
   const remove = useDeleteCategory();
@@ -80,7 +85,7 @@ function CategoryColumn({
       return;
     }
     if (items.some((item) => item.name.toLocaleLowerCase("pt-BR") === wanted.toLocaleLowerCase("pt-BR"))) {
-      toast(`"${wanted}" já existe em ${title.toLowerCase()}`, "error");
+      toast(t("categories.exists", { name: wanted, kind: title.toLowerCase() }), "error");
       return;
     }
     try {
@@ -94,7 +99,7 @@ function CategoryColumn({
   async function destroy(category: Category) {
     try {
       await remove.mutateAsync(category.id);
-      toast(`"${category.name}" removida`);
+      toast(t("categories.removed", { name: category.name }));
     } catch (reason: unknown) {
       toast(errorMessage(reason), "error");
     }
@@ -119,13 +124,13 @@ function CategoryColumn({
                 <span className="flex shrink-0 items-center gap-2">
                   <span className="text-xs text-faint">
                     {category.usage > 0
-                      ? `${category.usage} ${category.usage === 1 ? "lançamento" : "lançamentos"}`
-                      : "sem uso"}
+                      ? t("categories.usage", { count: category.usage })
+                      : t("categories.unused")}
                   </span>
                   {category.usage === 0 ? (
                     <button
                       type="button"
-                      aria-label={`Remover ${category.name}`}
+                      aria-label={t("categories.remove", { name: category.name })}
                       className="-my-1 flex h-8 w-8 items-center justify-center rounded-lg text-faint transition-[opacity,color,background-color] group-hover:opacity-100 hover:bg-negative/10 hover:text-negative focus-visible:opacity-100 hoverable:opacity-0"
                       disabled={remove.isPending}
                       onClick={() => void destroy(category)}
@@ -139,16 +144,16 @@ function CategoryColumn({
               </li>
             ))}
       </ul>
-      {!loading && visible.length === 0 ? <p className="py-6 text-sm text-muted">{search ? "Nenhuma categoria com esse nome." : "Adicione sua primeira categoria."}</p> : null}
+      {!loading && visible.length === 0 ? <p className="py-6 text-sm text-muted">{search ? t("categories.notFound") : t("categories.empty")}</p> : null}
       <form
         onSubmit={(event) => void add(event)}
         className="mt-3 flex items-center gap-2 rounded-xl border border-line pr-1 pl-3 transition-colors focus-within:border-accent/60"
       >
         <Icon name="plus" size={15} className="text-faint" />
         <input
-          aria-label={`Nova categoria de ${title.toLowerCase()}`}
+          aria-label={t("categories.newOf", { kind: title.toLowerCase() })}
           className="h-10 min-w-0 flex-1 bg-transparent text-base outline-none placeholder:text-faint focus-visible:outline-none sm:text-sm"
-          placeholder="Nova categoria"
+          placeholder={t("categories.new")}
           value={name}
           maxLength={80}
           onChange={(event) => setName(sanitizeText(event.target.value))}
@@ -160,7 +165,7 @@ function CategoryColumn({
             disabled={create.isPending}
             className="animate-enter rounded-lg px-2.5 py-1.5 text-xs text-accent transition-colors hover:bg-accent/10 disabled:opacity-50"
           >
-            Adicionar
+            {t("common.actions.add")}
           </button>
         ) : null}
       </form>

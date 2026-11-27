@@ -1,0 +1,31 @@
+{
+  "empty": {
+    "description": "Cadastre um cartão para acompanhar as faturas aqui.",
+    "action": "Ir para Cartões",
+    "items": "Nada nesta fatura."
+  },
+  "toPay": "A pagar",
+  "paidOn": "Paga em {{date}}",
+  "paidOnWith": "Paga em {{date}} com {{account}}",
+  "partlyPaid": "Já pago <paid/> de <total/>",
+  "payRest": "Pagar o restante",
+  "scheduled": "Previsto",
+  "scheduledHint": "Recorrências ainda não confirmadas",
+  "usage": "Usado <used/> · disponível <available/>",
+  "tapToEdit": "Toque em um item para editar.",
+  "addPurchase": "Adicionar compra",
+  "timeline": {
+    "title": "Próximas e anteriores",
+    "subtitle": "Inclui parcelas e recorrências já previstas"
+  },
+  "groups": {
+    "installments": "Parcelas",
+    "fixed": "Assinaturas e fixos",
+    "purchases": "Compras",
+    "payments": "Pagamentos"
+  },
+  "scheduledBadge": "previsto",
+  "lastInstallment": "última",
+  "installmentsLeft_one": "falta {{count}}",
+  "installmentsLeft_other": "faltam {{count}}"
+}

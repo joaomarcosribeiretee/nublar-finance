@@ -1,4 +1,5 @@
 import { currentMonth, monthLabel, shiftMonth } from "@/lib/dates";
+import { useTranslation } from "react-i18next";
 import { Icon } from "./Icon";
 
 export function MonthPicker({
@@ -8,13 +9,14 @@ export function MonthPicker({
   month: string;
   onChange: (month: string) => void;
 }) {
+  const { t } = useTranslation();
   const isCurrent = month === currentMonth();
 
   return (
     <div className="no-drag flex items-center gap-1">
       <button
         type="button"
-        aria-label="Mês anterior"
+        aria-label={t("common.month.previous")}
         className="flex h-9 w-9 items-center justify-center rounded-lg text-muted transition-colors hover:bg-hover hover:text-foreground"
         onClick={() => onChange(shiftMonth(month, -1))}
       >
@@ -23,7 +25,7 @@ export function MonthPicker({
       <span className="w-32 text-center text-sm tabular" aria-live="polite">{monthLabel(month)}</span>
       <button
         type="button"
-        aria-label="Próximo mês"
+        aria-label={t("common.month.next")}
         className="flex h-9 w-9 items-center justify-center rounded-lg text-muted transition-colors hover:bg-hover hover:text-foreground"
         onClick={() => onChange(shiftMonth(month, 1))}
       >
@@ -35,7 +37,7 @@ export function MonthPicker({
         onClick={() => onChange(currentMonth())}
         tabIndex={isCurrent ? -1 : 0}
       >
-        Hoje
+        {t("common.dates.today")}
       </button>
     </div>
   );

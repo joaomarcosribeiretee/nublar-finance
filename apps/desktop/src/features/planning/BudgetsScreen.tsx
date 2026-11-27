@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Button } from "@/components/Button";
 import { EmptyState } from "@/components/EmptyState";
 import { controlClass, Field, MoneyInput } from "@/components/Field";
@@ -27,6 +28,7 @@ const tone = budgetTone;
 type Item = Budgets["items"][number];
 
 export function BudgetsScreen({ month }: { month: string }) {
+  const { t } = useTranslation();
   const budgets = useBudgets(month);
   const [editing, setEditing] = useState<Item | "new" | null>(null);
   const data = budgets.data;
@@ -38,15 +40,15 @@ export function BudgetsScreen({ month }: { month: string }) {
     <section className="animate-enter space-y-6">
       <PageHeader
         eyebrow={monthLabel(month)}
-        title="Orçamentos"
+        title={t("shell.screens.budgets")}
         actions={
           <Button variant="primary" onClick={() => setEditing("new")}>
             <Icon name="plus" size={16} />
-            Novo orçamento
+            {t("planning.budgets.new")}
           </Button>
         }
       >
-        Um limite por categoria, o mesmo todo mês. Compras no cartão contam no mês da fatura.
+        {t("planning.budgets.intro")}
       </PageHeader>
 
       {budgets.isError ? (
@@ -54,11 +56,11 @@ export function BudgetsScreen({ month }: { month: string }) {
       ) : data && data.items.length === 0 ? (
         <EmptyState
           icon="gauge"
-          title="Nenhum orçamento"
-          description="Defina quanto quer gastar por mês em mercado, restaurantes, lazer… e acompanhe o quanto já foi."
+          title={t("planning.budgets.empty.title")}
+          description={t("planning.budgets.empty.description")}
           action={
             <Button variant="primary" onClick={() => setEditing("new")}>
-              Criar orçamento
+              {t("planning.budgets.create")}
             </Button>
           }
         />
@@ -71,20 +73,20 @@ export function BudgetsScreen({ month }: { month: string }) {
               <div className="space-y-3">
                 <div className="flex flex-wrap items-end justify-between gap-x-6 gap-y-2">
                   <div>
-                    <p className="text-xs text-muted">Gasto nas categorias com orçamento</p>
+                    <p className="text-xs text-muted">{t("planning.budgets.spent")}</p>
                     <p className="mt-1 text-xl @2xl:text-2xl">
                       <Money amount={data.totals.spent} />{" "}
-                      <span className="text-base text-muted">de {formatMinorUnits(data.totals.limit)}</span>
+                      <span className="text-base text-muted">{t("planning.of", { amount: formatMinorUnits(data.totals.limit) })}</span>
                     </p>
                   </div>
                   <div className="text-right text-sm">
                     {BigInt(data.totals.remaining) >= 0n ? (
                       <span className="text-muted">
-                        Restam <Money amount={data.totals.remaining} className="text-foreground" />
+                        {t("planning.remaining")} <Money amount={data.totals.remaining} className="text-foreground" />
                       </span>
                     ) : (
                       <span className="text-negative">
-                        Passou <Money amount={data.totals.remaining.replace("-", "")} />
+                        {t("planning.over")} <Money amount={data.totals.remaining.replace("-", "")} />
                       </span>
                     )}
                   </div>
@@ -94,13 +96,13 @@ export function BudgetsScreen({ month }: { month: string }) {
                   value={data.totals.usedBps / 100}
                   tone={tone[data.totals.status]}
                   marker={pace}
-                  markerTitle="Quanto do mês já passou"
+                  markerTitle={t("planning.markerTitle")}
                 /> : null}
                 <p className="flex flex-wrap justify-between gap-x-4 gap-y-1 text-xs text-faint">
-                  <span>{pace !== undefined ? "A marca mostra quanto do mês já passou." : " "}</span>
+                  <span>{pace !== undefined ? t("planning.budgets.markerHint") : " "}</span>
                   {BigInt(data.totals.unbudgeted) > 0n ? (
                     <span>
-                      Fora dos orçamentos: <Money amount={data.totals.unbudgeted} />
+                      {t("planning.budgets.unbudgeted")} <Money amount={data.totals.unbudgeted} />
                     </span>
                   ) : null}
                 </p>
@@ -109,10 +111,10 @@ export function BudgetsScreen({ month }: { month: string }) {
           </Panel>
 
           <div className="flex flex-wrap items-center justify-between gap-3">
-            <h2 className="font-medium">Por categoria</h2>
-            <Segmented size="sm" label="Estado do orçamento" value={filter} onChange={setFilter} options={[{ value: "all", label: "Todos" }, { value: "attention", label: "Perto ou acima do limite" }]} />
+            <h2 className="font-medium">{t("planning.budgets.byCategory")}</h2>
+            <Segmented size="sm" label={t("planning.budgets.filter.label")} value={filter} onChange={setFilter} options={[{ value: "all", label: t("transactions.filters.all") }, { value: "attention", label: t("planning.budgets.filter.attention") }]} />
           </div>
-          {visible?.length === 0 ? <EmptyState icon="check" title="Tudo dentro dos limites" description="Nenhuma categoria está perto ou acima do orçamento." /> : null}
+          {visible?.length === 0 ? <EmptyState icon="check" title={t("planning.budgets.allGood.title")} description={t("planning.budgets.allGood.description")} /> : null}
             <ul className="grid gap-4 @2xl:grid-cols-2">
               {!data
                 ? [0, 1, 2].map((i) => <li key={i} className="skeleton m-3 h-12" />)
@@ -127,18 +129,18 @@ export function BudgetsScreen({ month }: { month: string }) {
                           <span className="font-medium">{item.category.name}</span>
                           <span className="text-lg tabular">
                             <Money amount={item.spent} />
-                            <span className="block text-xs text-muted"> de {formatMinorUnits(item.limit)}</span>
+                            <span className="block text-xs text-muted"> {t("planning.of", { amount: formatMinorUnits(item.limit) })}</span>
                           </span>
                         </span>
                         {item.usedBps <= 10000 ? <div className="w-full"><ProgressBar value={item.usedBps / 100} tone={tone[item.status]} marker={pace} /></div> : null}
                         <span className="flex w-full flex-wrap justify-between gap-x-4 gap-y-1 text-xs">
                           <span className={item.status === "OVER" ? "text-negative" : item.status === "WARNING" ? "text-warning" : "text-faint"}>
                             {item.status === "OVER"
-                              ? `Passou ${formatMinorUnits(item.remaining.replace("-", ""))}`
-                              : `${formatBps(item.usedBps)} usado · restam ${formatMinorUnits(item.remaining)}`}
+                              ? t("planning.budgets.overBy", { amount: formatMinorUnits(item.remaining.replace("-", "")) })
+                              : t("planning.budgets.usage", { used: formatBps(item.usedBps), amount: formatMinorUnits(item.remaining) })}
                           </span>
                           {BigInt(item.scheduled) > 0n ? (
-                            <span className="text-faint">+ {formatMinorUnits(item.scheduled)} previsto</span>
+                            <span className="text-faint">{t("planning.budgets.scheduled", { amount: formatMinorUnits(item.scheduled) })}</span>
                           ) : null}
                         </span>
                       </button>
@@ -151,7 +153,7 @@ export function BudgetsScreen({ month }: { month: string }) {
       <Modal
         open={editing !== null}
         onClose={() => setEditing(null)}
-        title={editing === "new" ? "Novo orçamento" : editing ? editing.category.name : ""}
+        title={editing === "new" ? t("planning.budgets.new") : editing ? editing.category.name : ""}
       >
         {editing ? (
           <BudgetForm
@@ -177,6 +179,7 @@ function BudgetForm({
   taken: Set<string>;
   onDone: () => void;
 }) {
+  const { t } = useTranslation();
   const toast = useToast();
   const categories = useCategories();
   const analytics = useAnalytics(month, 6);
@@ -196,16 +199,16 @@ function BudgetForm({
     event.preventDefault();
     const minor = parseReaisToMinorUnits(amount);
     if (!categoryId) {
-      setError("Escolha a categoria.");
+      setError(t("planning.budgets.form.errors.category"));
       return;
     }
     if (!minor) {
-      setError("Informe o limite, por exemplo 800,00.");
+      setError(t("planning.budgets.form.errors.limit"));
       return;
     }
     try {
       await save.mutateAsync({ categoryId, amount: minor });
-      toast("Orçamento salvo");
+      toast(t("planning.budgets.form.saved"));
       onDone();
     } catch (reason: unknown) {
       setError(errorMessage(reason));
@@ -220,7 +223,7 @@ function BudgetForm({
     }
     try {
       await remove.mutateAsync(item.id);
-      toast("Orçamento removido");
+      toast(t("planning.budgets.form.removed"));
       onDone();
     } catch (reason: unknown) {
       setError(errorMessage(reason));
@@ -230,9 +233,9 @@ function BudgetForm({
   return (
     <form onSubmit={(event) => void submit(event)} className="space-y-5">
       {item ? null : (
-        <Field label="Categoria">
+        <Field label={t("transactions.fields.category")}>
           <select className={controlClass} value={categoryId} onChange={(event) => setCategoryId(event.target.value)}>
-            <option value="">Escolha…</option>
+            <option value="">{t("common.choose")}</option>
             {options.map((category) => (
               <option key={category.id} value={category.id}>
                 {category.name}
@@ -241,7 +244,7 @@ function BudgetForm({
           </select>
         </Field>
       )}
-      <Field label="Limite por mês">
+      <Field label={t("planning.budgets.form.limit")}>
         <MoneyInput autoFocus value={amount} onChange={setAmount} />
         {average && BigInt(average) > 0n ? (
           <button
@@ -249,7 +252,7 @@ function BudgetForm({
             className="self-start py-1 text-left text-xs text-accent hover:underline"
             onClick={() => setAmount(minorUnitsToInput(average))}
           >
-            Média dos últimos meses: {formatMinorUnits(average)}. Usar esse valor
+            {t("planning.budgets.form.useAverage", { amount: formatMinorUnits(average) })}
           </button>
         ) : null}
       </Field>
@@ -261,15 +264,15 @@ function BudgetForm({
             onBlur={() => setConfirmDelete(false)}
             disabled={remove.isPending}
           >
-            {confirmDelete ? "Confirmar" : "Remover"}
+            {confirmDelete ? t("common.actions.confirm") : t("common.actions.remove")}
           </Button>
         ) : null}
         <div className="flex-1" />
         <Button variant="ghost" onClick={onDone}>
-          Cancelar
+          {t("common.actions.cancel")}
         </Button>
         <Button variant="primary" type="submit" disabled={save.isPending}>
-          {save.isPending ? "Salvando…" : "Salvar"}
+          {save.isPending ? t("common.save.saving") : t("common.actions.save")}
         </Button>
       </FormFooter>
     </form>

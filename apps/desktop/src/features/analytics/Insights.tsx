@@ -1,4 +1,6 @@
 import { useMemo } from "react";
+import { Trans, useTranslation } from "react-i18next";
+import type { TranslationKey } from "@/i18n";
 import { CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { axisProps, ChartCard, gridProps, Legend, lineCursor, TooltipBox, yAxisMoney } from "@/components/charts";
 import { Money } from "@/components/Money";
@@ -36,6 +38,7 @@ function readPace(months: string[], lists: Transaction[][]) {
 
 /** Spending so far this month against the same day of the usual month. */
 export function SpendingPace({ month }: { month: string }) {
+  const { t } = useTranslation();
   const months = useMemo(
     () => [month, ...Array.from({ length: PACE_HISTORY }, (_, index) => shiftMonth(month, -(index + 1)))],
     [month],
@@ -56,14 +59,14 @@ export function SpendingPace({ month }: { month: string }) {
 
   return (
     <ChartCard
-      title="Ritmo de gastos"
-      subtitle={`Gasto acumulado em ${monthLabel(month).toLowerCase()}, comparado com a média dos ${PACE_HISTORY} meses anteriores`}
+      title={t("analytics.pace.title")}
+      subtitle={t("analytics.pace.subtitle", { month: monthLabel(month).toLowerCase(), count: PACE_HISTORY })}
       right={
         reading?.usual != null ? (
           <Legend
             items={[
-              { label: "Este mês", color: "var(--accent)", shape: "line" },
-              { label: "Normal", color: "var(--muted)", shape: "line" },
+              { label: t("analytics.pace.thisMonth"), color: "var(--accent)", shape: "line" },
+              { label: t("analytics.pace.usual"), color: "var(--muted)", shape: "line" },
             ]}
           />
         ) : null
@@ -77,23 +80,24 @@ export function SpendingPace({ month }: { month: string }) {
           <div className="skeleton h-48" />
         </div>
       ) : reading.spent === 0n && reading.usual === null ? (
-        <p className="py-8 text-center text-sm text-faint">Nenhum gasto registrado em {monthLabel(month).toLowerCase()}.</p>
+        <p className="py-8 text-center text-sm text-faint">{t("analytics.pace.empty", { month: monthLabel(month).toLowerCase() })}</p>
       ) : (
         <>
           <div className="mb-4 flex flex-wrap items-baseline gap-x-3 gap-y-1">
             <Money amount={reading.spent.toString()} className="text-2xl" />
             <span className="text-xs text-muted">
-              até o dia {reading.lastDay}
+              {t("analytics.pace.untilDay", { day: reading.lastDay })}
               {difference === null ? (
-                " · sem meses anteriores para comparar"
+                ` · ${t("analytics.pace.noHistory")}`
               ) : difference === 0n ? (
-                " · igual ao normal"
+                ` · ${t("analytics.pace.same")}`
               ) : (
                 <>
                   {" · "}
                   <span className={difference > 0n ? "text-negative" : "text-positive"}>
-                    {formatMinorUnits((difference > 0n ? difference : -difference).toString())}{" "}
-                    {difference > 0n ? "acima" : "abaixo"} do normal
+                    {difference > 0n
+                      ? t("analytics.pace.above", { amount: formatMinorUnits(difference.toString()) })
+                      : t("analytics.pace.below", { amount: formatMinorUnits((-difference).toString()) })}
                   </span>
                 </>
               )}
@@ -112,13 +116,13 @@ export function SpendingPace({ month }: { month: string }) {
                     if (!active || !row) return null;
                     return (
                       <TooltipBox
-                        title={`Até o dia ${row.day}`}
+                        title={t("analytics.pace.tooltip", { day: row.day })}
                         rows={[
                           ...(row.spent !== null
-                            ? [{ label: "Este mês", color: "var(--accent)", value: formatMinorUnits(row.spent.toString()) }]
+                            ? [{ label: t("analytics.pace.thisMonth"), color: "var(--accent)", value: formatMinorUnits(row.spent.toString()) }]
                             : []),
                           ...(row.usual !== null
-                            ? [{ label: "Normal", color: "var(--muted)", value: formatMinorUnits(row.usual.toString()), strong: false }]
+                            ? [{ label: t("analytics.pace.usual"), color: "var(--muted)", value: formatMinorUnits(row.usual.toString()), strong: false }]
                             : []),
                         ]}
                       />
@@ -159,6 +163,7 @@ const RESERVE_LOW_TENTHS = 30;
 
 /** How long the money you can reach today would last at the usual spending. */
 export function ReserveCard({ data }: { data: Analytics | undefined }) {
+  const { t } = useTranslation();
   const now = currentMonth();
   const summary = useSummary(now);
   const portfolio = usePortfolio();
@@ -180,7 +185,7 @@ export function ReserveCard({ data }: { data: Analytics | undefined }) {
   const tenths = available !== null && monthly !== null ? reserveTenths(available, monthly) : null;
 
   return (
-    <ChartCard title="Reserva de emergência" subtitle="Quanto tempo o dinheiro que dá para sacar hoje cobre o seu gasto normal">
+    <ChartCard title={t("analytics.reserve.title")} subtitle={t("analytics.reserve.subtitle")}>
       {failed ? (
         <ErrorNote>{errorMessage(failed)}</ErrorNote>
       ) : available === null || monthly === null ? (
@@ -189,14 +194,14 @@ export function ReserveCard({ data }: { data: Analytics | undefined }) {
           <div className="skeleton h-2" />
         </div>
       ) : tenths === null ? (
-        <p className="text-sm text-faint">Registre os gastos de um mês inteiro para calcular a reserva.</p>
+        <p className="text-sm text-faint">{t("analytics.reserve.empty")}</p>
       ) : (
         <div className="space-y-4">
           <p className="flex flex-wrap items-baseline gap-x-2">
             <span className={`font-display text-4xl tracking-tight ${tenths < RESERVE_LOW_TENTHS ? "text-warning" : ""}`}>
               {formatTenths(tenths)}
             </span>
-            <span className="text-sm text-muted">{tenths === 10 ? "mês" : "meses"} de gastos</span>
+            <span className="text-sm text-muted">{tenths === 10 ? t("analytics.reserve.month") : t("analytics.reserve.months")}</span>
           </p>
           {tenths <= RESERVE_GOAL_TENTHS ? (
             <ProgressBar
@@ -204,26 +209,26 @@ export function ReserveCard({ data }: { data: Analytics | undefined }) {
               value={(tenths / RESERVE_GOAL_TENTHS) * 100}
               tone={tenths < RESERVE_LOW_TENTHS ? "warning" : "positive"}
               marker={(RESERVE_LOW_TENTHS / RESERVE_GOAL_TENTHS) * 100}
-              markerTitle="3 meses"
+              markerTitle={t("analytics.reserve.marker")}
             />
           ) : null}
           <dl className="grid max-w-xl gap-x-8 gap-y-1 text-xs sm:grid-cols-2">
             <div className="flex justify-between gap-3">
-              <dt className="text-muted">Dá para sacar hoje</dt>
+              <dt className="text-muted">{t("analytics.reserve.available")}</dt>
               <dd>
                 <Money amount={available.toString()} />
               </dd>
             </div>
             <div className="flex justify-between gap-3">
-              <dt className="text-muted">Gasto normal por mês</dt>
+              <dt className="text-muted">{t("analytics.reserve.monthly")}</dt>
               <dd>
                 <Money amount={monthly.toString()} />
               </dd>
             </div>
           </dl>
           <p className="text-[11px] text-faint">
-            Contas + renda fixa com liquidez diária, menos faturas em aberto.{" "}
-            {tenths > RESERVE_GOAL_TENTHS ? "Acima dos 6 meses que costumam ser recomendados." : "O usual é ter de 3 a 6 meses."}
+            {t("analytics.reserve.hint")}{" "}
+            {tenths > RESERVE_GOAL_TENTHS ? t("analytics.reserve.above") : t("analytics.reserve.usual")}
           </p>
         </div>
       )}
@@ -231,16 +236,17 @@ export function ReserveCard({ data }: { data: Analytics | undefined }) {
   );
 }
 
-const splitLook: Record<SplitPart["key"], { label: string; color: string }> = {
-  fixed: { label: "Fixos", color: "var(--series-1)" },
-  installments: { label: "Parcelas", color: "var(--series-2)" },
-  variable: { label: "Dia a dia", color: "var(--series-3)" },
-  invested: { label: "Investido", color: "var(--accent)" },
-  left: { label: "Ficou na conta", color: "var(--line-strong)" },
+const splitLook: Record<SplitPart["key"], { label: TranslationKey; color: string }> = {
+  fixed: { label: "planning.calendar.projection.fixed", color: "var(--series-1)" },
+  installments: { label: "invoices.groups.installments", color: "var(--series-2)" },
+  variable: { label: "analytics.split.variable", color: "var(--series-3)" },
+  invested: { label: "analytics.split.invested", color: "var(--accent)" },
+  left: { label: "analytics.split.left", color: "var(--line-strong)" },
 };
 
 /** Where the month's income went, read as "of every R$ 100". */
 export function IncomeSplitCard({ data }: { data: Analytics | undefined }) {
+  const { t } = useTranslation();
   const point = data?.series.find((p) => p.month === data.to);
   const split = point ? incomeSplit(point) : null;
   const per100 = (amount: bigint) => (split ? Number((amount * 100n + split.base / 2n) / split.base) : 0);
@@ -248,8 +254,8 @@ export function IncomeSplitCard({ data }: { data: Analytics | undefined }) {
 
   return (
     <ChartCard
-      title={split && split.over > 0n ? "Para cada R$ 100 que saíram" : "Para cada R$ 100 que entraram"}
-      subtitle={data ? `Em ${month}` : undefined}
+      title={split && split.over > 0n ? t("analytics.split.titleOut") : t("analytics.split.titleIn")}
+      subtitle={data ? t("analytics.split.in", { month }) : undefined}
     >
       {!data ? (
         <div className="space-y-3">
@@ -257,7 +263,7 @@ export function IncomeSplitCard({ data }: { data: Analytics | undefined }) {
           <div className="skeleton h-20" />
         </div>
       ) : !split ? (
-        <p className="py-6 text-center text-sm text-faint">Nada entrou nem saiu em {month}.</p>
+        <p className="py-6 text-center text-sm text-faint">{t("analytics.split.empty", { month })}</p>
       ) : (
         <div className="space-y-4">
           <div className="flex h-3 gap-[2px] overflow-hidden rounded-full" aria-hidden="true">
@@ -273,15 +279,15 @@ export function IncomeSplitCard({ data }: { data: Analytics | undefined }) {
             {split.parts.map((part) => (
               <li key={part.key} className="flex items-center gap-2">
                 <span className="h-2.5 w-2.5 shrink-0 rounded-[3px]" style={{ background: splitLook[part.key].color }} />
-                {splitLook[part.key].label}
-                <span className="font-medium tabular">R$ {per100(part.amount)}</span>
+                {t(splitLook[part.key].label)}
+                <span className="font-medium tabular">{t("common.money.symbol")} {per100(part.amount)}</span>
                 <Money amount={part.amount.toString()} className="text-xs text-muted" />
               </li>
             ))}
           </ul>
           {split.over > 0n ? (
             <p className="text-sm text-negative">
-              Saiu <Money amount={split.over.toString()} /> a mais do que entrou.
+              <Trans i18nKey="analytics.split.over" components={{ value: <Money amount={split.over.toString()} /> }} />
             </p>
           ) : null}
         </div>

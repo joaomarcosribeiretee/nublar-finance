@@ -1,0 +1,90 @@
+{
+  "pace": {
+    "title": "Ritmo de gastos",
+    "subtitle": "Gasto acumulado em {{month}}, comparado com a média dos {{count}} meses anteriores",
+    "thisMonth": "Este mês",
+    "usual": "Normal",
+    "empty": "Nenhum gasto registrado em {{month}}.",
+    "untilDay": "até o dia {{day}}",
+    "noHistory": "sem meses anteriores para comparar",
+    "same": "igual ao normal",
+    "above": "{{amount}} acima do normal",
+    "below": "{{amount}} abaixo do normal",
+    "tooltip": "Até o dia {{day}}"
+  },
+  "reserve": {
+    "title": "Reserva de emergência",
+    "subtitle": "Quanto tempo o dinheiro que dá para sacar hoje cobre o seu gasto normal",
+    "empty": "Registre os gastos de um mês inteiro para calcular a reserva.",
+    "month": "mês de gastos",
+    "months": "meses de gastos",
+    "marker": "3 meses",
+    "available": "Dá para sacar hoje",
+    "monthly": "Gasto normal por mês",
+    "hint": "Contas + renda fixa com liquidez diária, menos faturas em aberto.",
+    "above": "Acima dos 6 meses que costumam ser recomendados.",
+    "usual": "O usual é ter de 3 a 6 meses."
+  },
+  "split": {
+    "variable": "Dia a dia",
+    "invested": "Investido",
+    "left": "Ficou na conta",
+    "titleOut": "Para cada R$ 100 que saíram",
+    "titleIn": "Para cada R$ 100 que entraram",
+    "in": "Em {{month}}",
+    "empty": "Nada entrou nem saiu em {{month}}.",
+    "over": "Saiu <value/> a mais do que entrou."
+  },
+  "range": "{{from}} a {{to}}",
+  "eyebrow": "Sua evolução financeira",
+  "period": "Período",
+  "months24": "24 meses",
+  "empty": {
+    "title": "Ainda não há o que analisar",
+    "description": "Registre receitas, despesas e investimentos. Os gráficos aparecem assim que existir o primeiro lançamento."
+  },
+  "views": {
+    "label": "Assunto da análise",
+    "flow": "Entradas e saídas",
+    "future": "Compromissos"
+  },
+  "openMonth": "Ver lançamentos do mês",
+  "kpis": {
+    "label": "Resumo financeiro do período",
+    "since": "desde {{month}}",
+    "firstMonth": "Primeiro mês acompanhado",
+    "result": "Sobrou no mês",
+    "resultDetail": "Entrou {{income}} · poupança {{rate}}"
+  },
+  "worth": {
+    "title": "Evolução do patrimônio",
+    "subtitleSince": "Contas + investimentos − dívida dos cartões, desde {{month}}, quando você começou a acompanhar",
+    "subtitle": "Contas + investimentos − dívida dos cartões, no fim de cada mês"
+  },
+  "allocation": {
+    "cash": "Contas",
+    "title": "Onde está o patrimônio",
+    "subtitle": "Contas e investimentos hoje",
+    "empty": "Nada para distribuir ainda."
+  },
+  "flow": {
+    "title": "Receitas × despesas",
+    "subtitle": "Por mês de competência"
+  },
+  "savings": "Poupança",
+  "categories": {
+    "subtitle": "{{month}} · marca = média dos 3 meses anteriores",
+    "empty": "Nenhuma despesa no mês.",
+    "previous": "Em {{month}}: {{amount}}",
+    "average": "Média: {{amount}}"
+  },
+  "commitments": {
+    "title": "Já comprometido",
+    "subtitle": "Próximos 6 meses: parcelas lançadas e despesas recorrentes",
+    "recurring": "Recorrentes",
+    "recurringIncome": "Receitas recorrentes"
+  },
+  "table": {
+    "title": "Tabela mês a mês"
+  }
+}

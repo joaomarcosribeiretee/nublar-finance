@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { AccountSelect } from "@/components/AccountSelect";
 import { Button } from "@/components/Button";
 import { ErrorNote, PageHeader, ProgressBar, StatStrip, Stepper } from "@/components/Page";
@@ -33,14 +34,16 @@ const statusStyle: Record<InvoiceStatus, string> = {
 };
 
 export function StatusPill({ status }: { status: InvoiceStatus }) {
+  const { t } = useTranslation();
   return (
     <span className={`shrink-0 rounded-full px-2 py-0.5 text-[11px] font-medium ${statusStyle[status]}`}>
-      {invoiceStatusLabels[status]}
+      {t(invoiceStatusLabels[status])}
     </span>
   );
 }
 
 export function CardsScreen({ onOpenInvoices }: { onOpenInvoices?: (cardId: string) => void }) {
+  const { t } = useTranslation();
   const cards = useCards();
   const [creating, setCreating] = useState(false);
   const [openId, setOpenId] = useState<string | null>(null);
@@ -49,19 +52,19 @@ export function CardsScreen({ onOpenInvoices }: { onOpenInvoices?: (cardId: stri
   return (
     <section className="animate-enter">
       <PageHeader
-        eyebrow="Faturas e limites"
-        title="Cartões"
+        eyebrow={t("cards.eyebrow")}
+        title={t("shell.screens.cards")}
         actions={
           <Button variant="primary" onClick={() => setCreating(true)}>
             <Icon name="plus" size={16} />
-            Novo cartão
+            {t("institutions.newCard")}
           </Button>
         }
       />
       {cards.isSuccess && cards.data.length > 0 ? <div className="mt-6"><StatStrip columns="grid-cols-1 @lg:grid-cols-3" items={[
-        { label: "Comprometido nos cartões", value: <Money amount={cards.data.reduce((sum, card) => sum + BigInt(card.debt), 0n).toString()} /> },
-        { label: "Limite disponível", value: <Money amount={cards.data.reduce((sum, card) => sum + BigInt(card.available), 0n).toString()} /> },
-        { label: "Cartões cadastrados", value: cards.data.length },
+        { label: t("cards.stats.debt"), value: <Money amount={cards.data.reduce((sum, card) => sum + BigInt(card.debt), 0n).toString()} /> },
+        { label: t("cards.stats.available"), value: <Money amount={cards.data.reduce((sum, card) => sum + BigInt(card.available), 0n).toString()} /> },
+        { label: t("cards.stats.count"), value: cards.data.length },
       ]} /></div> : null}
 
       <div className="mt-8">
@@ -76,11 +79,11 @@ export function CardsScreen({ onOpenInvoices }: { onOpenInvoices?: (cardId: stri
         ) : cards.data.length === 0 ? (
           <EmptyState
             icon="card"
-            title="Nenhum cartão"
-            description="Cadastre seus cartões para acompanhar faturas, parcelas e limite."
+            title={t("cards.empty.title")}
+            description={t("cards.empty.description")}
             action={
               <Button variant="primary" onClick={() => setCreating(true)}>
-                Cadastrar cartão
+                {t("cards.empty.action")}
               </Button>
             }
           />
@@ -95,7 +98,7 @@ export function CardsScreen({ onOpenInvoices }: { onOpenInvoices?: (cardId: stri
         )}
       </div>
 
-      <Modal open={creating} onClose={() => setCreating(false)} title="Novo cartão">
+      <Modal open={creating} onClose={() => setCreating(false)} title={t("institutions.newCard")}>
         <CardForm card={null} onDone={() => setCreating(false)} />
       </Modal>
       <Modal open={open !== null} onClose={() => setOpenId(null)} title={open?.name ?? ""} width={640}>
@@ -112,6 +115,7 @@ export function CardsScreen({ onOpenInvoices }: { onOpenInvoices?: (cardId: stri
 }
 
 function CardTile({ card, onOpen }: { card: Card; onOpen: () => void }) {
+  const { t } = useTranslation();
   const invoice = card.currentInvoice;
   const used = percentOf(card.debt, card.limit);
 
@@ -130,20 +134,20 @@ function CardTile({ card, onOpen }: { card: Card; onOpen: () => void }) {
       </div>
       <div className="relative mt-auto">
         <p className="text-xs text-muted">
-          Fatura de {monthLabel(invoice.month).split(" ")[0].toLowerCase()} · vence {shortDate(invoice.dueDate)}
+          {t("cards.tile.invoiceOf", { month: monthLabel(invoice.month).split(" ")[0].toLowerCase(), date: shortDate(invoice.dueDate) })}
         </p>
         <p className="mt-1 font-display text-3xl tracking-tight">
           <Money amount={invoice.status === "PAID" ? invoice.total : invoice.remaining} />
         </p>
         <div className="mt-4">
-          {used <= 100 ? <ProgressBar size="xs" value={used} tone={used > 90 ? "negative" : "accent"} /> : <p className="text-xs text-negative">Limite excedido em <Money amount={(BigInt(card.debt) - BigInt(card.limit)).toString()} /></p>}
+          {used <= 100 ? <ProgressBar size="xs" value={used} tone={used > 90 ? "negative" : "accent"} /> : <p className="text-xs text-negative">{t("cards.tile.overLimit")} <Money amount={(BigInt(card.debt) - BigInt(card.limit)).toString()} /></p>}
         </div>
         <p className="mt-2 flex justify-between gap-3 text-[11px] text-faint">
           <span>
-            Disponível <Money amount={card.available} />
+            {t("institutions.panel.available")} <Money amount={card.available} />
           </span>
           <span>
-            Limite <Money amount={card.limit} />
+            {t("institutions.add.limit")} <Money amount={card.limit} />
           </span>
         </p>
       </div>
@@ -160,6 +164,7 @@ function CardDetail({
   onClose: () => void;
   onOpenInvoices?: () => void;
 }) {
+  const { t } = useTranslation();
   const [month, setMonth] = useState(card.currentInvoice.month);
   const [view, setView] = useState<"invoice" | "pay" | "edit">("invoice");
   const invoice = useInvoice(card.id, month);
@@ -181,8 +186,8 @@ function CardDetail({
         <Stepper
           className="-ml-2"
           label={monthLabel(month)}
-          previousLabel="Fatura anterior"
-          nextLabel="Próxima fatura"
+          previousLabel={t("cards.detail.previous")}
+          nextLabel={t("cards.detail.next")}
           onPrevious={() => goTo(shiftMonth(month, -1))}
           onNext={() => goTo(shiftMonth(month, 1))}
         />
@@ -193,9 +198,9 @@ function CardDetail({
 
       <StatStrip
         items={[
-          { label: "Total", value: data?.total },
-          { label: "Pago", value: data?.paid },
-          { label: "Restante", value: data?.remaining },
+          { label: t("cards.detail.total"), value: data?.total },
+          { label: t("cards.detail.paid"), value: data?.paid },
+          { label: t("cards.detail.remaining"), value: data?.remaining },
         ].map((stat) => ({
           label: stat.label,
           value: stat.value === undefined ? <span className="skeleton block h-5 w-16" /> : <Money amount={stat.value} />,
@@ -203,7 +208,7 @@ function CardDetail({
       />
       {data ? (
         <p className="-mt-2 text-xs text-faint">
-          Fecha em {shortDate(data.closingDate)} · vence em {shortDate(data.dueDate)}
+          {t("cards.detail.dates", { closing: shortDate(data.closingDate), due: shortDate(data.dueDate) })}
         </p>
       ) : null}
 
@@ -212,7 +217,7 @@ function CardDetail({
       ) : (
         <ul className={`-mx-2 transition-opacity duration-(--dur-base) ${invoice.isPlaceholderData ? "opacity-50" : ""}`}>
           {data?.items.length === 0 ? (
-            <li className="py-8 text-center text-sm text-faint">Nenhuma compra nesta fatura.</li>
+            <li className="py-8 text-center text-sm text-faint">{t("cards.detail.empty")}</li>
           ) : null}
           {data?.items.map((item) => (
             <li key={item.id} className="flex items-center gap-3 rounded-xl px-2 py-2">
@@ -220,14 +225,14 @@ function CardDetail({
               <span className="min-w-0 flex-1">
                 <span className="block truncate text-sm">
                   {item.type === "CARD_PAYMENT"
-                    ? `Pagamento · ${item.account?.name ?? ""}`
+                    ? t("cards.detail.payment", { account: item.account?.name ?? "" })
                     : item.description || item.category?.name}
                 </span>
                 {item.type === "EXPENSE" ? (
                   <span className="block truncate text-xs text-muted">
                     {item.category?.name}
                     {(item.installmentCount ?? 1) > 1
-                      ? ` · parcela ${item.installmentNumber}/${item.installmentCount}`
+                      ? ` · ${t("cards.detail.installment", { number: item.installmentNumber, count: item.installmentCount })}`
                       : ""}
                   </span>
                 ) : null}
@@ -247,23 +252,23 @@ function CardDetail({
         <FormFooter>
           <Button variant="ghost" onClick={() => setView("edit")}>
             <Icon name="pencil" size={14} />
-            Editar cartão
+            {t("cards.detail.edit")}
           </Button>
           {onOpenInvoices ? (
             <Button variant="ghost" onClick={onOpenInvoices}>
               <Icon name="receipt" size={14} />
-              Ver faturas
+              {t("cards.detail.invoices")}
             </Button>
           ) : null}
           <div className="flex-1" />
           {data?.status === "PAID" ? (
             <span className="flex items-center gap-1.5 text-sm text-positive">
               <Icon name="check" size={15} />
-              Fatura paga
+              {t("cards.pay.paid")}
             </span>
           ) : data && BigInt(data.remaining) > 0n ? (
             <Button variant="primary" onClick={() => setView("pay")}>
-              Pagar fatura
+              {t("cards.pay.action")}
             </Button>
           ) : null}
         </FormFooter>
@@ -283,6 +288,7 @@ export function PayForm({
   remaining: string;
   onDone: () => void;
 }) {
+  const { t } = useTranslation();
   const toast = useToast();
   const accounts = useAccounts();
   const pay = usePayInvoice();
@@ -296,20 +302,20 @@ export function PayForm({
     event.preventDefault();
     const minor = parseReaisToMinorUnits(amount);
     if (!minor) {
-      setError("Informe um valor, por exemplo 250,00.");
+      setError(t("cards.pay.errors.amount"));
       return;
     }
     if (!chosen) {
-      setError("Escolha a conta de onde sai o pagamento.");
+      setError(t("cards.pay.errors.account"));
       return;
     }
     try {
       if (BigInt(minor) > BigInt(remaining)) {
-        setError("O valor passa do que falta pagar nesta fatura.");
+        setError(t("cards.pay.errors.tooMuch"));
         return;
       }
       await pay.mutateAsync({ cardId: card.id, accountId: chosen, amount: minor, date, invoiceMonth: month });
-      toast(minor === remaining ? "Fatura paga" : "Pagamento parcial registrado");
+      toast(minor === remaining ? t("cards.pay.paid") : t("cards.pay.partial"));
       onDone();
     } catch (reason: unknown) {
       setError(errorMessage(reason));
@@ -320,15 +326,15 @@ export function PayForm({
     <form onSubmit={(event) => void submit(event)} className="animate-enter space-y-4 rounded-2xl bg-surface-2 p-4">
       <div className="grid gap-3 sm:grid-cols-3">
         <AccountSelect
-          label="Pagar com"
+          label={t("transactions.form.payWith.label")}
           accounts={accounts.data ?? []}
           value={chosen}
           onChange={setAccountId}
         />
-        <Field label="Valor">
+        <Field label={t("transactions.form.amount.single")}>
           <MoneyInput autoFocus value={amount} onChange={setAmount} />
         </Field>
-        <Field label="Data">
+        <Field label={t("transactions.form.date")}>
           <input
             className={controlClass}
             type="date"
@@ -339,8 +345,7 @@ export function PayForm({
         </Field>
       </div>
       <p className="text-xs text-faint">
-        Sai da conta e abate a dívida do cartão. Não é despesa: as compras já contaram na fatura. As
-        cobranças previstas desta fatura são confirmadas junto.
+        {t("cards.pay.hint")}
       </p>
       {error ? (
         <p role="alert" className="text-sm text-negative">
@@ -349,10 +354,10 @@ export function PayForm({
       ) : null}
       <div className="flex flex-wrap justify-end gap-2">
         <Button variant="ghost" onClick={onDone}>
-          Cancelar
+          {t("common.actions.cancel")}
         </Button>
         <Button variant="primary" type="submit" disabled={pay.isPending}>
-          {pay.isPending ? "Registrando…" : "Confirmar pagamento"}
+          {pay.isPending ? t("cards.pay.registering") : t("cards.pay.submit")}
         </Button>
       </div>
     </form>
@@ -370,6 +375,7 @@ export function CardForm({
   onDeleted?: () => void;
   institutionId?: string;
 }) {
+  const { t } = useTranslation();
   const toast = useToast();
   const accounts = useAccounts();
   const institutions = useInstitutions();
@@ -400,7 +406,7 @@ export function CardForm({
     // An empty or zeroed limit means "no limit tracked", not a mistake.
     const minor = /^[0.,\s]*$/.test(limit) ? "0" : parseReaisToMinorUnits(limit);
     if (minor === null) {
-      setError("Limite inválido. Use algo como 5.000,00.");
+      setError(t("cards.form.invalidLimit"));
       return;
     }
     try {
@@ -415,7 +421,7 @@ export function CardForm({
           institutionId: institutionId || null,
         },
       });
-      toast(card ? "Cartão atualizado" : "Cartão criado");
+      toast(card ? t("cards.form.updated") : t("cards.form.created"));
       onDone();
     } catch (reason: unknown) {
       setError(errorMessage(reason));
@@ -430,7 +436,7 @@ export function CardForm({
     }
     try {
       await remove.mutateAsync(card.id);
-      toast("Cartão excluído");
+      toast(t("cards.form.deleted"));
       onDeleted?.();
     } catch (reason: unknown) {
       setConfirmDelete(false);
@@ -443,13 +449,13 @@ export function CardForm({
   return (
     <form onSubmit={(event) => void submit(event)} className="space-y-5">
       {presetInstitution ? null : (
-        <Field label="Instituição">
+        <Field label={t("cards.form.institution")}>
           <select
             className={controlClass}
             value={institutionId}
             onChange={(event) => setInstitutionId(event.target.value)}
           >
-            <option value="">Nenhuma</option>
+            <option value="">{t("common.none")}</option>
             {institutions.data?.map((institution) => (
               <option key={institution.id} value={institution.id}>
                 {institution.name}
@@ -459,22 +465,22 @@ export function CardForm({
         </Field>
       )}
       <div className="grid gap-3 sm:grid-cols-[1fr_180px]">
-        <Field label="Nome do cartão">
+        <Field label={t("cards.form.name")}>
           <TextInput
             autoFocus
-            placeholder={institutionName || "Ex.: Nubank"}
+            placeholder={institutionName || t("cards.form.namePlaceholder")}
             value={name}
             maxLength={80}
             onChange={setName}
             required={!institutionName}
           />
         </Field>
-        <Field label="Limite">
+        <Field label={t("institutions.add.limit")}>
           <MoneyInput value={limit} onChange={setLimit} />
         </Field>
       </div>
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-        <Field label="Fecha dia">
+        <Field label={t("institutions.add.closingDay")}>
           <select className={controlClass} value={closingDay} onChange={(event) => setClosingDay(Number(event.target.value))}>
             {days.map((day) => (
               <option key={day} value={day}>
@@ -483,7 +489,7 @@ export function CardForm({
             ))}
           </select>
         </Field>
-        <Field label="Vence dia">
+        <Field label={t("institutions.add.dueDay")}>
           <select className={controlClass} value={dueDay} onChange={(event) => setDueDay(Number(event.target.value))}>
             {days.map((day) => (
               <option key={day} value={day}>
@@ -494,17 +500,17 @@ export function CardForm({
         </Field>
         <div className="col-span-2 sm:col-span-1">
           <AccountSelect
-            label="Paga com"
+            label={t("cards.form.paysWith")}
             accounts={accounts.data ?? []}
             value={paymentAccount}
             onChange={setPaymentAccountId}
-            allowEmpty="Nenhuma"
+            allowEmpty={t("common.none")}
           />
         </div>
       </div>
       <p className="text-xs text-faint">
-        Compras no dia do fechamento ou depois entram na fatura seguinte.
-        {card ? " Mudar as datas vale para novas compras." : ""}
+        {t("cards.form.closingHint")}
+        {card ? ` ${t("cards.form.datesHint")}` : ""}
       </p>
       <FormFooter error={error}>
         {card ? (
@@ -514,15 +520,15 @@ export function CardForm({
             onBlur={() => setConfirmDelete(false)}
             disabled={remove.isPending}
           >
-            {confirmDelete ? "Confirmar exclusão" : "Excluir"}
+            {confirmDelete ? t("common.actions.confirmDelete") : t("common.actions.delete")}
           </Button>
         ) : null}
         <div className="flex-1" />
         <Button variant="ghost" onClick={onDone}>
-          {card ? "Voltar" : "Cancelar"}
+          {card ? t("common.actions.back") : t("common.actions.cancel")}
         </Button>
         <Button variant="primary" type="submit" disabled={save.isPending}>
-          {save.isPending ? "Salvando…" : "Salvar"}
+          {save.isPending ? t("common.save.saving") : t("common.actions.save")}
         </Button>
       </FormFooter>
     </form>

@@ -1,0 +1,69 @@
+{
+  "errors": {
+    "sessionExpired": "Sessão expirada. Entre de novo.",
+    "apiUnreachable": "Não foi possível falar com a API. Ela está rodando?",
+    "generic": "Não foi possível concluir a operação.",
+    "supabaseConfig": "Falta a chave do Supabase. Em Project Settings → API, copie a publishable key para VITE_SUPABASE_ANON_KEY e SUPABASE_ANON_KEY."
+  },
+  "health": {
+    "down": "API indisponível",
+    "up": "API e banco conectados",
+    "databaseDown": "API no ar, banco indisponível"
+  },
+  "save": {
+    "saving": "Salvando…",
+    "saved": "Salvo",
+    "failed": "Não foi possível salvar"
+  },
+  "dates": {
+    "months": [
+      "Janeiro",
+      "Fevereiro",
+      "Março",
+      "Abril",
+      "Maio",
+      "Junho",
+      "Julho",
+      "Agosto",
+      "Setembro",
+      "Outubro",
+      "Novembro",
+      "Dezembro"
+    ],
+    "weekdays": [
+      "dom",
+      "seg",
+      "ter",
+      "qua",
+      "qui",
+      "sex",
+      "sáb"
+    ],
+    "today": "Hoje",
+    "yesterday": "Ontem"
+  },
+  "actions": {
+    "close": "Fechar",
+    "confirm": "Confirmar",
+    "cancel": "Cancelar",
+    "retry": "Tentar novamente",
+    "save": "Salvar",
+    "delete": "Excluir",
+    "confirmDelete": "Confirmar exclusão",
+    "continue": "Continuar",
+    "back": "Voltar",
+    "remove": "Remover",
+    "add": "Adicionar"
+  },
+  "month": {
+    "previous": "Mês anterior",
+    "next": "Próximo mês"
+  },
+  "money": {
+    "symbol": "R$"
+  },
+  "appName": "Nublar",
+  "optional": "Opcional",
+  "none": "Nenhuma",
+  "choose": "Escolha…"
+}
