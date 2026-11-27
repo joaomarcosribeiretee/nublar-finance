@@ -69,3 +69,11 @@ export function percentOf(part: string, total: string): number {
   }
   return Number((BigInt(part) * 10000n) / whole) / 100;
 }
+
+/** What privacy mode shows in place of any amount. */
+export const HIDDEN_MONEY = "R$ ••••";
+
+/** formatMinorUnits, unless privacy mode is on. Percentages never go through here. */
+export function formatMoney(amount: string, hidden: boolean): string {
+  return hidden ? HIDDEN_MONEY : formatMinorUnits(amount);
+}

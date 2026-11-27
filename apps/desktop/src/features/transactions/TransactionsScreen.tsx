@@ -10,7 +10,8 @@ import { Money } from "@/components/Money";
 import { Segmented } from "@/components/Segmented";
 import { errorMessage } from "@/lib/api";
 import { compactBRL, plotValue } from "@/lib/chart";
-import { formatMinorUnits } from "@/lib/money";
+import { HIDDEN_MONEY } from "@/lib/money";
+import { useFormatMoney, useHideValues } from "@/hooks/useHideValues";
 import { currentMonth, dayLabel, monthLabel, shiftMonth, shortDate, shortMonthLabel } from "@/lib/dates";
 import {
   useSummariesFor,
@@ -409,6 +410,8 @@ const STRIP_MONTHS = 6;
  */
 function MonthStrip({ month, onChange }: { month: string; onChange: (month: string) => void }) {
   const { t } = useTranslation();
+  const money = useFormatMoney();
+  const hideValues = useHideValues();
   const today = currentMonth();
   const [last, setEnd] = useState(() => (month > today ? month : today));
   // A month chosen elsewhere (the top bar, Análises) that falls outside the
@@ -467,11 +470,11 @@ function MonthStrip({ month, onChange }: { month: string; onChange: (month: stri
               ) : (
                 // Short form: the exact number is in the totals right below.
                 <span
-                  title={formatMinorUnits(result)}
+                  title={money(result)}
                   className={`text-[11px] whitespace-nowrap tabular ${result.startsWith("-") ? "text-negative" : "text-positive"}`}
                 >
                   {result.startsWith("-") ? "−" : "+"}
-                  {compactBRL(Math.abs(plotValue(result)))}
+                  {hideValues ? HIDDEN_MONEY : compactBRL(Math.abs(plotValue(result)))}
                 </span>
               )}
             </button>

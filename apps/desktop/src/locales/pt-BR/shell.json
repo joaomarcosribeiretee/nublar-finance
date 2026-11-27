@@ -21,5 +21,9 @@
   "mainNav": "Principal",
   "workspace": "Meu espaço",
   "more": "Mais",
-  "allScreens": "Todas as telas"
+  "allScreens": "Todas as telas",
+  "privacy": {
+    "hide": "Ocultar valores",
+    "show": "Mostrar valores"
+  }
 }

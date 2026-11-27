@@ -13,7 +13,8 @@ import { errorMessage } from "@/lib/api";
 import { formatBps } from "@/lib/chart";
 import { monthLabel } from "@/lib/dates";
 import { institutionColors } from "@/lib/institutions";
-import { formatMinorUnits, minorUnitsToInput, parseReaisToMinorUnits } from "@/lib/money";
+import { minorUnitsToInput, parseReaisToMinorUnits } from "@/lib/money";
+import { useFormatMoney } from "@/hooks/useHideValues";
 import {
   useAccounts,
   useDeleteGoal,
@@ -95,6 +96,7 @@ export function GoalsScreen() {
 
 function GoalCard({ goal, onOpen }: { goal: Goal; onOpen: () => void }) {
   const { t } = useTranslation();
+  const money = useFormatMoney();
   const progress = goal.progressBps / 100;
   return (
     <button
@@ -110,7 +112,7 @@ function GoalCard({ goal, onOpen }: { goal: Goal; onOpen: () => void }) {
       <span className="mt-6 break-words text-3xl tabular">
         <Money amount={goal.saved} />
       </span>
-      <span className="text-xs text-muted">{t("planning.of", { amount: formatMinorUnits(goal.target) })}</span>
+      <span className="text-xs text-muted">{t("planning.of", { amount: money(goal.target) })}</span>
       <span className="mt-3 block">
         <ProgressBar size="md" value={progress} color={goal.color} />
       </span>
@@ -118,17 +120,17 @@ function GoalCard({ goal, onOpen }: { goal: Goal; onOpen: () => void }) {
         {goal.reached ? (
           <span className="text-positive">{t("planning.goals.card.reached")}</span>
         ) : goal.late ? (
-          <span className="text-negative">{t("planning.goals.card.late", { amount: formatMinorUnits(goal.remaining) })}</span>
+          <span className="text-negative">{t("planning.goals.card.late", { amount: money(goal.remaining) })}</span>
         ) : goal.monthlyNeeded ? (
           <span className="text-muted">
             <Trans
               i18nKey="planning.goals.card.monthly"
-              values={{ amount: formatMinorUnits(goal.monthlyNeeded), month: goal.targetDate ? monthLabel(goal.targetDate.slice(0, 7)).toLowerCase() : "" }}
+              values={{ amount: money(goal.monthlyNeeded), month: goal.targetDate ? monthLabel(goal.targetDate.slice(0, 7)).toLowerCase() : "" }}
               components={{ value: <span className="text-foreground" /> }}
             />
           </span>
         ) : (
-          <span className="text-muted">{t("planning.goals.card.remaining", { amount: formatMinorUnits(goal.remaining) })}</span>
+          <span className="text-muted">{t("planning.goals.card.remaining", { amount: money(goal.remaining) })}</span>
         )}
       </span>
     </button>

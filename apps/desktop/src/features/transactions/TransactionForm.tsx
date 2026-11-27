@@ -13,7 +13,8 @@ import { Segmented } from "@/components/Segmented";
 import { useToast } from "@/components/Toast";
 import { errorMessage } from "@/lib/api";
 import { dayLabel, defaultDateFor, monthLabel, todayLocal } from "@/lib/dates";
-import { formatMinorUnits, minorUnitsToInput, parseReaisToMinorUnits } from "@/lib/money";
+import { minorUnitsToInput, parseReaisToMinorUnits } from "@/lib/money";
+import { useFormatMoney } from "@/hooks/useHideValues";
 import {
   useAccounts,
   useCards,
@@ -580,6 +581,7 @@ function FormBody({
 
 /** Mirrors the backend split (remainder on the first installment) for preview only. */
 function InstallmentPreview({ total, count, inline }: { total: string; count: number; inline?: boolean }) {
+  const money = useFormatMoney();
   const value = BigInt(total);
   const base = value / BigInt(count);
   const first = base + (value % BigInt(count));
@@ -588,13 +590,13 @@ function InstallmentPreview({ total, count, inline }: { total: string; count: nu
       {first === base ? (
         <Trans
           i18nKey="transactions.form.installmentsEqual"
-          values={{ count, value: formatMinorUnits(base.toString()) }}
+          values={{ count, value: money(base.toString()) }}
           components={{ value: <span className="text-foreground tabular" /> }}
         />
       ) : (
         <Trans
           i18nKey="transactions.form.installmentsUneven"
-          values={{ rest: count - 1, first: formatMinorUnits(first.toString()), value: formatMinorUnits(base.toString()) }}
+          values={{ rest: count - 1, first: money(first.toString()), value: money(base.toString()) }}
           components={{ value: <span className="text-foreground tabular" /> }}
         />
       )}

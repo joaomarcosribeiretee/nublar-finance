@@ -25,7 +25,7 @@ import {
   lineCursor,
   StatTile,
   TooltipBox,
-  yAxisMoney,
+  useMoneyChart,
 } from "@/components/charts";
 import { EmptyState } from "@/components/EmptyState";
 import { Button } from "@/components/Button";
@@ -36,7 +36,8 @@ import { ErrorNote, PageHeader, ProgressBar } from "@/components/Page";
 import { errorMessage } from "@/lib/api";
 import { allocationColors, formatBps, plotValue } from "@/lib/chart";
 import { monthLabel, shiftMonth, shortMonthLabel } from "@/lib/dates";
-import { formatMinorUnits, percentOf } from "@/lib/money";
+import { percentOf } from "@/lib/money";
+import { useFormatMoney } from "@/hooks/useHideValues";
 import { activeSeries } from "@/lib/insights";
 import { useAnalytics, type Analytics, type AssetClass } from "@/lib/queries";
 import { IncomeSplitCard, ReserveCard, SpendingPace } from "./Insights";
@@ -148,6 +149,7 @@ export function AnalyticsScreen({
 /** The browsed month up front; the period average only as a reference. */
 function Kpis({ data }: { data: Analytics | undefined }) {
   const { t } = useTranslation();
+  const money = useFormatMoney();
   const k = data?.kpis;
   const point = data?.series.find((p) => p.month === data.to);
   // Measured from when tracking began: a percentage over the near-empty
@@ -170,7 +172,7 @@ function Kpis({ data }: { data: Analytics | undefined }) {
             <>
               <span className={change > 0n ? "text-positive" : change < 0n ? "text-negative" : ""}>
                 {change > 0n ? "+" : ""}
-                {formatMinorUnits(change.toString()).replace("-", "−")}
+                <Money amount={change.toString()} />
               </span>{" "}
               {t("analytics.kpis.since", { month: monthLabel(since.month).toLowerCase() })}
             </>
@@ -183,7 +185,7 @@ function Kpis({ data }: { data: Analytics | undefined }) {
         label={t("analytics.kpis.result")}
         loading={loading}
         value={point ? <Money amount={result.toString()} tone="auto" /> : null}
-        detail={point ? t("analytics.kpis.resultDetail", { income: formatMinorUnits(point.income), rate: formatBps(point.savingsRateBps) }) : null}
+        detail={point ? t("analytics.kpis.resultDetail", { income: money(point.income), rate: formatBps(point.savingsRateBps) }) : null}
       />
     </div>
   );
@@ -191,6 +193,7 @@ function Kpis({ data }: { data: Analytics | undefined }) {
 
 function NetWorthChart({ data, dim }: { data: Analytics | undefined; dim: boolean }) {
   const { t } = useTranslation();
+  const chart = useMoneyChart();
   const fill = useId();
   const rows = useMemo(
     () => (data ? activeSeries(data.series) : []).map((p) => ({ ...p, plot: plotValue(p.netWorth) })),
@@ -219,8 +222,9 @@ function NetWorthChart({ data, dim }: { data: Analytics | undefined; dim: boolea
               </defs>
               <CartesianGrid {...gridProps} />
               <XAxis dataKey="month" tickFormatter={axisMonth} {...axisProps} />
-              <YAxis {...yAxisMoney} />
+              <YAxis {...chart.yAxis} />
               <Tooltip
+                {...chart.tooltip}
                 cursor={lineCursor}
                 content={({ active, payload }) => {
                   const point = payload?.[0]?.payload as Point | undefined;
@@ -229,10 +233,10 @@ function NetWorthChart({ data, dim }: { data: Analytics | undefined; dim: boolea
                     <TooltipBox
                       title={monthLabel(point.month)}
                       rows={[
-                        { label: t("home.netWorth"), color: colors.worth, value: formatMinorUnits(point.netWorth) },
-                        { label: t("analytics.allocation.cash"), value: formatMinorUnits(point.cash), strong: false },
-                        { label: t("shell.screens.investments"), value: formatMinorUnits(point.investments), strong: false },
-                        { label: t("shell.screens.cards"), value: `− ${formatMinorUnits(point.cardDebt)}`, strong: false },
+                        { label: t("home.netWorth"), color: colors.worth, value: <Money amount={point.netWorth} /> },
+                        { label: t("analytics.allocation.cash"), value: <Money amount={point.cash} />, strong: false },
+                        { label: t("shell.screens.investments"), value: <Money amount={point.investments} />, strong: false },
+                        { label: t("shell.screens.cards"), value: <Money amount={point.cardDebt} sign="-" />, strong: false },
                       ]}
                     />
                   );
@@ -258,6 +262,7 @@ function NetWorthChart({ data, dim }: { data: Analytics | undefined; dim: boolea
 
 function IncomeExpenseChart({ data, dim }: { data: Analytics | undefined; dim: boolean }) {
   const { t } = useTranslation();
+  const chart = useMoneyChart();
   const rows = useMemo(
     () =>
       (data ? activeSeries(data.series) : []).map((p) => ({
@@ -287,8 +292,9 @@ function IncomeExpenseChart({ data, dim }: { data: Analytics | undefined; dim: b
             <BarChart data={rows} barGap={2} margin={{ top: 8, right: 0, bottom: 0, left: 0 }}>
               <CartesianGrid {...gridProps} />
               <XAxis dataKey="month" tickFormatter={axisMonth} {...axisProps} />
-              <YAxis {...yAxisMoney} />
+              <YAxis {...chart.yAxis} />
               <Tooltip
+                {...chart.tooltip}
                 cursor={barCursor}
                 content={({ active, payload }) => {
                   const point = payload?.[0]?.payload as Point | undefined;
@@ -297,9 +303,9 @@ function IncomeExpenseChart({ data, dim }: { data: Analytics | undefined; dim: b
                     <TooltipBox
                       title={monthLabel(point.month)}
                       rows={[
-                        { label: t("transactions.filters.income"), color: colors.income, value: formatMinorUnits(point.income) },
-                        { label: t("transactions.filters.expense"), color: colors.expense, value: formatMinorUnits(point.expense) },
-                        { label: t("transactions.result"), value: formatMinorUnits(point.result) },
+                        { label: t("transactions.filters.income"), color: colors.income, value: <Money amount={point.income} /> },
+                        { label: t("transactions.filters.expense"), color: colors.expense, value: <Money amount={point.expense} /> },
+                        { label: t("transactions.result"), value: <Money amount={point.result} /> },
                         { label: t("analytics.savings"), value: formatBps(point.savingsRateBps), strong: false },
                       ]}
                     />
@@ -320,6 +326,7 @@ function IncomeExpenseChart({ data, dim }: { data: Analytics | undefined; dim: b
 
 function CategoriesCard({ data, dim }: { data: Analytics | undefined; dim: boolean }) {
   const { t } = useTranslation();
+  const money = useFormatMoney();
   const items = data?.categories.slice(0, 8) ?? [];
   const max = items.reduce((m, c) => {
     for (const v of [c.amount, c.average]) if (BigInt(v) > BigInt(m)) m = v;
@@ -357,7 +364,7 @@ function CategoriesCard({ data, dim }: { data: Analytics | undefined; dim: boole
                     {deltaBps !== null && delta !== 0n ? (
                       <span
                         className={`flex items-center gap-0.5 text-[11px] ${delta > 0n ? "text-negative" : "text-positive"}`}
-                        title={t("analytics.categories.previous", { month: previousMonth, amount: formatMinorUnits(category.previous) })}
+                        title={t("analytics.categories.previous", { month: previousMonth, amount: money(category.previous) })}
                       >
                         <Icon name={delta > 0n ? "arrowUp" : "arrowDown"} size={11} />
                         <span className="sr-only">{delta > 0n ? t("home.delta.up") : t("home.delta.down")}{" "}</span>
@@ -371,7 +378,7 @@ function CategoriesCard({ data, dim }: { data: Analytics | undefined; dim: boole
                   <ProgressBar
                     value={share}
                     marker={BigInt(category.average) > 0n ? avgShare : undefined}
-                    markerTitle={t("analytics.categories.average", { amount: formatMinorUnits(category.average) })}
+                    markerTitle={t("analytics.categories.average", { amount: money(category.average) })}
                   />
                 </div>
               </li>
@@ -385,6 +392,7 @@ function CategoriesCard({ data, dim }: { data: Analytics | undefined; dim: boole
 
 function AllocationCard({ data, dim }: { data: Analytics | undefined; dim: boolean }) {
   const { t } = useTranslation();
+  const chart = useMoneyChart();
   const slices = data?.allocation ?? [];
   const total = slices.reduce((sum, s) => sum + BigInt(s.value), 0n).toString();
   const rows = slices.map((s) => ({ ...s, plot: plotValue(s.value) }));
@@ -415,6 +423,7 @@ function AllocationCard({ data, dim }: { data: Analytics | undefined; dim: boole
                   ))}
                 </Pie>
                 <Tooltip
+                  {...chart.tooltip}
                   content={({ active, payload }) => {
                     const slice = payload?.[0]?.payload as (typeof rows)[number] | undefined;
                     if (!active || !slice) return null;
@@ -425,7 +434,7 @@ function AllocationCard({ data, dim }: { data: Analytics | undefined; dim: boole
                           {
                             label: `${Math.round(percentOf(slice.value, total))}%`,
                             color: allocationColors[slice.key],
-                            value: formatMinorUnits(slice.value),
+                            value: <Money amount={slice.value} />,
                           },
                         ]}
                       />
@@ -461,6 +470,7 @@ function AllocationCard({ data, dim }: { data: Analytics | undefined; dim: boole
 
 function CommitmentsChart({ data, dim }: { data: Analytics | undefined; dim: boolean }) {
   const { t } = useTranslation();
+  const chart = useMoneyChart();
   const rows = useMemo(
     () =>
       data?.commitments.map((c) => ({
@@ -491,8 +501,9 @@ function CommitmentsChart({ data, dim }: { data: Analytics | undefined; dim: boo
             <BarChart data={rows} margin={{ top: 8, right: 0, bottom: 0, left: 0 }}>
               <CartesianGrid {...gridProps} />
               <XAxis dataKey="month" tickFormatter={axisMonth} {...axisProps} />
-              <YAxis {...yAxisMoney} />
+              <YAxis {...chart.yAxis} />
               <Tooltip
+                {...chart.tooltip}
                 cursor={barCursor}
                 content={({ active, payload }) => {
                   const row = payload?.[0]?.payload as Row | undefined;
@@ -501,10 +512,10 @@ function CommitmentsChart({ data, dim }: { data: Analytics | undefined; dim: boo
                     <TooltipBox
                       title={monthLabel(row.month)}
                       rows={[
-                        { label: t("invoices.groups.installments"), color: colors.installments, value: formatMinorUnits(row.installments) },
-                        { label: t("analytics.commitments.recurring"), color: colors.fixed, value: formatMinorUnits(row.recurringExpense) },
-                        { label: t("analytics.commitments.recurringIncome"), value: formatMinorUnits(row.recurringIncome), strong: false },
-                        { label: t("planning.calendar.projection.projected"), value: formatMinorUnits(row.balance), strong: false },
+                        { label: t("invoices.groups.installments"), color: colors.installments, value: <Money amount={row.installments} /> },
+                        { label: t("analytics.commitments.recurring"), color: colors.fixed, value: <Money amount={row.recurringExpense} /> },
+                        { label: t("analytics.commitments.recurringIncome"), value: <Money amount={row.recurringIncome} />, strong: false },
+                        { label: t("planning.calendar.projection.projected"), value: <Money amount={row.balance} />, strong: false },
                       ]}
                     />
                   );
@@ -562,12 +573,12 @@ function MonthlyTable({ data, onInspectMonth }: { data: Analytics | undefined; o
               {[...activeSeries(data.series)].reverse().map((p) => (
                 <tr key={p.month} className="border-t border-line">
                   <td className="px-3 py-2 text-left"><button type="button" className="rounded-md py-1 text-accent hover:underline" onClick={() => onInspectMonth(p.month)} aria-label={t("home.categories.open", { name: monthLabel(p.month) })}>{monthLabel(p.month)}</button></td>
-                  <td className="px-3 py-2">{formatMinorUnits(p.income)}</td>
-                  <td className="px-3 py-2">{formatMinorUnits(p.expense)}</td>
-                  <td className="px-3 py-2">{formatMinorUnits(p.result)}</td>
+                  <td className="px-3 py-2"><Money amount={p.income} /></td>
+                  <td className="px-3 py-2"><Money amount={p.expense} /></td>
+                  <td className="px-3 py-2"><Money amount={p.result} /></td>
                   <td className="px-3 py-2">{formatBps(p.savingsRateBps)}</td>
-                  <td className="px-3 py-2">{formatMinorUnits(p.invested)}</td>
-                  <td className="px-3 py-2">{formatMinorUnits(p.netWorth)}</td>
+                  <td className="px-3 py-2"><Money amount={p.invested} /></td>
+                  <td className="px-3 py-2"><Money amount={p.netWorth} /></td>
                 </tr>
               ))}
             </tbody>

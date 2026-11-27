@@ -13,7 +13,8 @@ import { Segmented } from "@/components/Segmented";
 import { useToast } from "@/components/Toast";
 import { errorMessage } from "@/lib/api";
 import { currentMonth, monthLabel, shortMonthLabel } from "@/lib/dates";
-import { formatMinorUnits, minorUnitsToInput, parseReaisToMinorUnits } from "@/lib/money";
+import { minorUnitsToInput, parseReaisToMinorUnits } from "@/lib/money";
+import { useFormatMoney } from "@/hooks/useHideValues";
 import {
   useAccounts,
   useCards,
@@ -48,6 +49,7 @@ function monthlyOf(rule: RecurringRule): bigint {
 /** The rules behind every scheduled entry; lives as a tab of Lançamentos. */
 export function RecurringScreen() {
   const { t } = useTranslation();
+  const money = useFormatMoney();
   const rules = useRecurring();
   const [editing, setEditing] = useState<RecurringRule | "new" | null>(null);
   const [search, setSearch] = useState("");
@@ -101,7 +103,7 @@ export function RecurringScreen() {
                   key={group.title}
                   flush
                   title={group.title}
-                  actions={<span className="text-xs text-muted">{t("recurring.perMonth", { amount: formatMinorUnits(total.toString()) })}</span>}
+                  actions={<span className="text-xs text-muted">{t("recurring.perMonth", { amount: money(total.toString()) })}</span>}
                 >
                   <ul>
                     {group.items.map((rule) => (
@@ -121,7 +123,7 @@ export function RecurringScreen() {
                           <span className="shrink-0 text-right">
                             <Money amount={monthlyOf(rule).toString()} tone={group.tone} className="block text-sm" />
                             {rule.installments ? (
-                              <span className="text-[11px] text-faint">{t("recurring.total", { amount: formatMinorUnits(rule.amount) })}</span>
+                              <span className="text-[11px] text-faint">{t("recurring.total", { amount: money(rule.amount) })}</span>
                             ) : null}
                           </span>
                         </button>
@@ -148,6 +150,7 @@ export function RecurringScreen() {
 
 function RecurringForm({ rule, onDone }: { rule: RecurringRule | null; onDone: () => void }) {
   const { t } = useTranslation();
+  const money = useFormatMoney();
   const toast = useToast();
   const accounts = useAccounts();
   const cards = useCards();
@@ -283,7 +286,7 @@ function RecurringForm({ rule, onDone }: { rule: RecurringRule | null; onDone: (
             />
             {parsed ? (
               <span className="text-sm text-muted">
-                {t("recurring.form.installmentsPreview", { count: installments, amount: formatMinorUnits((BigInt(parsed) / BigInt(installments)).toString()) })}
+                {t("recurring.form.installmentsPreview", { count: installments, amount: money((BigInt(parsed) / BigInt(installments)).toString()) })}
               </span>
             ) : null}
           </div>

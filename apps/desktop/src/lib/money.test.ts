@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
   formatMinorUnits,
+  formatMoney,
+  HIDDEN_MONEY,
   minorUnitsToInput,
   parseReaisToMinorUnits,
   parseSignedReaisToMinorUnits,
@@ -48,5 +50,16 @@ describe("money formatting", () => {
   it("computes bar shares without floats on the amounts", () => {
     expect(percentOf("2500", "10000")).toBe(25);
     expect(percentOf("1", "0")).toBe(0);
+  });
+});
+
+describe("formatMoney", () => {
+  it("formats like formatMinorUnits when values are visible", () => {
+    expect(formatMoney("-123456", false)).toBe(formatMinorUnits("-123456"));
+  });
+
+  it("never reveals the amount or its size when hidden", () => {
+    expect(formatMoney("5", true)).toBe(HIDDEN_MONEY);
+    expect(formatMoney("-999999999", true)).toBe(HIDDEN_MONEY);
   });
 });

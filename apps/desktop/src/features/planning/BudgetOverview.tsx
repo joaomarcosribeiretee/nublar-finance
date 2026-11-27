@@ -5,7 +5,7 @@ import { Money } from "@/components/Money";
 import { ErrorNote, Panel, ProgressBar } from "@/components/Page";
 import { errorMessage } from "@/lib/api";
 import { currentMonth, monthLabel, todayLocal } from "@/lib/dates";
-import { formatMinorUnits } from "@/lib/money";
+import { useFormatMoney } from "@/hooks/useHideValues";
 import { useBudgets, type BudgetStatus, type Budgets } from "@/lib/queries";
 import { categoryLabel } from "@/lib/categories";
 
@@ -50,6 +50,7 @@ export function BudgetOverview({
   onCategory?: (category: { id: string; name: string }) => void;
 }) {
   const { t } = useTranslation();
+  const money = useFormatMoney();
   const budgets = useBudgets(month);
   const data = budgets.data;
   const pace = monthProgress(month);
@@ -95,7 +96,7 @@ export function BudgetOverview({
             <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
               <p className="text-sm">
                 <Money amount={data.totals.spent} className="text-lg" />{" "}
-                <span className="text-muted">{t("planning.of", { amount: formatMinorUnits(data.totals.limit) })}</span>
+                <span className="text-muted">{t("planning.of", { amount: money(data.totals.limit) })}</span>
               </p>
               <Remaining amount={data.totals.remaining} />
             </div>
@@ -114,14 +115,14 @@ export function BudgetOverview({
                 <button
                   type="button"
                   onClick={() => (onCategory ? onCategory(item.category) : onManage())}
-                  aria-label={t("planning.overview.itemLabel", { name: categoryLabel(item.category.name), spent: formatMinorUnits(item.spent), limit: formatMinorUnits(item.limit) })}
+                  aria-label={t("planning.overview.itemLabel", { name: categoryLabel(item.category.name), spent: money(item.spent), limit: money(item.limit) })}
                   className="w-full rounded-xl p-2 text-left transition-colors hover:bg-hover"
                 >
                   <span className="flex items-baseline justify-between gap-3 text-sm">
                     <span className="truncate">{categoryLabel(item.category.name)}</span>
                     <span className="shrink-0 tabular">
                       <Money amount={item.spent} />
-                      <span className="text-xs text-muted"> / {formatMinorUnits(item.limit)}</span>
+                      <span className="text-xs text-muted"> / {money(item.limit)}</span>
                     </span>
                   </span>
                   <span className="mt-2 block">

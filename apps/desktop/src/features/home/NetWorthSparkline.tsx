@@ -1,10 +1,10 @@
 import { useId } from "react";
 import { useTranslation } from "react-i18next";
 import { Area, AreaChart, ResponsiveContainer, Tooltip } from "recharts";
-import { TooltipBox } from "@/components/charts";
+import { TooltipBox, useMoneyChart } from "@/components/charts";
 import { formatBps, plotValue } from "@/lib/chart";
 import { monthLabel } from "@/lib/dates";
-import { formatMinorUnits } from "@/lib/money";
+import { Money } from "@/components/Money";
 import { useAnalytics } from "@/lib/queries";
 
 /** Last 12 months of net worth, as a quiet trend next to the headline. */
@@ -12,6 +12,7 @@ export function NetWorthSparkline({ month, onOpen }: { month: string; onOpen: ()
   const { t } = useTranslation();
   const analytics = useAnalytics(month, 12);
   const fill = useId();
+  const chart = useMoneyChart();
   const data = analytics.data;
   if (!data || data.kpis.trackedMonths < 2) {
     return null;
@@ -36,6 +37,7 @@ export function NetWorthSparkline({ month, onOpen }: { month: string; onOpen: ()
               </linearGradient>
             </defs>
             <Tooltip
+              {...chart.tooltip}
               cursor={false}
               content={({ active, payload }) => {
                 const point = payload?.[0]?.payload as (typeof rows)[number] | undefined;
@@ -43,7 +45,7 @@ export function NetWorthSparkline({ month, onOpen }: { month: string; onOpen: ()
                 return (
                   <TooltipBox
                     title={monthLabel(point.month)}
-                    rows={[{ label: t("home.netWorth"), color: "var(--accent)", value: formatMinorUnits(point.netWorth) }]}
+                    rows={[{ label: t("home.netWorth"), color: "var(--accent)", value: <Money amount={point.netWorth} /> }]}
                   />
                 );
               }}
@@ -63,7 +65,7 @@ export function NetWorthSparkline({ month, onOpen }: { month: string; onOpen: ()
       <div className="pb-0.5 text-xs">
         <p className="text-muted">{t("home.sparkline.period")}</p>
         <p className={change > 0n ? "text-positive" : change < 0n ? "text-negative" : "text-muted"}>
-          {data.kpis.netWorthChangeBps !== null ? formatBps(data.kpis.netWorthChangeBps, true) : formatMinorUnits(data.kpis.netWorthChange)}
+          {data.kpis.netWorthChangeBps !== null ? formatBps(data.kpis.netWorthChangeBps, true) : <Money amount={data.kpis.netWorthChange} />}
         </p>
       </div>
     </button>

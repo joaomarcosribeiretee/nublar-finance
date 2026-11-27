@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { useHideValues } from "@/hooks/useHideValues";
 import { compactBRL } from "@/lib/chart";
 
 /** Shared axis/grid styling: hairline, recessive, solid (never dashed). */
@@ -8,11 +9,22 @@ export const axisProps = {
   tickLine: false,
   tick: axisTick,
 } as const;
-export const yAxisMoney = {
+const yAxisMoney = {
   ...axisProps,
   width: 84,
   tickFormatter: (value: number) => compactBRL(value),
 } as const;
+/**
+ * Money axis and tooltip for a chart. In privacy mode the marks keep their
+ * shape, but the axis loses its labels (same width, so nothing shifts) and the
+ * tooltip never opens. Spread `yAxis` on <YAxis> and `tooltip` on <Tooltip>.
+ */
+export function useMoneyChart() {
+  const hidden = useHideValues();
+  return hidden
+    ? { yAxis: { ...yAxisMoney, tick: false }, tooltip: { active: false } }
+    : { yAxis: yAxisMoney, tooltip: {} };
+}
 export const gridProps = {
   stroke: "var(--grid)",
   vertical: false,
