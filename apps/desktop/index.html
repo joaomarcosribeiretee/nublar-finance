@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Nublar</title>
     <script>
-      // Paint the saved theme and language before the app loads (no flash).
+      // Paint the saved theme, accent and language before the app loads (no flash).
       // Same rules as applyPreferences in src/lib/preferences.ts.
       try {
         var p = JSON.parse(localStorage.getItem("nublar.preferences") || "{}");
@@ -13,6 +13,8 @@
           p.theme === "LIGHT" ||
           (p.theme === "SYSTEM" && matchMedia("(prefers-color-scheme: light)").matches);
         document.documentElement.dataset.theme = light ? "light" : "dark";
+        if (/^(GOLD|GREEN|BLUE|VIOLET|ROSE)$/.test(p.accent))
+          document.documentElement.dataset.accent = p.accent.toLowerCase();
         if (p.locale === "en") document.documentElement.lang = "en";
       } catch (e) {}
     </script>

@@ -8,7 +8,12 @@
  * :root, so any element can preview a theme with data-theme="light|dark".
  *
  * Contrast (checked by contrast.test.ts): text tokens reach 4.5:1 on every
- * surface, chart series 3:1 on --surface, in both themes.
+ * surface, chart series 3:1 on --surface, in both themes. So does every
+ * accent step, with --accent-fg on top of it.
+ *
+ * Accent: each theme declares one step per accent the user can pick in
+ * Settings (--accent-gold…). [data-accent] only points --accent at one of
+ * them; nothing else changes, so income/expense colors stay put.
  *
  * The Electron main process keeps a copy of --background and --muted for the
  * window and title bar (electron/main.cjs): change them there too.
@@ -30,7 +35,12 @@
   --faint: #7e9084;
   --line: rgb(232 239 233 / 9%);
   --line-strong: rgb(232 239 233 / 13%);
-  --accent: #c9a45c;
+  --accent-gold: #c9a45c;
+  --accent-green: #52b8ad;
+  --accent-blue: #7ea6ea;
+  --accent-violet: #a898ec;
+  --accent-rose: #e58fb2;
+  --accent: var(--accent-gold);
   --accent-fg: var(--background);
   --positive: #6cc495;
   --negative: #e58a7c;
@@ -70,7 +80,12 @@
   --faint: #5f6c64;
   --line: rgb(22 32 27 / 10%);
   --line-strong: rgb(22 32 27 / 16%);
-  --accent: #866424;
+  --accent-gold: #866424;
+  --accent-green: #1b6b64;
+  --accent-blue: #2f5fb3;
+  --accent-violet: #6249c0;
+  --accent-rose: #a63f6c;
+  --accent: var(--accent-gold);
   --accent-fg: var(--surface);
   --positive: #1f7548;
   --negative: #ad4334;
@@ -94,6 +109,34 @@
   --series-8: #d63e3d;
 
   color-scheme: light;
+}
+
+/* ── Accent ────────────────────────────────────────────────────────── */
+/* Set on <html> (and on a swatch to preview one). Re-declared on every
+   nested [data-theme] so a theme preview gets its own step of the accent. */
+[data-accent="gold"],
+[data-accent="gold"] [data-theme] {
+  --accent: var(--accent-gold);
+}
+
+[data-accent="green"],
+[data-accent="green"] [data-theme] {
+  --accent: var(--accent-green);
+}
+
+[data-accent="blue"],
+[data-accent="blue"] [data-theme] {
+  --accent: var(--accent-blue);
+}
+
+[data-accent="violet"],
+[data-accent="violet"] [data-theme] {
+  --accent: var(--accent-violet);
+}
+
+[data-accent="rose"],
+[data-accent="rose"] [data-theme] {
+  --accent: var(--accent-rose);
 }
 
 /* ── Derived (shared by every theme; never picked by hand) ──────────── */

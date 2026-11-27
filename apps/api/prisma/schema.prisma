@@ -388,6 +388,8 @@ enum ThemePreference {
 model UserPreferences {
   userId          String          @id @db.Uuid
   theme           ThemePreference @default(DARK)
+  /// "GOLD" | "GREEN" | "BLUE" | "VIOLET" | "ROSE"; validated by @nublar/validation.
+  accent          String          @default("GOLD")
   /// "pt-BR" | "en"; validated by @nublar/validation.
   locale          String          @default("pt-BR")
   currency        String          @default("BRL")

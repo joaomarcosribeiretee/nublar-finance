@@ -5,6 +5,7 @@ import { Button } from "@/components/Button";
 import { Icon } from "@/components/Icon";
 import { PageHeader, Panel } from "@/components/Page";
 import { Segmented } from "@/components/Segmented";
+import { AccentPicker } from "./AccentPicker";
 import { ThemePicker } from "./ThemePicker";
 import { useSaveSetting } from "./useSaveSetting";
 
@@ -59,6 +60,7 @@ export function SettingsScreen({ email, onSignOut }: { email: string; onSignOut:
 
         <Panel title={t("settings.appearance.title")} subtitle={t("settings.appearance.subtitle")}>
           <ThemePicker value={preferences.theme} onChange={(theme) => save({ theme })} />
+          <AccentPicker value={preferences.accent} onChange={(accent) => save({ accent })} />
         </Panel>
 
         <Panel title={t("settings.language.title")} subtitle={t("settings.language.subtitle")}>

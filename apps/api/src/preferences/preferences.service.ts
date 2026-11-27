@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import {
+  accentSchema,
   DEFAULT_PREFERENCES,
   localeSchema,
   onboardingStateSchema,
@@ -15,6 +16,7 @@ import { PrismaService } from '../prisma/prisma.service';
 function serialize(row: UserPreferences): Preferences {
   return {
     theme: row.theme,
+    accent: accentSchema.catch(DEFAULT_PREFERENCES.accent).parse(row.accent),
     locale: localeSchema.catch(DEFAULT_PREFERENCES.locale).parse(row.locale),
     currency: DEFAULT_PREFERENCES.currency,
     monthStartDay: row.monthStartDay,

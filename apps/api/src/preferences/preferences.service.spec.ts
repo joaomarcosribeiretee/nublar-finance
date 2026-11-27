@@ -10,6 +10,7 @@ describe('PreferencesService', () => {
     return {
       userId,
       theme: 'DARK',
+      accent: 'GOLD',
       locale: 'pt-BR',
       currency: 'BRL',
       monthStartDay: 1,
@@ -85,11 +86,16 @@ describe('PreferencesService', () => {
 
     it('falls back to defaults for stored values that no longer parse', async () => {
       const { ...prisma } = prismaWith(
-        row({ locale: 'fr', onboardingState: { broken: true } }),
+        row({
+          locale: 'fr',
+          accent: 'PINK',
+          onboardingState: { broken: true },
+        }),
       );
       const result = await new PreferencesService(prisma as never).get(userId);
 
       expect(result.locale).toBe('pt-BR');
+      expect(result.accent).toBe('GOLD');
       expect(result.onboardingState).toEqual(
         DEFAULT_PREFERENCES.onboardingState,
       );
