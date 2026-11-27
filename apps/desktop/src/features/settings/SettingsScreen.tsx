@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import { Button } from "@/components/Button";
 import { Icon } from "@/components/Icon";
 import { PageHeader, Panel } from "@/components/Page";
+import { ThemePicker } from "./ThemePicker";
 import { useSaveSetting } from "./useSaveSetting";
 
 const REPOSITORY_URL = "https://github.com/joaomarcosribeiretee/nublar-finance";
@@ -12,7 +13,7 @@ const REPOSITORY_URL = "https://github.com/joaomarcosribeiretee/nublar-finance";
  */
 export function SettingsScreen({ email, onSignOut }: { email: string; onSignOut: () => void }) {
   // Sections that change preferences pass `save` to their controls.
-  const { status, saved, failed } = useSaveSetting();
+  const { preferences, save, status, saved, failed } = useSaveSetting();
 
   return (
     <section className="animate-enter">
@@ -44,6 +45,10 @@ export function SettingsScreen({ email, onSignOut }: { email: string; onSignOut:
               <Icon name="logout" size={16} /> Sair
             </Button>
           </SettingRow>
+        </Panel>
+
+        <Panel title="Aparência" subtitle="O tema muda na hora, sem recarregar.">
+          <ThemePicker value={preferences.theme} onChange={(theme) => save({ theme })} />
         </Panel>
 
         <Panel title="Sobre">

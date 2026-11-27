@@ -47,10 +47,17 @@ export function resolveTheme(theme: Theme, prefersLight: boolean): "dark" | "lig
 
 const lightQuery = "(prefers-color-scheme: light)";
 
+/** What Electron's nativeTheme.themeSource expects for each choice. */
+export function nativeThemeSource(theme: Theme): "dark" | "light" | "system" {
+  return theme === "SYSTEM" ? "system" : theme === "LIGHT" ? "light" : "dark";
+}
+
 export function applyPreferences(preferences: Preferences): void {
   const root = document.documentElement;
   root.dataset.theme = resolveTheme(preferences.theme, matchMedia(lightQuery).matches);
   root.lang = preferences.locale;
+  // Title bar and native menus (Electron only).
+  window.nublar?.setTheme(nativeThemeSource(preferences.theme));
 }
 
 /** With theme SYSTEM, follow the OS when it switches while the app is open. */

@@ -9,8 +9,10 @@ interface ImportMetaEnv {
   readonly VITE_SUPABASE_ANON_KEY: string;
 }
 
+/** Bridge from electron/preload.cjs; absent when the page runs in a browser. */
 interface Window {
-  nublar: {
+  nublar?: {
     platform: string;
+    setTheme: (source: "dark" | "light" | "system") => void;
   };
 }
