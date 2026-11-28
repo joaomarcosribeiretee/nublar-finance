@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
+  investmentMovementSchema,
+  quantityToUnits,
+  unitsToQuantity,
   btcToSats,
   coinForSymbol,
   satsToBtc,
@@ -265,5 +268,29 @@ describe("bitcoin in sats", () => {
     expect(updateInvestmentSchema.safeParse({ ...base, quantity: "0,12345678" }).success).toBe(true);
     // Other coins keep any precision.
     expect(updateInvestmentSchema.safeParse({ ...base, coinId: "ethereum", quantity: "0.123456789" }).success).toBe(true);
+  });
+});
+
+describe("coin quantities", () => {
+  it("converts decimal text to 10^-18 units and back, exactly", () => {
+    expect(quantityToUnits("0,5")).toBe(5n * 10n ** 17n);
+    expect(quantityToUnits("1.000000000000000001")).toBe(10n ** 18n + 1n);
+    expect(quantityToUnits("1.0000000000000000001")).toBeNull();
+    expect(quantityToUnits("abc")).toBeNull();
+    expect(unitsToQuantity(15n * 10n ** 17n)).toBe("1.5");
+    expect(unitsToQuantity(-(10n ** 18n))).toBe("-1");
+  });
+
+  it("takes an optional quantity above zero on movements", () => {
+    const base = {
+      type: "INVESTMENT",
+      accountId: "4f8b5c4e-2c1a-4b7a-9d3e-1a2b3c4d5e6f",
+      amount: "50000",
+      date: "2026-11-30",
+    };
+    expect(investmentMovementSchema.safeParse(base).success).toBe(true);
+    expect(investmentMovementSchema.safeParse({ ...base, quantity: "0,0005" }).success).toBe(true);
+    expect(investmentMovementSchema.safeParse({ ...base, quantity: "0" }).success).toBe(false);
+    expect(investmentMovementSchema.safeParse({ ...base, quantity: "-1" }).success).toBe(false);
   });
 });

@@ -32,7 +32,7 @@ Produto (CDB, LCI, LCA, Tesouro…), indexador e taxa (110% do CDI, IPCA + 6,5%,
 
 - Aplicado = valor inicial aplicado + aportes.
 - Ganho = valor atual + resgatado − aplicado (realizado ou não).
-- Rentabilidade = ganho ÷ aplicado. Não há custo médio por cota.
+- Rentabilidade = ganho ÷ aplicado. Não há custo médio por cota, exceto em cripto (ver `0006-preco-medio-em-cripto.md`).
 - Rendimento só vira receita se o usuário lançar como receita (ex.: dividendos caindo na conta).
 
 ## Patrimônio

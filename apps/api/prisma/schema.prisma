@@ -106,6 +106,9 @@ model Transaction {
   occurrence           String?
   /// Contributions (INVESTMENT) and redemptions (REDEMPTION).
   investmentId         String?           @db.Uuid
+  /// Crypto contributions and redemptions: how many coins moved, as decimal
+  /// text with "." ("0.0005"), never a float. Drives the average price.
+  quantity             String?
   categoryId           String?           @db.Uuid
   type                 TransactionType
   amount               BigInt

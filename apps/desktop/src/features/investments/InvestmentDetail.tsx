@@ -25,11 +25,18 @@ import {
 } from "@/lib/queries";
 import { bpsToPercentInput, liquidityLabels, parsePercentToBps, productLabels, rateLabel } from "@/lib/rates";
 import { cdiPreview, isTaxExempt, loadCdiBps, saveCdiBps } from "@/lib/yield";
-import { BitcoinHolding } from "./BitcoinUnit";
+import { useHideValues } from "@/hooks/useHideValues";
+import { formatSats, MAX_SATS_DIGITS, satsToInput, typedToSats, type BtcUnit } from "@/lib/bitcoin";
+import { formatQuantity, typedToQuantity } from "@/lib/quantity";
+import { btcToSats } from "@nublar/validation";
+import { BitcoinHolding, BtcUnitToggle, useBtcUnit } from "./BitcoinUnit";
+import { CostBasisSummary } from "./CostBasis";
 import { GainText } from "./GainText";
 import { InvestmentForm } from "./InvestmentForm";
 import { QuoteStatus } from "./QuoteStatus";
-import { formatDate, formatMonth } from "@/lib/format";
+import { formatDate, formatMonth, numberSeparators } from "@/lib/format";
+
+const decimalSeparator = () => numberSeparators().decimal;
 
 type Action = "none" | "INVESTMENT" | "REDEMPTION" | "value" | "edit";
 
@@ -66,6 +73,8 @@ export function InvestmentDetail({ id, onClose }: { id: string; onClose: () => v
       {data.autoQuote && data.quote ? <QuoteStatus coinId={data.coinId} quote={data.quote} /> : null}
 
       {data.coinId === "bitcoin" && data.quantity ? <BitcoinHolding quantity={data.quantity} /> : null}
+
+      <CostBasisSummary data={data} />
 
       <CdiPreview data={data} />
 
@@ -162,6 +171,22 @@ function MovementForm({
   const [date, setDate] = useState(todayLocal());
   const [error, setError] = useState<string | null>(null);
   const chosen = accountId || accounts.data?.[0]?.id || "";
+  // Crypto: how many coins moved. A redemption starts as "sell everything",
+  // like the amount does.
+  const crypto = data.assetClass === "CRYPTO";
+  const bitcoin = data.coinId === "bitcoin";
+  const [btcUnit, setBtcUnit] = useBtcUnit();
+  const [quantity, setQuantity] = useState(() => {
+    if (type !== "REDEMPTION" || !data.quantity) return "";
+    const sats = bitcoin ? btcToSats(data.quantity) : null;
+    return sats === null ? data.quantity.replace(".", decimalSeparator()) : satsToInput(sats, btcUnit);
+  });
+
+  function chooseBtcUnit(next: BtcUnit) {
+    const sats = typedToSats(quantity.replace(/[.,]$/, ""), btcUnit);
+    if (sats !== null) setQuantity(satsToInput(sats, next));
+    setBtcUnit(next);
+  }
 
   async function submit(event: React.FormEvent) {
     event.preventDefault();
@@ -170,12 +195,21 @@ function MovementForm({
       setError(t("investments.detail.errors.amount"));
       return;
     }
+    let coins: string | undefined;
+    if (crypto && (quantity.trim() || data.quantity)) {
+      const typed = typedToQuantity(quantity, data.coinId, btcUnit);
+      if (typed === null) {
+        setError(bitcoin ? t("investments.bitcoin.invalid") : t("investments.detail.errors.quantity"));
+        return;
+      }
+      coins = typed;
+    }
     if (!chosen) {
       setError(t("investments.detail.errors.noAccount"));
       return;
     }
     try {
-      await move.mutateAsync({ id: data.id, type, accountId: chosen, amount: minor, date });
+      await move.mutateAsync({ id: data.id, type, accountId: chosen, amount: minor, date, quantity: coins });
       toast(type === "INVESTMENT" ? t("investments.detail.invested") : t("investments.detail.redeemed"));
       onDone();
     } catch (reason: unknown) {
@@ -186,7 +220,7 @@ function MovementForm({
   return (
     <form onSubmit={(event) => void submit(event)} className="animate-enter space-y-3 rounded-2xl bg-surface-2 p-4">
       <p className="text-sm">{type === "INVESTMENT" ? t("investments.detail.invest") : t("investments.detail.redeem")}</p>
-      <div className="grid gap-3 sm:grid-cols-3">
+      <div className={`grid gap-3 ${crypto ? "sm:grid-cols-2" : "sm:grid-cols-3"}`}>
         <AccountSelect
           label={type === "INVESTMENT" ? t("investments.detail.from") : t("investments.detail.to")}
           accounts={accounts.data ?? []}
@@ -205,8 +239,37 @@ function MovementForm({
             required
           />
         </Field>
+        {crypto ? (
+          <Field label={type === "INVESTMENT" ? t("investments.detail.quantityBought") : t("investments.detail.quantitySold")}>
+            {bitcoin ? (
+              <span className="relative block">
+                {btcUnit === "SATS" ? (
+                  <input
+                    className={`${controlClass} tabular pr-28`}
+                    type="text"
+                    inputMode="numeric"
+                    autoComplete="off"
+                    placeholder="50000"
+                    value={quantity}
+                    onChange={(event) => setQuantity(event.target.value.replace(/\D/g, "").slice(0, MAX_SATS_DIGITS))}
+                  />
+                ) : (
+                  <DecimalInput className={`${controlClass} tabular pr-28`} placeholder="0,0005" decimals={8} wholeDigits={8} value={quantity} onChange={setQuantity} />
+                )}
+                <span className="absolute top-1/2 right-0.5 -translate-y-1/2">
+                  <BtcUnitToggle unit={btcUnit} onChange={chooseBtcUnit} />
+                </span>
+              </span>
+            ) : (
+              <DecimalInput placeholder="0,5" decimals={8} wholeDigits={12} value={quantity} onChange={setQuantity} />
+            )}
+          </Field>
+        ) : null}
       </div>
-      <p className="text-[11px] text-faint">{t("investments.detail.movementHint")}</p>
+      <p className="text-[11px] text-faint">
+        {t("investments.detail.movementHint")}
+        {crypto ? ` ${t("investments.detail.quantityHint")}` : null}
+      </p>
       {error ? (
         <p role="alert" className="text-sm text-negative">
           {error}
@@ -327,6 +390,7 @@ function Timeline({ data }: { data: Detail }) {
                 <span className="min-w-0 flex-1 truncate text-sm">
                   {movement.type === "INVESTMENT" ? t("transactions.kind.investment") : t("transactions.kind.redemption")}
                   <span className="text-muted"> · {movement.account?.name}</span>
+                  {movement.quantity ? <MovedQuantity quantity={movement.quantity} bitcoin={data.coinId === "bitcoin"} /> : null}
                 </span>
                 <Money amount={movement.amount} sign={movement.type === "INVESTMENT" ? "+" : "-"} className="text-sm" />
                 <DeleteButton
@@ -356,6 +420,21 @@ function Timeline({ data }: { data: Detail }) {
             ))}
       </ul>
     </div>
+  );
+}
+
+/** "· 0,0005 BTC" next to a crypto movement, in the unit the person picked. */
+function MovedQuantity({ quantity, bitcoin }: { quantity: string; bitcoin: boolean }) {
+  const { t } = useTranslation();
+  const hidden = useHideValues();
+  const [unit] = useBtcUnit();
+  const sats = bitcoin ? btcToSats(quantity) : null;
+  const amount = hidden ? "••••" : sats === null ? formatQuantity(quantity) : formatSats(sats, unit);
+  return (
+    <span className="tabular text-faint">
+      {" · "}
+      {sats === null ? amount : t(`investments.bitcoin.amount.${unit}`, { amount })}
+    </span>
   );
 }
 

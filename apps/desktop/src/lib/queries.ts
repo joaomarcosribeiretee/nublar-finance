@@ -327,6 +327,19 @@ export type Portfolio = {
   };
 };
 
+/** Weighted average cost of a crypto position (docs/decisions/0006). */
+export type CostBasis = {
+  /** Centavos per whole coin; null once everything was sold. */
+  averagePrice: string | null;
+  quantity: string;
+  costBasis: string;
+  unrealized: string;
+  unrealizedBps: number | null;
+  realized: string;
+  realizedBps: number | null;
+  hasSales: boolean;
+};
+
 export type InvestmentDetail = Performance & QuoteFields & {
   id: string;
   name: string;
@@ -341,11 +354,15 @@ export type InvestmentDetail = Performance & QuoteFields & {
   rateBps: number | null;
   liquidity: Liquidity | null;
   history: { month: string; value: string }[];
+  /** Crypto only; null when the movements lack quantities to tell the price. */
+  costBasis: CostBasis | null;
   valuations: { id: string; date: string; value: string; auto: boolean }[];
   movements: {
     id: string;
     type: "INVESTMENT" | "REDEMPTION";
     amount: string;
+    /** Crypto: coins moved, decimal text with ".". */
+    quantity: string | null;
     date: string;
     account: Ref | null;
   }[];
@@ -710,7 +727,17 @@ export const useDeleteInvestment = () =>
 
 export const useMoveInvestment = () =>
   useMoneyMutation(
-    ({ id, ...input }: { id: string; type: "INVESTMENT" | "REDEMPTION"; accountId: string; amount: string; date: string }) =>
+    ({
+      id,
+      ...input
+    }: {
+      id: string;
+      type: "INVESTMENT" | "REDEMPTION";
+      accountId: string;
+      amount: string;
+      date: string;
+      quantity?: string;
+    }) =>
       api(`/investments/${id}/movements`, json("POST", input)),
   );
 

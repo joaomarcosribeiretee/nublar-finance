@@ -7,6 +7,7 @@ import {
   calendarMonthSchema,
   confirmOccurrenceSchema,
   createTransactionSchema,
+  quantityToUnits,
   updateOccurrenceSchema,
   updateTransactionSchema,
   type CreateTransactionInput,
@@ -24,6 +25,7 @@ import {
 import { positionsValueAt } from '../ledger/investments';
 import { LedgerService } from '../ledger/ledger.service';
 import { monthRange, shiftMonth } from '../ledger/month';
+import { shiftQuantity } from '../investments/investments.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { RecurringService } from '../recurring/recurring.service';
 import { serialize, withRelations } from './serialize';
@@ -119,6 +121,23 @@ export class TransactionsService {
         where: { id },
         data: { status: 'CANCELED' },
       });
+      return;
+    }
+    // A crypto movement takes its coins back out of the position.
+    const { investment, quantity } = existing;
+    const units = quantity ? quantityToUnits(quantity) : null;
+    if (investment && units !== null) {
+      const held = shiftQuantity(
+        investment,
+        existing.type === 'INVESTMENT' ? -units : units,
+      );
+      await this.prisma.db.$transaction([
+        this.prisma.db.investment.update({
+          where: { id: investment.id },
+          data: held,
+        }),
+        this.prisma.db.transaction.delete({ where: { id } }),
+      ]);
       return;
     }
     await this.prisma.db.transaction.delete({ where: { id } });
@@ -312,6 +331,16 @@ export class TransactionsService {
         status: true,
         purchaseId: true,
         recurringRuleId: true,
+        quantity: true,
+        investment: {
+          select: {
+            id: true,
+            assetClass: true,
+            coinId: true,
+            quantity: true,
+            sats: true,
+          },
+        },
       },
     });
     if (!existing) {

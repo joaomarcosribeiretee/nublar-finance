@@ -314,6 +314,30 @@ export function satsToBtc(sats: bigint): string {
   return fraction ? `${whole}.${fraction}` : whole.toString();
 }
 
+/** Decimal places a coin quantity keeps (wei-level: covers every coin). */
+export const QUANTITY_SCALE = 18;
+const UNITS_PER_COIN = 10n ** BigInt(QUANTITY_SCALE);
+
+/**
+ * "0,5" or "0.00012" as whole units of 10^-18, exact (no floats), so
+ * quantities can be added and compared. Null when it is not a plain decimal
+ * or has more than 18 places.
+ */
+export function quantityToUnits(text: string): bigint | null {
+  const match = /^(\d+)(?:[.,](\d{1,18}))?$/.exec(text.trim());
+  if (!match) return null;
+  return BigInt(match[1]) * UNITS_PER_COIN + BigInt((match[2] ?? "").padEnd(QUANTITY_SCALE, "0"));
+}
+
+/** Units back to decimal text with "." and no trailing zeros: 5 × 10^17 → "0.5". */
+export function unitsToQuantity(units: bigint): string {
+  const sign = units < 0n ? "-" : "";
+  const abs = units < 0n ? -units : units;
+  const whole = abs / UNITS_PER_COIN;
+  const fraction = (abs % UNITS_PER_COIN).toString().padStart(QUANTITY_SCALE, "0").replace(/0+$/, "");
+  return `${sign}${fraction ? `${whole}.${fraction}` : whole}`;
+}
+
 const nonNegativeMinorSchema = moneyAmountSchema.refine(
   (amount) => amount >= 0n,
   msg("amountNegative"),
@@ -439,6 +463,18 @@ export const investmentMovementSchema = z.object({
   accountId: z.string().uuid(msg("chooseAccount")),
   amount: positiveMinorAmountSchema,
   date: calendarDateSchema,
+  /**
+   * Crypto only: how many coins were bought or sold, as decimal text. It
+   * updates the position's quantity and feeds the average price.
+   */
+  quantity: z
+    .string()
+    .trim()
+    .refine((text) => {
+      const units = quantityToUnits(text);
+      return units !== null && units > 0n;
+    }, msg("invalidQuantity"))
+    .optional(),
 });
 
 export const valuationSchema = z.object({
