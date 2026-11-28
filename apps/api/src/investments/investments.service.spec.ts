@@ -1,6 +1,9 @@
+import { BadRequestException } from '@nestjs/common';
 import {
   fixedIncomeSummary,
+  movedUnits,
   quantityOf,
+  shiftQuantity,
   quoteOf,
   storedQuantity,
 } from './investments.service';
@@ -165,5 +168,89 @@ describe('bitcoin quantity in sats', () => {
   it('shows sats back as BTC text', () => {
     expect(quantityOf({ quantity: '', sats: 12_345n })).toBe('0.00012345');
     expect(quantityOf({ quantity: '100', sats: null })).toBe('100');
+  });
+});
+
+describe('movedUnits', () => {
+  const coin = 10n ** 18n;
+  const btc = {
+    assetClass: 'CRYPTO',
+    coinId: 'bitcoin',
+    quantity: '',
+    sats: 50_000_000n,
+  };
+
+  it('reads the coins a crypto movement carries', () => {
+    expect(movedUnits(btc, '0,25')).toBe(coin / 4n);
+    expect(
+      movedUnits(
+        { ...btc, coinId: 'ethereum', sats: null, quantity: '2' },
+        '0.000000000000000001',
+      ),
+    ).toBe(1n);
+  });
+
+  it('asks for the quantity when the position tracks one', () => {
+    expect(() => movedUnits(btc, undefined)).toThrow(BadRequestException);
+    expect(
+      movedUnits({ ...btc, coinId: null, sats: null, quantity: '' }, undefined),
+    ).toBeNull();
+  });
+
+  it('refuses less than one sat and ignores quantities outside crypto', () => {
+    expect(() => movedUnits(btc, '0.000000001')).toThrow(BadRequestException);
+    expect(
+      movedUnits(
+        {
+          ...btc,
+          assetClass: 'STOCK',
+          coinId: null,
+          sats: null,
+          quantity: '100',
+        },
+        '10',
+      ),
+    ).toBeNull();
+  });
+});
+
+describe('shiftQuantity', () => {
+  const coin = 10n ** 18n;
+
+  it('adds and removes bitcoin in whole sats', () => {
+    const btc = {
+      assetClass: 'CRYPTO',
+      coinId: 'bitcoin',
+      quantity: '',
+      sats: 50_000_000n,
+    };
+    expect(shiftQuantity(btc, coin / 4n)).toEqual({
+      quantity: '',
+      sats: 75_000_000n,
+    });
+    expect(shiftQuantity(btc, -coin / 2n)).toEqual({ quantity: '', sats: 0n });
+  });
+
+  it('keeps other coins as decimal text', () => {
+    const eth = {
+      assetClass: 'CRYPTO',
+      coinId: 'ethereum',
+      quantity: '1,5',
+      sats: null,
+    };
+    expect(shiftQuantity(eth, coin / 2n)).toEqual({
+      quantity: '2',
+      sats: null,
+    });
+  });
+
+  it('refuses to hold fewer coins than zero', () => {
+    const eth = {
+      assetClass: 'CRYPTO',
+      coinId: 'ethereum',
+      quantity: '1',
+      sats: null,
+    };
+    expect(() => shiftQuantity(eth, -2n * coin)).toThrow(BadRequestException);
   });
 });

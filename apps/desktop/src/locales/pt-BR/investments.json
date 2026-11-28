@@ -90,7 +90,8 @@
       "amount": "Informe um valor, por exemplo 500,00.",
       "noAccount": "Cadastre uma conta antes: o dinheiro precisa sair de algum lugar ou voltar para ele.",
       "value": "Informe quanto a aplicação vale na data.",
-      "invalidValue": "Valor inválido. Use algo como 1.250,00."
+      "invalidValue": "Valor inválido. Use algo como 1.250,00.",
+      "quantity": "Informe a quantidade, por exemplo 0,5."
     },
     "invested": "Aporte registrado",
     "redeemed": "Resgate registrado",
@@ -114,7 +115,10 @@
     "valueDeleted": "Valor excluído",
     "deleteConfirm": "Excluir?",
     "matures": "Vence {{date}}",
-    "quotedValue": "Cotação automática"
+    "quotedValue": "Cotação automática",
+    "quantityBought": "Quantidade comprada",
+    "quantitySold": "Quantidade vendida",
+    "quantityHint": "A quantidade do investimento é atualizada junto."
   },
   "preview": {
     "title": "Prévia de rendimento",
@@ -146,5 +150,15 @@
     },
     "hint": "1 BTC = 100.000.000 sats",
     "invalid": "Quantidade inválida. Em sats, use só números inteiros; em BTC, até 8 casas."
+  },
+  "costBasis": {
+    "average": "Você pagou em média {{price}} por {{symbol}}",
+    "averageUnit": "Você pagou em média {{price}} por unidade",
+    "soldAll": "Você vendeu tudo o que tinha.",
+    "unrealized": "Resultado não realizado",
+    "realized": "Resultado realizado",
+    "note": "Não realizado: quanto as moedas que você ainda tem valorizaram desde a compra.",
+    "noteWithSales": "Não realizado: quanto as moedas que você ainda tem valorizaram. Realizado: o que você ganhou ou perdeu nas vendas.",
+    "missing": "Informe a quantidade nos aportes e resgates para ver o preço médio."
   }
 }

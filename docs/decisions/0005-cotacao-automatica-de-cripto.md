@@ -23,7 +23,7 @@ Investimentos de cripto em moedas suportadas valem **quantidade × cotação em 
 - É **uma avaliação por dia**, atualizada no lugar. Os dias anteriores ficam com a cotação deles, e o histórico do patrimônio continua certo.
 - Cada sucesso também grava a cotação do dia em `CryptoQuote` (o snapshot diário, de onde vem o último preço depois de reiniciar a API).
 - Dias em que ninguém abriu a tela não têm avaliação automática: o valor fica no do último dia registrado (degrau), como acontece com as avaliações manuais.
-- Com a cotação ligada, a quantidade é o que manda. Depois de um aporte ou resgate, atualize a quantidade.
+- Com a cotação ligada, a quantidade é o que manda. Aportes e resgates de cripto informam quantas moedas moveram e atualizam a quantidade sozinhos (ver `0006-preco-medio-em-cripto.md`).
 
 ## Quando a fonte falha
 

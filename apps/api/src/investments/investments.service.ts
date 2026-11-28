@@ -10,7 +10,9 @@ import {
   bulkValuationSchema,
   createInvestmentSchema,
   investmentMovementSchema,
+  quantityToUnits,
   satsToBtc,
+  unitsToQuantity,
   updateInvestmentSchema,
   valuationSchema,
 } from '@nublar/validation';
@@ -19,6 +21,7 @@ import { parseBody } from '../common/parse-body';
 import { today } from '../common/today';
 import { assertInstitution } from '../institutions/assert-institution';
 import { dayOf } from '../ledger/cards';
+import { costBasis } from '../ledger/cost-basis';
 import {
   investmentPerformance,
   investmentValueAt,
@@ -135,6 +138,7 @@ export class InvestmentsService {
       }),
     ]);
     const now = today();
+    const performance = investmentPerformance({ ...position, today: now });
 
     return {
       id,
@@ -147,9 +151,29 @@ export class InvestmentsService {
       startDate: investment.startDate.toISOString().slice(0, 10),
       maturityDate: investment.maturityDate?.toISOString().slice(0, 10) ?? null,
       ...fixedIncomeOf(investment),
-      ...serializePerformance(
-        investmentPerformance({ ...position, today: now }),
-      ),
+      ...serializePerformance(performance),
+      costBasis:
+        investment.assetClass === 'CRYPTO'
+          ? serializeCostBasis(
+              costBasis({
+                openingApplied: investment.openingApplied,
+                heldUnits: heldUnitsOf(investment),
+                current: performance.current,
+                movements: movements
+                  .filter((movement) => movement.status === 'POSTED')
+                  .map((movement) => ({
+                    type: movement.type as 'INVESTMENT' | 'REDEMPTION',
+                    amount: movement.amount,
+                    units: movement.quantity
+                      ? quantityToUnits(movement.quantity)
+                      : null,
+                    date: movement.date.toISOString().slice(0, 10),
+                    createdAt: movement.createdAt.toISOString(),
+                  })),
+                today: now,
+              }),
+            )
+          : null,
       history: monthEndHistory(position, investment.startDate, now),
       valuations: valuations.map((valuation) => ({
         id: valuation.id,
@@ -161,6 +185,7 @@ export class InvestmentsService {
         id: movement.id,
         type: movement.type,
         amount: movement.amount.toString(),
+        quantity: movement.quantity,
         date: movement.date.toISOString().slice(0, 10),
         account: toAccountRef(movement.account),
       })),
@@ -294,18 +319,34 @@ export class InvestmentsService {
         );
       }
     }
-    const movement = await this.prisma.db.transaction.create({
-      data: {
-        userId,
-        type: input.type,
-        accountId: input.accountId,
-        investmentId: id,
-        amount: input.amount,
-        description: `${input.type === 'INVESTMENT' ? 'Aporte' : 'Resgate'} · ${investment.name}`,
-        date: asDate(input.date),
-        source: 'MANUAL',
-        status: 'POSTED',
-      },
+    // Crypto: the coins that moved update the position's quantity, so the
+    // quote and the average price follow without retyping it.
+    const moved = movedUnits(investment, input.quantity);
+    const held =
+      moved === null
+        ? null
+        : shiftQuantity(
+            investment,
+            input.type === 'INVESTMENT' ? moved : -moved,
+          );
+    const movement = await this.prisma.db.$transaction(async (tx) => {
+      if (held) {
+        await tx.investment.update({ where: { id }, data: held });
+      }
+      return tx.transaction.create({
+        data: {
+          userId,
+          type: input.type,
+          accountId: input.accountId,
+          investmentId: id,
+          amount: input.amount,
+          quantity: moved === null ? null : unitsToQuantity(moved),
+          description: `${input.type === 'INVESTMENT' ? 'Aporte' : 'Resgate'} · ${investment.name}`,
+          date: asDate(input.date),
+          source: 'MANUAL',
+          status: 'POSTED',
+        },
+      });
     });
     return { id: movement.id };
   }
@@ -460,6 +501,76 @@ export class InvestmentsService {
     }
     return investment;
   }
+}
+
+function serializeCostBasis(basis: ReturnType<typeof costBasis>) {
+  if (!basis) return null;
+  return {
+    averagePrice: basis.averagePrice?.toString() ?? null,
+    quantity: basis.quantity,
+    costBasis: basis.costBasis.toString(),
+    unrealized: basis.unrealized.toString(),
+    unrealizedBps: basis.unrealizedBps,
+    realized: basis.realized.toString(),
+    realizedBps: basis.realizedBps,
+    hasSales: basis.hasSales,
+  };
+}
+
+type HeldQuantity = {
+  assetClass: string;
+  coinId: string | null;
+  quantity: string;
+  sats: bigint | null;
+};
+
+/** Coins the position holds now, in 10^-18 units; null without a quantity. */
+export function heldUnitsOf(investment: HeldQuantity): bigint | null {
+  const quantity = quantityOf(investment);
+  return quantity ? quantityToUnits(quantity) : null;
+}
+
+/**
+ * The coins a crypto movement carries, in 10^-18 units. Required when the
+ * position tracks a quantity (the quote and the average price depend on
+ * it); ignored outside crypto. Bitcoin moves in whole sats.
+ */
+export function movedUnits(
+  investment: HeldQuantity,
+  quantity: string | undefined,
+): bigint | null {
+  if (investment.assetClass !== 'CRYPTO') return null;
+  if (!quantity) {
+    if (heldUnitsOf(investment) !== null) {
+      throw new BadRequestException('Informe a quantidade movimentada');
+    }
+    return null;
+  }
+  if (investment.coinId === 'bitcoin' && btcToSats(quantity) === null) {
+    throw new BadRequestException('Quantidade inválida');
+  }
+  return quantityToUnits(quantity);
+}
+
+/**
+ * The position's stored quantity after `delta` units move in (positive) or
+ * out (negative). Refused when it would hold fewer coins than zero.
+ */
+export function shiftQuantity(
+  investment: HeldQuantity,
+  delta: bigint,
+): { quantity: string; sats: bigint | null } {
+  const next = (heldUnitsOf(investment) ?? 0n) + delta;
+  if (next < 0n) {
+    throw new BadRequestException(
+      'O investimento ficaria com quantidade negativa',
+    );
+  }
+  return storedQuantity({
+    assetClass: investment.assetClass,
+    coinId: investment.coinId,
+    quantity: unitsToQuantity(next),
+  });
 }
 
 function serializePerformance(
