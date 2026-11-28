@@ -32,12 +32,12 @@ export default tseslint.config(
           "object-properties": {
             exclude: ["[A-Z_-]+", "value", "kind", "color", "shape", "stroke", "fill", "activeClass"],
           },
-          // State setters and navigation take ids, not text. "t" and the rest keep the plugin defaults.
+          // State setters, navigation and the lib/format helpers take ids or styles, not text. "t" and the rest keep the plugin defaults.
           callees: {
             exclude: [
               "i18n(ext)?", "t", "require", "addEventListener", "removeEventListener", "postMessage",
               "getElementById", "dispatch", "commit", "includes", "indexOf", "endsWith", "startsWith",
-              "set[A-Z][A-Za-z]*", "go", "select",
+              "set[A-Z][A-Za-z]*", "format[A-Z][A-Za-z]*", "go", "select",
             ],
           },
           words: {

@@ -1,6 +1,7 @@
-import { currentMonth, monthLabel, shiftMonth } from "@/lib/dates";
+import { currentMonth, shiftMonth } from "@/lib/dates";
 import { useTranslation } from "react-i18next";
 import { Icon } from "./Icon";
+import { formatMonth } from "@/lib/format";
 
 export function MonthPicker({
   month,
@@ -22,7 +23,7 @@ export function MonthPicker({
       >
         <Icon name="chevronLeft" size={16} />
       </button>
-      <span className="w-32 text-center text-sm tabular" aria-live="polite">{monthLabel(month)}</span>
+      <span className="w-32 text-center text-sm tabular" aria-live="polite">{formatMonth(month)}</span>
       <button
         type="button"
         aria-label={t("common.month.next")}

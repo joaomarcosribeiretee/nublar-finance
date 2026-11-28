@@ -20,9 +20,10 @@ import { ErrorNote, PageHeader, Panel } from "@/components/Page";
 import { Segmented } from "@/components/Segmented";
 import { errorMessage } from "@/lib/api";
 import { plotValue } from "@/lib/chart";
-import { dayLabel, monthLabel, shortMonthLabel, todayLocal, weekdayNames } from "@/lib/dates";
+import { todayLocal } from "@/lib/dates";
 import { useFormatMoney } from "@/hooks/useHideValues";
 import { useCalendar, useProjection, type CalendarEvent } from "@/lib/queries";
+import { formatDate, formatMonth, weekdayNames } from "@/lib/format";
 
 /** How an event reads: money in, money out, a bill, a milestone. */
 function look(event: CalendarEvent): { icon: IconName; dot: string; sign: "+" | "-" | null } {
@@ -68,7 +69,7 @@ export function CalendarScreen({ month }: { month: string }) {
 
   return (
     <section className="animate-enter space-y-6">
-      <PageHeader eyebrow={monthLabel(month)} title={t("shell.screens.calendar")} actions={month === today.slice(0, 7) ? <Button onClick={() => setSelected(today)}>{t("common.dates.today")}</Button> : undefined}>
+      <PageHeader eyebrow={formatMonth(month)} title={t("shell.screens.calendar")} actions={month === today.slice(0, 7) ? <Button onClick={() => setSelected(today)}>{t("common.dates.today")}</Button> : undefined}>
         {t("planning.calendar.intro")}
       </PageHeader>
 
@@ -98,7 +99,7 @@ export function CalendarScreen({ month }: { month: string }) {
                     isFocus ? "border-accent/50 bg-accent/10" : "border-transparent hover:border-line hover:bg-hover"
                   } ${date < today ? "text-muted" : ""}`}
                   aria-pressed={isFocus}
-                  aria-label={`${dayLabel(date)}: ${t("planning.calendar.items", { count: events.length })}`}
+                  aria-label={`${formatDate(date, "weekday")}: ${t("planning.calendar.items", { count: events.length })}`}
                 >
                   <span className={`text-xs ${isToday ? "rounded-full bg-accent px-1.5 font-medium text-accent-fg" : ""}`}>
                     {Number(date.slice(8, 10))}
@@ -127,7 +128,7 @@ export function CalendarScreen({ month }: { month: string }) {
           </div>
         </Panel>
 
-        <Panel flush className="day-agenda" title={dayLabel(focus)} subtitle={data && focusEvents.length === 0 ? t("planning.calendar.noEvents") : undefined}>
+        <Panel flush className="day-agenda" title={formatDate(focus, "weekday")} subtitle={data && focusEvents.length === 0 ? t("planning.calendar.noEvents") : undefined}>
           {!data ? <div className="skeleton m-3 h-24" /> : null}
           {data && focusEvents.length === 0 ? <div className="flex items-center gap-3 p-4 text-muted"><Icon name="calendar" size={24} /><p className="text-sm">{t("planning.calendar.pickDay")}</p></div> : null}
           <ul>
@@ -223,7 +224,7 @@ function DailyCashChart({
                   if (!active || !day) return null;
                   return (
                     <TooltipBox
-                      title={dayLabel(day.date)}
+                      title={formatDate(day.date, "weekday")}
                       rows={[
                         {
                           label: day.projected ? t("invoices.scheduled") : t("planning.calendar.daily.balance"),
@@ -300,7 +301,7 @@ function ProjectionPanel() {
                   </linearGradient>
                 </defs>
                 <CartesianGrid {...gridProps} />
-                <XAxis dataKey="month" tickFormatter={(m: string) => shortMonthLabel(m)} {...axisProps} />
+                <XAxis dataKey="month" tickFormatter={(m: string) => formatMonth(m, "short")} {...axisProps} />
                 <YAxis {...chart.yAxis} />
                 <ReferenceLine y={0} stroke="var(--negative)" strokeOpacity={0.5} />
                 <Tooltip
@@ -311,7 +312,7 @@ function ProjectionPanel() {
                     if (!active || !row) return null;
                     return (
                       <TooltipBox
-                        title={t("planning.calendar.projection.endOf", { month: monthLabel(row.month).toLowerCase() })}
+                        title={t("planning.calendar.projection.endOf", { month: formatMonth(row.month).toLowerCase() })}
                         rows={[
                           { label: t("planning.calendar.projection.projected"), color: "var(--series-1)", value: <Money amount={row.projectedCash} /> },
                           { label: t("planning.calendar.projection.income"), value: <Money amount={row.income} />, strong: false },
@@ -341,7 +342,7 @@ function ProjectionPanel() {
           <tbody>
             {data?.months.map((row) => (
               <tr key={row.month} className="border-t border-line">
-                <td className="py-1.5 text-left">{monthLabel(row.month)}</td>
+                <td className="py-1.5 text-left">{formatMonth(row.month)}</td>
                 <td className={`py-1.5 ${row.balance.startsWith("-") ? "text-negative" : "text-positive"}`}>
                   <Money amount={row.balance} />
                 </td>

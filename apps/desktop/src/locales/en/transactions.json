@@ -76,7 +76,7 @@
       "description": "Every transaction happens in an account. Add your bank to get started."
     },
     "errors": {
-      "amount": "Enter an amount, for example 25,90.",
+      "amount": "Enter an amount, for example 25.90.",
       "sameAccount": "Choose two different accounts.",
       "category": "Choose a category."
     },

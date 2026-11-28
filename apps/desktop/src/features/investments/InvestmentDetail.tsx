@@ -12,7 +12,7 @@ import { Segmented } from "@/components/Segmented";
 import { useToast } from "@/components/Toast";
 import { errorMessage } from "@/lib/api";
 import { plotValue } from "@/lib/chart";
-import { monthLabel, shortDate, shortMonthLabel, todayLocal } from "@/lib/dates";
+import { todayLocal } from "@/lib/dates";
 import { minorUnitsToInput, parseReaisToMinorUnits } from "@/lib/money";
 import {
   useAccounts,
@@ -27,6 +27,7 @@ import { bpsToPercentInput, liquidityLabels, parsePercentToBps, productLabels, r
 import { cdiPreview, isTaxExempt, loadCdiBps, saveCdiBps } from "@/lib/yield";
 import { GainText } from "./GainText";
 import { InvestmentForm } from "./InvestmentForm";
+import { formatDate, formatMonth } from "@/lib/format";
 
 type Action = "none" | "INVESTMENT" | "REDEMPTION" | "value" | "edit";
 
@@ -107,7 +108,7 @@ function HistoryChart({ data }: { data: Detail }) {
               <stop offset="100%" stopColor="var(--series-1)" stopOpacity={0} />
             </linearGradient>
           </defs>
-          <XAxis dataKey="month" tickFormatter={(m: string) => shortMonthLabel(m)} {...axisProps} minTickGap={24} />
+          <XAxis dataKey="month" tickFormatter={(m: string) => formatMonth(m, "short")} {...axisProps} minTickGap={24} />
           <YAxis {...chart.yAxis} tickCount={4} />
           <Tooltip
             {...chart.tooltip}
@@ -117,7 +118,7 @@ function HistoryChart({ data }: { data: Detail }) {
               if (!active || !point) return null;
               return (
                 <TooltipBox
-                  title={monthLabel(point.month)}
+                  title={formatMonth(point.month)}
                   rows={[{ label: t("transactions.form.amount.single"), color: "var(--series-1)", value: <Money amount={point.value} /> }]}
                 />
               );
@@ -316,7 +317,7 @@ function Timeline({ data }: { data: Detail }) {
         {tab === "movements"
           ? data.movements.map((movement) => (
               <li key={movement.id} className="group flex items-center gap-3 rounded-xl px-2 py-2">
-                <span className="w-14 shrink-0 text-xs text-faint">{shortDate(movement.date)}</span>
+                <span className="w-14 shrink-0 text-xs text-faint">{formatDate(movement.date)}</span>
                 <span className="min-w-0 flex-1 truncate text-sm">
                   {movement.type === "INVESTMENT" ? t("transactions.kind.investment") : t("transactions.kind.redemption")}
                   <span className="text-muted"> · {movement.account?.name}</span>
@@ -330,7 +331,7 @@ function Timeline({ data }: { data: Detail }) {
             ))
           : data.valuations.map((valuation) => (
               <li key={valuation.id} className="group flex items-center gap-3 rounded-xl px-2 py-2">
-                <span className="w-14 shrink-0 text-xs text-faint">{shortDate(valuation.date)}</span>
+                <span className="w-14 shrink-0 text-xs text-faint">{formatDate(valuation.date)}</span>
                 <span className="flex-1 text-sm text-muted">{t("investments.detail.reportedValue")}</span>
                 <Money amount={valuation.value} className="text-sm" />
                 {data.valuations.length > 1 ? (
@@ -379,7 +380,7 @@ function FixedIncomeFacts({ data }: { data: Detail }) {
     data.product ? t(productLabels[data.product]) : null,
     rateLabel(data.indexer, data.rateBps),
     data.liquidity ? t(liquidityLabels[data.liquidity]) : null,
-    data.maturityDate ? t("investments.detail.matures", { date: `${shortDate(data.maturityDate)} ${data.maturityDate.slice(2, 4)}` }) : null,
+    data.maturityDate ? t("investments.detail.matures", { date: `${formatDate(data.maturityDate)} ${data.maturityDate.slice(2, 4)}` }) : null,
   ].filter((fact): fact is string => Boolean(fact));
   if (facts.length === 0) return null;
   return (

@@ -55,6 +55,17 @@ describe("sanitizeMoney", () => {
   });
 });
 
+describe("sanitizeMoney in English", () => {
+  it("keeps the comma for thousands and the dot for cents", () => {
+    expect(sanitizeMoney("1,234.56", { locale: "en" })).toBe("1,234.56");
+    expect(sanitizeMoney("R$ 1,234.567", { locale: "en" })).toBe("1,234.56");
+    expect(sanitizeMoney(",5", { locale: "en" })).toBe("5");
+    expect(sanitizeMoney("1,,000", { locale: "en" })).toBe("1,000");
+    expect(sanitizeMoney("-80.5", { signed: true, locale: "en" })).toBe("-80.5");
+    expect(parseReaisToMinorUnits(sanitizeMoney("1,234.56", { locale: "en" }), "en")).toBe("123456");
+  });
+});
+
 describe("sanitizeDecimal", () => {
   it("keeps digits and one separator, shown as a comma", () => {
     expect(sanitizeDecimal("110")).toBe("110");
@@ -63,6 +74,7 @@ describe("sanitizeDecimal", () => {
     expect(sanitizeDecimal("6,555")).toBe("6,55");
     expect(sanitizeDecimal("6%")).toBe("6");
     expect(sanitizeDecimal("0,00012345678", 8)).toBe("0,00012345");
+    expect(sanitizeDecimal("6,5", 2, 9, "en")).toBe("6.5");
   });
 });
 

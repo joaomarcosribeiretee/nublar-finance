@@ -6,9 +6,9 @@ import { Money } from "@/components/Money";
 import { useToast } from "@/components/Toast";
 import { errorMessage } from "@/lib/api";
 import { useConfirmTransaction, useSkipTransaction, type Transaction } from "@/lib/queries";
-import { shortDate } from "@/lib/dates";
 import { entryTypeLabels } from "@/lib/labels";
 import { categoryLabel } from "@/lib/categories";
+import { formatDate } from "@/lib/format";
 
 type Look = {
   icon: IconName;
@@ -118,7 +118,7 @@ export function TransactionRow({
             ) : null}
           </span>
           <span className="block truncate text-xs text-muted">
-            {showDate ? `${shortDate(transaction.date)} · ` : ""}
+            {showDate ? `${formatDate(transaction.date)} · ` : ""}
             {subtitleOf(transaction)}
           </span>
         </span>

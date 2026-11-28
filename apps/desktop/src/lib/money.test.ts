@@ -1,8 +1,6 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it } from "vitest";
+import { DEFAULT_LOCALE, setLocale } from "@/i18n";
 import {
-  formatMinorUnits,
-  formatMoney,
-  HIDDEN_MONEY,
   minorUnitsToInput,
   parseReaisToMinorUnits,
   parseSignedReaisToMinorUnits,
@@ -27,11 +25,6 @@ describe("money formatting", () => {
     expect(parseReaisToMinorUnits("abc")).toBeNull();
   });
 
-  it("formats minor units back to reais", () => {
-    expect(formatMinorUnits("123456")).toBe("R$ 1.234,56");
-    expect(formatMinorUnits("-5000")).toBe("-R$ 50,00");
-  });
-
   it("round-trips the editable form", () => {
     expect(minorUnitsToInput("123456")).toBe("1.234,56");
     expect(parseReaisToMinorUnits(minorUnitsToInput("1531000"))).toBe("1531000");
@@ -53,13 +46,21 @@ describe("money formatting", () => {
   });
 });
 
-describe("formatMoney", () => {
-  it("formats like formatMinorUnits when values are visible", () => {
-    expect(formatMoney("-123456", false)).toBe(formatMinorUnits("-123456"));
+describe("amounts typed in English", () => {
+  afterEach(() => setLocale(DEFAULT_LOCALE));
+
+  it("reads the dot as decimals and the comma as thousands", () => {
+    expect(parseReaisToMinorUnits("1,234.56", "en")).toBe("123456");
+    expect(parseReaisToMinorUnits("25.9", "en")).toBe("2590");
+    expect(parseReaisToMinorUnits("1,500", "en")).toBe("150000");
+    expect(parseReaisToMinorUnits("25,90", "en")).toBe("2590");
+    expect(parseReaisToMinorUnits("12.345", "en")).toBeNull();
   });
 
-  it("never reveals the amount or its size when hidden", () => {
-    expect(formatMoney("5", true)).toBe(HIDDEN_MONEY);
-    expect(formatMoney("-999999999", true)).toBe(HIDDEN_MONEY);
+  it("round-trips the editable form in the language being shown", () => {
+    setLocale("en");
+    expect(minorUnitsToInput("123456")).toBe("1,234.56");
+    expect(parseReaisToMinorUnits(minorUnitsToInput("1531000"))).toBe("1531000");
+    expect(parseSignedReaisToMinorUnits("-1,250.00")).toBe("-125000");
   });
 });

@@ -12,7 +12,7 @@ import { Money } from "@/components/Money";
 import { Segmented } from "@/components/Segmented";
 import { useToast } from "@/components/Toast";
 import { errorMessage } from "@/lib/api";
-import { dayLabel, defaultDateFor, monthLabel, todayLocal } from "@/lib/dates";
+import { defaultDateFor, todayLocal } from "@/lib/dates";
 import { minorUnitsToInput, parseReaisToMinorUnits } from "@/lib/money";
 import { useFormatMoney } from "@/hooks/useHideValues";
 import {
@@ -29,6 +29,7 @@ import {
   type EntryType,
   type Transaction,
 } from "@/lib/queries";
+import { formatDate, formatMonth } from "@/lib/format";
 
 const typeOptions: { value: EntryType; label: TranslationKey; activeClass: string }[] = [
   { value: "EXPENSE", label: "labels.entryType.EXPENSE", activeClass: "text-negative" },
@@ -467,7 +468,7 @@ function FormBody({
             <p className="animate-enter text-xs text-faint">
               {onCard
                 ? t("transactions.form.repeat.monthlyCard")
-                : t("transactions.form.repeat.monthlyAccount", { day: Number(date.slice(8, 10)), month: monthLabel(date.slice(0, 7)).toLowerCase() })}
+                : t("transactions.form.repeat.monthlyAccount", { day: Number(date.slice(8, 10)), month: formatMonth(date.slice(0, 7)).toLowerCase() })}
             </p>
           ) : null}
           {effectiveRepeat === "installments" && !onCard ? (
@@ -639,7 +640,7 @@ function PaymentDetails({ payment, onDone }: { payment: Transaction; onDone: () 
         {payment.type === "CARD_PAYMENT" ? (
           <>
             <Row label={t("transactions.form.card")}>{payment.card?.name}</Row>
-            <Row label={t("transactions.form.invoice")}>{payment.invoiceMonth ? monthLabel(payment.invoiceMonth) : "—"}</Row>
+            <Row label={t("transactions.form.invoice")}>{payment.invoiceMonth ? formatMonth(payment.invoiceMonth) : "—"}</Row>
             <Row label={t("transactions.form.paidWith")}>{payment.account?.name}</Row>
           </>
         ) : (
@@ -650,7 +651,7 @@ function PaymentDetails({ payment, onDone }: { payment: Transaction; onDone: () 
             </Row>
           </>
         )}
-        <Row label={t("transactions.form.date")}>{dayLabel(payment.date)}</Row>
+        <Row label={t("transactions.form.date")}>{formatDate(payment.date, "weekday")}</Row>
       </dl>
       <p className="text-xs text-faint">
         {payment.type === "CARD_PAYMENT"

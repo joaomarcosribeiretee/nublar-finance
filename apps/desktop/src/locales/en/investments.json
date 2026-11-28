@@ -44,7 +44,7 @@
   },
   "form": {
     "errors": {
-      "rate": "Invalid rate. Use something like 110 or 6,5.",
+      "rate": "Invalid rate. Use something like 110 or 6.5.",
       "current": "Enter how much you have today.",
       "applied": "Enter how much you invested."
     },
@@ -83,10 +83,10 @@
     "updateValue": "Update value",
     "edit": "Edit details",
     "errors": {
-      "amount": "Enter an amount, for example 500,00.",
+      "amount": "Enter an amount, for example 500.00.",
       "noAccount": "Add an account first: the money has to come from somewhere or go back to it.",
       "value": "Enter what the investment is worth on that date.",
-      "invalidValue": "Invalid value. Use something like 1.250,00."
+      "invalidValue": "Invalid value. Use something like 1,250.00."
     },
     "invested": "Contribution recorded",
     "redeemed": "Withdrawal recorded",

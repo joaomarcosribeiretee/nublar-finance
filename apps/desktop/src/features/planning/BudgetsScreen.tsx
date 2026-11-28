@@ -10,8 +10,6 @@ import { Segmented } from "@/components/Segmented";
 import { ErrorNote, PageHeader, Panel, ProgressBar } from "@/components/Page";
 import { useToast } from "@/components/Toast";
 import { errorMessage } from "@/lib/api";
-import { formatBps } from "@/lib/chart";
-import { monthLabel } from "@/lib/dates";
 import { minorUnitsToInput, parseReaisToMinorUnits } from "@/lib/money";
 import { useFormatMoney } from "@/hooks/useHideValues";
 import {
@@ -24,6 +22,7 @@ import {
 } from "@/lib/queries";
 import { budgetTone, monthProgress } from "./BudgetOverview";
 import { categoryLabel } from "@/lib/categories";
+import { formatMonth, formatPercent } from "@/lib/format";
 
 const tone = budgetTone;
 
@@ -42,7 +41,7 @@ export function BudgetsScreen({ month }: { month: string }) {
   return (
     <section className="animate-enter space-y-6">
       <PageHeader
-        eyebrow={monthLabel(month)}
+        eyebrow={formatMonth(month)}
         title={t("shell.screens.budgets")}
         actions={
           <Button variant="primary" onClick={() => setEditing("new")}>
@@ -140,7 +139,7 @@ export function BudgetsScreen({ month }: { month: string }) {
                           <span className={item.status === "OVER" ? "text-negative" : item.status === "WARNING" ? "text-warning" : "text-faint"}>
                             {item.status === "OVER"
                               ? t("planning.budgets.overBy", { amount: money(item.remaining.replace("-", "")) })
-                              : t("planning.budgets.usage", { used: formatBps(item.usedBps), amount: money(item.remaining) })}
+                              : t("planning.budgets.usage", { used: formatPercent(item.usedBps), amount: money(item.remaining) })}
                           </span>
                           {BigInt(item.scheduled) > 0n ? (
                             <span className="text-faint">{t("planning.budgets.scheduled", { amount: money(item.scheduled) })}</span>

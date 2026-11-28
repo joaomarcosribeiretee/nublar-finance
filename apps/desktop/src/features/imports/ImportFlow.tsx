@@ -8,7 +8,6 @@ import { FormFooter } from "@/components/Modal";
 import { Money } from "@/components/Money";
 import { useToast } from "@/components/Toast";
 import { errorMessage } from "@/lib/api";
-import { shortDate } from "@/lib/dates";
 import {
   useAccounts,
   useCategories,
@@ -18,6 +17,7 @@ import {
   type ImportPreview,
 } from "@/lib/queries";
 import { categoryLabel } from "@/lib/categories";
+import { formatDate } from "@/lib/format";
 
 /**
  * Bank files are often Latin-1. Read as UTF-8 first and fall back when the
@@ -228,7 +228,7 @@ export function ImportFlow({ onDone }: { onDone: () => void }) {
                           className="h-4 w-4 accent-(--accent)"
                         />
                       </td>
-                      <td className="px-2 py-1.5 text-xs whitespace-nowrap text-muted">{shortDate(row.date)}</td>
+                      <td className="px-2 py-1.5 text-xs whitespace-nowrap text-muted">{formatDate(row.date)}</td>
                       <td className="max-w-56 px-2 py-1.5">
                         <span className="block truncate" title={row.description}>
                           {row.description}

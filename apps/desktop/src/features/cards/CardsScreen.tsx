@@ -10,7 +10,7 @@ import { FormFooter, Modal } from "@/components/Modal";
 import { Money } from "@/components/Money";
 import { useToast } from "@/components/Toast";
 import { errorMessage } from "@/lib/api";
-import { monthLabel, shiftMonth, shortDate, todayLocal } from "@/lib/dates";
+import { shiftMonth, todayLocal } from "@/lib/dates";
 import { invoiceStatusLabels } from "@/lib/labels";
 import { minorUnitsToInput, parseReaisToMinorUnits, percentOf } from "@/lib/money";
 import {
@@ -25,6 +25,7 @@ import {
   type InvoiceStatus,
 } from "@/lib/queries";
 import { categoryLabel } from "@/lib/categories";
+import { formatDate, formatMonth } from "@/lib/format";
 
 const statusStyle: Record<InvoiceStatus, string> = {
   EMPTY: "bg-hover-strong text-muted",
@@ -135,7 +136,7 @@ function CardTile({ card, onOpen }: { card: Card; onOpen: () => void }) {
       </div>
       <div className="relative mt-auto">
         <p className="text-xs text-muted">
-          {t("cards.tile.invoiceOf", { month: monthLabel(invoice.month).split(" ")[0].toLowerCase(), date: shortDate(invoice.dueDate) })}
+          {t("cards.tile.invoiceOf", { month: formatMonth(invoice.month).split(" ")[0].toLowerCase(), date: formatDate(invoice.dueDate) })}
         </p>
         <p className="mt-1 font-display text-3xl tracking-tight">
           <Money amount={invoice.status === "PAID" ? invoice.total : invoice.remaining} />
@@ -186,7 +187,7 @@ function CardDetail({
       <div className="flex items-center justify-between gap-3">
         <Stepper
           className="-ml-2"
-          label={monthLabel(month)}
+          label={formatMonth(month)}
           previousLabel={t("cards.detail.previous")}
           nextLabel={t("cards.detail.next")}
           onPrevious={() => goTo(shiftMonth(month, -1))}
@@ -209,7 +210,7 @@ function CardDetail({
       />
       {data ? (
         <p className="-mt-2 text-xs text-faint">
-          {t("cards.detail.dates", { closing: shortDate(data.closingDate), due: shortDate(data.dueDate) })}
+          {t("cards.detail.dates", { closing: formatDate(data.closingDate), due: formatDate(data.dueDate) })}
         </p>
       ) : null}
 
@@ -222,7 +223,7 @@ function CardDetail({
           ) : null}
           {data?.items.map((item) => (
             <li key={item.id} className="flex items-center gap-3 rounded-xl px-2 py-2">
-              <span className="w-14 shrink-0 text-xs text-faint">{shortDate(item.date)}</span>
+              <span className="w-14 shrink-0 text-xs text-faint">{formatDate(item.date)}</span>
               <span className="min-w-0 flex-1">
                 <span className="block truncate text-sm">
                   {item.type === "CARD_PAYMENT"

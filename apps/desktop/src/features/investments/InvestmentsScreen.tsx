@@ -11,7 +11,6 @@ import { Money } from "@/components/Money";
 import { errorMessage } from "@/lib/api";
 import { allocationColors } from "@/lib/chart";
 import { GainText } from "./GainText";
-import { shortDate } from "@/lib/dates";
 import { assetClassLabels } from "@/lib/labels";
 import { percentOf } from "@/lib/money";
 import { usePortfolio, type AssetClass, type InvestmentItem } from "@/lib/queries";
@@ -19,6 +18,7 @@ import { InvestmentDetail } from "./InvestmentDetail";
 import { InvestmentForm } from "./InvestmentForm";
 import { BulkValuations } from "./BulkValuations";
 import { liquidityLabels, rateLabel } from "@/lib/rates";
+import { formatDate } from "@/lib/format";
 
 const classOrder: AssetClass[] = ["FIXED_INCOME", "STOCK", "FII", "ETF", "CRYPTO", "OTHER"];
 
@@ -245,8 +245,8 @@ function describe(item: InvestmentItem): string {
   const parts = [
     item.assetClass === "FIXED_INCOME" ? rateLabel(item.indexer, item.rateBps) : null,
     item.liquidity ? t(liquidityLabels[item.liquidity]).toLowerCase() : null,
-    item.maturityDate ? t("investments.describe.matures", { date: `${shortDate(item.maturityDate)} ${item.maturityDate.slice(2, 4)}` }) : null,
-    item.lastValuation ? t("investments.bulk.updatedOn", { date: shortDate(item.lastValuation) }) : t("investments.describe.noValue"),
+    item.maturityDate ? t("investments.describe.matures", { date: `${formatDate(item.maturityDate)} ${item.maturityDate.slice(2, 4)}` }) : null,
+    item.lastValuation ? t("investments.bulk.updatedOn", { date: formatDate(item.lastValuation) }) : t("investments.describe.noValue"),
   ];
   return parts.filter(Boolean).join(" · ");
 }
@@ -294,7 +294,7 @@ function FixedIncomePanel({
                   className="-mx-2 flex w-[calc(100%+16px)] items-center gap-3 rounded-xl px-2 py-2 text-left transition-colors hover:bg-hover"
                 >
                   <span className="w-20 shrink-0 text-xs text-muted">
-                    {shortDate(maturity.date)} {maturity.date.slice(2, 4)}
+                    {formatDate(maturity.date)} {maturity.date.slice(2, 4)}
                   </span>
                   <span className="min-w-0 flex-1 truncate text-sm">{maturity.name}</span>
                   <Money amount={maturity.value} className="text-sm" />
