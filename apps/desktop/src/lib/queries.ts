@@ -5,6 +5,7 @@ import {
   useQuery,
   useQueryClient,
 } from "@tanstack/react-query";
+import type { CoinId } from "@nublar/validation";
 import { api } from "./api";
 import type { accountTypeLabels, entryTypeLabels } from "./labels";
 import type { FixedIncomeProduct, Indexer, Liquidity } from "./rates";
@@ -281,6 +282,15 @@ export type ImportPreview = {
   csv: { header: string[]; mapping: ImportMapping | null; sample: string[][] } | null;
 };
 
+/** Present on auto-quoted crypto. `stale`: the source failed, last value shown. */
+export type QuoteInfo = { price: string | null; fetchedAt: string | null; stale: boolean };
+
+type QuoteFields = {
+  coinId: CoinId | null;
+  autoQuote: boolean;
+  quote: QuoteInfo | null;
+};
+
 type Performance = {
   current: string;
   applied: string;
@@ -289,7 +299,7 @@ type Performance = {
   gainBps: number | null;
 };
 
-export type InvestmentItem = Performance & {
+export type InvestmentItem = Performance & QuoteFields & {
   id: string;
   name: string;
   assetClass: AssetClass;
@@ -317,7 +327,7 @@ export type Portfolio = {
   };
 };
 
-export type InvestmentDetail = Performance & {
+export type InvestmentDetail = Performance & QuoteFields & {
   id: string;
   name: string;
   assetClass: AssetClass;
@@ -331,7 +341,7 @@ export type InvestmentDetail = Performance & {
   rateBps: number | null;
   liquidity: Liquidity | null;
   history: { month: string; value: string }[];
-  valuations: { id: string; date: string; value: string }[];
+  valuations: { id: string; date: string; value: string; auto: boolean }[];
   movements: {
     id: string;
     type: "INVESTMENT" | "REDEMPTION";
@@ -352,6 +362,8 @@ export type InvestmentInput = {
   indexer: Indexer | null;
   rateBps: number | null;
   liquidity: Liquidity | null;
+  coinId: CoinId | null;
+  autoQuote: boolean;
 };
 
 export type Analytics = {
@@ -684,7 +696,7 @@ export const useDeleteCategory = () =>
 
 export const useCreateInvestment = () =>
   useMoneyMutation(
-    (input: InvestmentInput & { openingApplied?: string; currentValue: string; startDate?: string }) =>
+    (input: InvestmentInput & { openingApplied?: string; currentValue?: string; startDate?: string }) =>
       api<{ id: string }>("/investments", json("POST", input)),
   );
 
@@ -701,6 +713,10 @@ export const useMoveInvestment = () =>
     ({ id, ...input }: { id: string; type: "INVESTMENT" | "REDEMPTION"; accountId: string; amount: string; date: string }) =>
       api(`/investments/${id}/movements`, json("POST", input)),
   );
+
+/** The refresh button next to a quote: a fresh one, at most once a minute. */
+export const useRefreshQuotes = () =>
+  useMoneyMutation(() => api<Portfolio>("/investments/quotes/refresh", json("POST")));
 
 export const useAddValuations = () =>
   useMoneyMutation((input: { date: string; items: { investmentId: string; value: string }[] }) =>

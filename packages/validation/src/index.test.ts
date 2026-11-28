@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
+  coinForSymbol,
+  createInvestmentSchema,
+  updateInvestmentSchema,
   cardPurchaseSchema,
   createTransactionSchema,
   recurringRuleSchema,
@@ -191,5 +194,42 @@ describe("preferences", () => {
     expect(
       updatePreferencesSchema.parse({ tipsSeen: ["a", "b", "a"] }).tipsSeen,
     ).toEqual(["a", "b"]);
+  });
+});
+
+describe("crypto quotes", () => {
+  const base = { name: "Bitcoin", assetClass: "CRYPTO" as const };
+
+  it("maps supported tickers to their coin, in any case", () => {
+    expect(coinForSymbol("btc")).toBe("bitcoin");
+    expect(coinForSymbol(" USDC ")).toBe("usd-coin");
+    expect(coinForSymbol("DOGE")).toBeNull();
+  });
+
+  it("needs no current value when the quote gives it", () => {
+    const input = createInvestmentSchema.parse({
+      ...base,
+      coinId: "bitcoin",
+      autoQuote: true,
+      quantity: "0,5",
+    });
+    expect(input.currentValue).toBeUndefined();
+  });
+
+  it("asks for a quantity and a known coin to quote automatically", () => {
+    expect(
+      createInvestmentSchema.safeParse({ ...base, coinId: "bitcoin", autoQuote: true }).success,
+    ).toBe(false);
+    expect(
+      updateInvestmentSchema.safeParse({ ...base, coinId: "bitcoin", autoQuote: true, quantity: "0" }).success,
+    ).toBe(false);
+    expect(
+      updateInvestmentSchema.safeParse({ ...base, coinId: "dogecoin", autoQuote: true, quantity: "1" }).success,
+    ).toBe(false);
+  });
+
+  it("still asks for the value when it is manual", () => {
+    expect(createInvestmentSchema.safeParse({ ...base, quantity: "1" }).success).toBe(false);
+    expect(createInvestmentSchema.safeParse({ ...base, quantity: "1", currentValue: "100" }).success).toBe(true);
   });
 });

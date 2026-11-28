@@ -46,7 +46,8 @@
     "errors": {
       "rate": "Taxa inválida. Use algo como 110 ou 6,5.",
       "current": "Informe quanto você tem hoje.",
-      "applied": "Informe quanto você aplicou."
+      "applied": "Informe quanto você aplicou.",
+      "quantity": "Informe a quantidade para usar a cotação."
     },
     "updated": "Investimento atualizado",
     "created": "Investimento cadastrado",
@@ -69,7 +70,10 @@
     "history": "Sei quanto e quando apliquei",
     "historyHint": "Opcional. Sem isso, o rendimento passa a ser contado a partir de hoje.",
     "applied": "Valor aplicado",
-    "since": "Desde"
+    "since": "Desde",
+    "autoQuote": "Atualizar cotação automaticamente",
+    "autoQuoteHint": "Valor = quantidade × cotação em reais, atualizada a cada 5 minutos. Desligue para informar o valor à mão.",
+    "quantityAuto": "Quantidade"
   },
   "horizons": {
     "oneMonth": "1 mês",
@@ -109,7 +113,8 @@
     "deleteValue": "Excluir valor",
     "valueDeleted": "Valor excluído",
     "deleteConfirm": "Excluir?",
-    "matures": "Vence {{date}}"
+    "matures": "Vence {{date}}",
+    "quotedValue": "Cotação automática"
   },
   "preview": {
     "title": "Prévia de rendimento",
@@ -120,5 +125,14 @@
     "cdiLabel": "CDI anual",
     "gross": "bruto",
     "note": "Estimativa com CDI constante; não altera o valor da posição, que segue pelas suas atualizações."
+  },
+  "quote": {
+    "updated": "Atualizado {{time}}",
+    "updatedNow": "Atualizado agora",
+    "refresh": "Atualizar cotação",
+    "stale": "Não deu para atualizar a cotação. Mantendo o último valor.",
+    "unavailable": "Cotação indisponível no momento. Mantendo o último valor.",
+    "price": "1 {{symbol}} = {{price}}",
+    "auto": "cotação automática"
   }
 }

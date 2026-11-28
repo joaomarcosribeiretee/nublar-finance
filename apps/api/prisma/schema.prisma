@@ -248,17 +248,22 @@ enum AssetClass {
   OTHER
 }
 
-/// A position held at an institution. Its value is tracked by manual
-/// valuations plus contributions and redemptions made after them.
+/// A position held at an institution. Its value is tracked by valuations
+/// (manual, or quantity × quote for crypto) plus movements made after them.
 model Investment {
   id             String                @id @default(uuid()) @db.Uuid
   userId         String                @db.Uuid
   institutionId  String?               @db.Uuid
   name           String
   assetClass     AssetClass
-  /// Informative only, e.g. "PETR4" and "100". No quotes are fetched.
+  /// E.g. "PETR4" and "100". Informative, except for auto-quoted crypto,
+  /// whose value is quantity × quote.
   ticker         String                @default("")
   quantity       String                @default("")
+  /// Crypto only: CoinGecko id ("bitcoin"); see cryptoCoins in @nublar/validation.
+  coinId         String?
+  /// On: the API values the position with the coin's BRL quote every day.
+  autoQuote      Boolean               @default(false)
   /// What was already applied before tracking started. Not an expense.
   openingApplied BigInt                @default(0)
   startDate      DateTime              @db.Date
@@ -287,11 +292,25 @@ model InvestmentValuation {
   investmentId String     @db.Uuid
   date         DateTime   @db.Date
   value        BigInt
+  /// Written by the automatic quote (one per day, refreshed in place).
+  auto         Boolean    @default(false)
   createdAt    DateTime   @default(now())
   user         User       @relation(fields: [userId], references: [id], onDelete: Cascade)
   investment   Investment @relation(fields: [investmentId], references: [id], onDelete: Cascade)
 
   @@index([investmentId, date])
+}
+
+/// Last BRL quote of a coin on each day. Shared by every user; keeps the
+/// last known price when the source is down.
+model CryptoQuote {
+  coinId    String
+  date      DateTime @db.Date
+  /// Decimal text ("512345.12345678"), never a float.
+  price     String
+  fetchedAt DateTime
+
+  @@id([coinId, date])
 }
 
 enum FixedIncomeProduct {

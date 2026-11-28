@@ -27,6 +27,7 @@ import { bpsToPercentInput, liquidityLabels, parsePercentToBps, productLabels, r
 import { cdiPreview, isTaxExempt, loadCdiBps, saveCdiBps } from "@/lib/yield";
 import { GainText } from "./GainText";
 import { InvestmentForm } from "./InvestmentForm";
+import { QuoteStatus } from "./QuoteStatus";
 import { formatDate, formatMonth } from "@/lib/format";
 
 type Action = "none" | "INVESTMENT" | "REDEMPTION" | "value" | "edit";
@@ -61,6 +62,8 @@ export function InvestmentDetail({ id, onClose }: { id: string; onClose: () => v
 
       <FixedIncomeFacts data={data} />
 
+      {data.autoQuote && data.quote ? <QuoteStatus coinId={data.coinId} quote={data.quote} /> : null}
+
       <CdiPreview data={data} />
 
       <HistoryChart data={data} />
@@ -72,7 +75,7 @@ export function InvestmentDetail({ id, onClose }: { id: string; onClose: () => v
             {t("investments.detail.invest")}
           </Button>
           <Button onClick={() => setAction("REDEMPTION")}>{t("investments.detail.redeem")}</Button>
-          <Button onClick={() => setAction("value")}>{t("investments.detail.updateValue")}</Button>
+          {data.autoQuote ? null : <Button onClick={() => setAction("value")}>{t("investments.detail.updateValue")}</Button>}
           <div className="flex-1" />
           <Button variant="ghost" onClick={() => setAction("edit")}>
             <Icon name="pencil" size={14} />
@@ -332,7 +335,9 @@ function Timeline({ data }: { data: Detail }) {
           : data.valuations.map((valuation) => (
               <li key={valuation.id} className="group flex items-center gap-3 rounded-xl px-2 py-2">
                 <span className="w-14 shrink-0 text-xs text-faint">{formatDate(valuation.date)}</span>
-                <span className="flex-1 text-sm text-muted">{t("investments.detail.reportedValue")}</span>
+                <span className="flex-1 text-sm text-muted">
+                  {valuation.auto ? t("investments.detail.quotedValue") : t("investments.detail.reportedValue")}
+                </span>
                 <Money amount={valuation.value} className="text-sm" />
                 {data.valuations.length > 1 ? (
                   <DeleteButton
