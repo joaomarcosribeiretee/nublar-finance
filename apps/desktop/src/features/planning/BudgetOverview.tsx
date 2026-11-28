@@ -4,10 +4,11 @@ import { Icon } from "@/components/Icon";
 import { Money } from "@/components/Money";
 import { ErrorNote, Panel, ProgressBar } from "@/components/Page";
 import { errorMessage } from "@/lib/api";
-import { currentMonth, monthLabel, todayLocal } from "@/lib/dates";
+import { currentMonth, todayLocal } from "@/lib/dates";
 import { useFormatMoney } from "@/hooks/useHideValues";
 import { useBudgets, type BudgetStatus, type Budgets } from "@/lib/queries";
 import { categoryLabel } from "@/lib/categories";
+import { formatMonth } from "@/lib/format";
 
 export const budgetTone: Record<BudgetStatus, "positive" | "warning" | "negative"> = {
   OK: "positive",
@@ -60,7 +61,7 @@ export function BudgetOverview({
 
   return (
     <Panel
-      title={t("planning.overview.title", { month: monthLabel(month).toLowerCase() })}
+      title={t("planning.overview.title", { month: formatMonth(month).toLowerCase() })}
       subtitle={pace !== undefined && items.length > 0 ? t("planning.overview.markerHint") : undefined}
       actions={
         <Button variant="ghost" className="h-8 px-3 text-xs" onClick={onManage}>

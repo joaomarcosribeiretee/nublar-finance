@@ -49,6 +49,7 @@
   "attention": {
     "title": "Needs attention",
     "invoice": "{{name}} statement",
-    "due": "Due {{date}}"
+    "due": "Due {{when}}",
+    "overdue": "Was due {{when}}"
   }
 }

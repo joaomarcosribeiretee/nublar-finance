@@ -13,6 +13,7 @@ describe("fixed income rates", () => {
     expect(bpsToPercentInput(650)).toBe("6,5");
     expect(bpsToPercentInput(1225)).toBe("12,25");
     expect(bpsToPercentInput(11000)).toBe("110");
+    expect(bpsToPercentInput(650, "en")).toBe("6.5");
   });
 
   it("reads like the bank writes it", () => {

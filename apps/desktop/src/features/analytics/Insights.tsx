@@ -7,7 +7,7 @@ import { Money } from "@/components/Money";
 import { ErrorNote, ProgressBar } from "@/components/Page";
 import { errorMessage } from "@/lib/api";
 import { plotValue } from "@/lib/chart";
-import { currentMonth, monthLabel, shiftMonth, todayLocal } from "@/lib/dates";
+import { currentMonth, shiftMonth, todayLocal } from "@/lib/dates";
 import {
   averageCumulative,
   cumulativeSpending,
@@ -18,6 +18,7 @@ import {
 } from "@/lib/insights";
 import { useFormatMoney } from "@/hooks/useHideValues";
 import { usePortfolio, useSummary, useTransactionsFor, type Analytics, type Transaction } from "@/lib/queries";
+import { formatMonth } from "@/lib/format";
 
 /** How many earlier months make "the usual" pace. */
 const PACE_HISTORY = 3;
@@ -62,7 +63,7 @@ export function SpendingPace({ month }: { month: string }) {
   return (
     <ChartCard
       title={t("analytics.pace.title")}
-      subtitle={t("analytics.pace.subtitle", { month: monthLabel(month).toLowerCase(), count: PACE_HISTORY })}
+      subtitle={t("analytics.pace.subtitle", { month: formatMonth(month).toLowerCase(), count: PACE_HISTORY })}
       right={
         reading?.usual != null ? (
           <Legend
@@ -82,7 +83,7 @@ export function SpendingPace({ month }: { month: string }) {
           <div className="skeleton h-48" />
         </div>
       ) : reading.spent === 0n && reading.usual === null ? (
-        <p className="py-8 text-center text-sm text-faint">{t("analytics.pace.empty", { month: monthLabel(month).toLowerCase() })}</p>
+        <p className="py-8 text-center text-sm text-faint">{t("analytics.pace.empty", { month: formatMonth(month).toLowerCase() })}</p>
       ) : (
         <>
           <div className="mb-4 flex flex-wrap items-baseline gap-x-3 gap-y-1">
@@ -253,7 +254,7 @@ export function IncomeSplitCard({ data }: { data: Analytics | undefined }) {
   const point = data?.series.find((p) => p.month === data.to);
   const split = point ? incomeSplit(point) : null;
   const per100 = (amount: bigint) => (split ? Number((amount * 100n + split.base / 2n) / split.base) : 0);
-  const month = data ? monthLabel(data.to).toLowerCase() : "";
+  const month = data ? formatMonth(data.to).toLowerCase() : "";
 
   return (
     <ChartCard

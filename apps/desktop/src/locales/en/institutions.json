@@ -7,7 +7,7 @@
     "name": "Name"
   },
   "account": {
-    "invalidBalance": "Invalid balance. Use something like 1.250,00 or -80,00.",
+    "invalidBalance": "Invalid balance. Use something like 1,250.00 or -80.00.",
     "updated": "Account updated",
     "created": "Account created",
     "deleted": "Account deleted",

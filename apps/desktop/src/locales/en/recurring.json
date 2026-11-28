@@ -33,7 +33,7 @@
   "total": "total {{amount}}",
   "form": {
     "errors": {
-      "amount": "Enter an amount, for example 49,90.",
+      "amount": "Enter an amount, for example 49.90.",
       "end": "The end must be after the start."
     },
     "updated": "Recurring item updated",

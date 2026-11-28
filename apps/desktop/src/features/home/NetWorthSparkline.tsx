@@ -2,10 +2,10 @@ import { useId } from "react";
 import { useTranslation } from "react-i18next";
 import { Area, AreaChart, ResponsiveContainer, Tooltip } from "recharts";
 import { TooltipBox, useMoneyChart } from "@/components/charts";
-import { formatBps, plotValue } from "@/lib/chart";
-import { monthLabel } from "@/lib/dates";
+import { plotValue } from "@/lib/chart";
 import { Money } from "@/components/Money";
 import { useAnalytics } from "@/lib/queries";
+import { formatMonth, formatPercent } from "@/lib/format";
 
 /** Last 12 months of net worth, as a quiet trend next to the headline. */
 export function NetWorthSparkline({ month, onOpen }: { month: string; onOpen: () => void }) {
@@ -44,7 +44,7 @@ export function NetWorthSparkline({ month, onOpen }: { month: string; onOpen: ()
                 if (!active || !point) return null;
                 return (
                   <TooltipBox
-                    title={monthLabel(point.month)}
+                    title={formatMonth(point.month)}
                     rows={[{ label: t("home.netWorth"), color: "var(--accent)", value: <Money amount={point.netWorth} /> }]}
                   />
                 );
@@ -65,7 +65,7 @@ export function NetWorthSparkline({ month, onOpen }: { month: string; onOpen: ()
       <div className="pb-0.5 text-xs">
         <p className="text-muted">{t("home.sparkline.period")}</p>
         <p className={change > 0n ? "text-positive" : change < 0n ? "text-negative" : "text-muted"}>
-          {data.kpis.netWorthChangeBps !== null ? formatBps(data.kpis.netWorthChangeBps, true) : <Money amount={data.kpis.netWorthChange} />}
+          {data.kpis.netWorthChangeBps !== null ? formatPercent(data.kpis.netWorthChangeBps, true) : <Money amount={data.kpis.netWorthChange} />}
         </p>
       </div>
     </button>

@@ -9,7 +9,7 @@ import { ErrorNote, PageHeader, Panel, ProgressBar, StatStrip, Stepper } from "@
 import { Segmented } from "@/components/Segmented";
 import { PayForm, StatusPill } from "@/features/cards/CardsScreen";
 import { errorMessage } from "@/lib/api";
-import { monthLabel, shiftMonth, shortDate, shortMonthLabel, todayLocal } from "@/lib/dates";
+import { shiftMonth, todayLocal } from "@/lib/dates";
 import { percentOf } from "@/lib/money";
 import { useFormatMoney } from "@/hooks/useHideValues";
 import {
@@ -22,6 +22,7 @@ import {
 } from "@/lib/queries";
 import type { FormPreset } from "@/features/transactions/TransactionForm";
 import { categoryLabel } from "@/lib/categories";
+import { formatDate, formatMonth } from "@/lib/format";
 
 type Actions = {
   onEdit: (transaction: Transaction) => void;
@@ -122,7 +123,7 @@ function CardInvoices({ card, onEdit, onAdd }: { card: Card } & Actions) {
         <div className="flex items-center justify-between gap-3">
           <Stepper
             className="-ml-2"
-            label={monthLabel(month)}
+            label={formatMonth(month)}
             previousLabel={t("cards.detail.previous")}
             nextLabel={t("cards.detail.next")}
             onPrevious={() => goTo(shiftMonth(month, -1))}
@@ -148,9 +149,9 @@ function CardInvoices({ card, onEdit, onAdd }: { card: Card } & Actions) {
               <p className="mt-2 text-xs text-faint">
                 {paid && lastPayment
                   ? lastPayment.account
-                    ? t("invoices.paidOnWith", { date: shortDate(lastPayment.date), account: lastPayment.account.name })
-                    : t("invoices.paidOn", { date: shortDate(lastPayment.date) })
-                  : t("cards.detail.dates", { closing: shortDate(data.closingDate), due: shortDate(data.dueDate) })}
+                    ? t("invoices.paidOnWith", { date: formatDate(lastPayment.date), account: lastPayment.account.name })
+                    : t("invoices.paidOn", { date: formatDate(lastPayment.date) })
+                  : t("cards.detail.dates", { closing: formatDate(data.closingDate), due: formatDate(data.dueDate) })}
               </p>
             ) : null}
             {partlyPaid ? (
@@ -261,7 +262,7 @@ function Timeline({ invoice, onPick }: { invoice: Invoice; onPick: (month: strin
               onClick={() => onPick(item.month)}
               aria-current={active ? "true" : undefined}
               className="group flex h-full min-w-0 flex-1 flex-col items-center justify-end gap-1.5"
-              title={`${monthLabel(item.month)}: ${money(item.total)}`}
+              title={`${formatMonth(item.month)}: ${money(item.total)}`}
             >
               <span
                 className={`w-full rounded-md transition-colors ${
@@ -270,7 +271,7 @@ function Timeline({ invoice, onPick }: { invoice: Invoice; onPick: (month: strin
                 style={{ height: `${Math.max(height, item.total === "0" ? 2 : 6)}%` }}
               />
               <span className={`max-w-full truncate text-[11px] ${active ? "text-foreground" : "text-faint"}`}>
-                {shortMonthLabel(item.month)}
+                {formatMonth(item.month, "short")}
               </span>
             </button>
           );
@@ -345,7 +346,7 @@ function Items({ items, onEdit }: { items: InvoiceItem[]; onEdit: Actions["onEdi
                     onClick={() => onEdit(item)}
                     className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left transition-colors hover:bg-hover"
                   >
-                  <span className="w-12 shrink-0 text-xs text-faint">{shortDate(item.date)}</span>
+                  <span className="w-12 shrink-0 text-xs text-faint">{formatDate(item.date)}</span>
                   <span className="min-w-0 flex-1">
                     <span className="flex items-center gap-2 text-sm">
                       <span className="truncate">

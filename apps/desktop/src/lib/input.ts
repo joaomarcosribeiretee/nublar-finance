@@ -1,3 +1,7 @@
+import type { Locale } from "@nublar/validation";
+import { currentLocale } from "@/i18n";
+import { numberSeparators } from "@/lib/format";
+
 /**
  * Keystroke filters. Each one keeps only what its field can mean, so an
  * invalid character never reaches the screen and parsing at submit time is
@@ -8,28 +12,38 @@
 const MAX_WHOLE_DIGITS = 12;
 
 /**
- * Money as people type it in Brazil: digits, thousand dots and one decimal
- * comma followed by at most two digits. `signed` keeps a leading minus.
+ * Money as people type it in the language being shown: digits, thousands
+ * separators and one decimal separator followed by at most two digits
+ * ("1.234,56" in pt-BR, "1,234.56" in en). `signed` keeps a leading minus.
  */
-export function sanitizeMoney(raw: string, { signed = false } = {}): string {
+export function sanitizeMoney(
+  raw: string,
+  { signed = false, locale = currentLocale() }: { signed?: boolean; locale?: Locale } = {},
+): string {
+  const { decimal, group } = numberSeparators(locale);
   const negative = signed && /^\s*[-−]/.test(raw);
-  const body = raw.replace(/[^\d.,]/g, "");
-  const comma = body.indexOf(",");
-  let whole = comma === -1 ? body : body.slice(0, comma);
+  const body = [...raw].filter((char) => /\d/.test(char) || char === decimal || char === group).join("");
+  const separator = body.indexOf(decimal);
+  let whole = separator === -1 ? body : body.slice(0, separator);
   let digits = 0;
   whole = [...whole]
-    .filter((char) => char === "." || ++digits <= MAX_WHOLE_DIGITS)
-    .join("")
-    // A dot only separates digits: never first, never doubled.
-    .replace(/^\.+/, "")
-    .replace(/\.{2,}/g, ".");
+    .filter((char) => char === group || ++digits <= MAX_WHOLE_DIGITS)
+    .join("");
+  // A thousands separator only separates digits: never first, never doubled.
+  while (whole.startsWith(group)) whole = whole.slice(group.length);
+  whole = whole.split(group).filter((chunk, index, all) => chunk || index === all.length - 1).join(group);
   const text =
-    comma === -1 ? whole : `${whole},${body.slice(comma + 1).replace(/\D/g, "").slice(0, 2)}`;
+    separator === -1
+      ? whole
+      : `${whole}${decimal}${body.slice(separator + 1).replace(/\D/g, "").slice(0, 2)}`;
   return `${negative ? "-" : ""}${text}`;
 }
 
-/** Digits with one decimal separator, e.g. a rate ("6,5") or a quantity. */
-export function sanitizeDecimal(raw: string, decimals = 2, wholeDigits = 9): string {
+/**
+ * Digits with one decimal separator, e.g. a rate ("6,5" / "6.5") or a quantity.
+ * Either "," or "." starts the decimals; the field shows the language's own.
+ */
+export function sanitizeDecimal(raw: string, decimals = 2, wholeDigits = 9, locale: Locale = currentLocale()): string {
   const body = raw.replace(/[^\d.,]/g, "");
   const separator = body.search(/[.,]/);
   if (separator === -1) {
@@ -37,7 +51,7 @@ export function sanitizeDecimal(raw: string, decimals = 2, wholeDigits = 9): str
   }
   const whole = body.slice(0, separator).slice(0, wholeDigits);
   const fraction = body.slice(separator + 1).replace(/\D/g, "").slice(0, decimals);
-  return `${whole},${fraction}`;
+  return `${whole}${numberSeparators(locale).decimal}${fraction}`;
 }
 
 /** Digits only. */

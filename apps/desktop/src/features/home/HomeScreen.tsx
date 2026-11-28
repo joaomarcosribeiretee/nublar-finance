@@ -5,7 +5,7 @@ import { Icon } from "@/components/Icon";
 import { Money } from "@/components/Money";
 import { ErrorNote, PageHeader, Panel, ProgressBar } from "@/components/Page";
 import { errorMessage } from "@/lib/api";
-import { monthLabel, shortDate, shortMonthLabel, shiftMonth } from "@/lib/dates";
+import { shiftMonth } from "@/lib/dates";
 import { invoiceStatusLabels } from "@/lib/labels";
 import { percentOf } from "@/lib/money";
 import { useFormatMoney } from "@/hooks/useHideValues";
@@ -22,6 +22,7 @@ import { TransactionRow } from "@/features/transactions/TransactionRow";
 import { BudgetOverview } from "@/features/planning/BudgetOverview";
 import type { TransactionFilter } from "@/features/transactions/TransactionsScreen";
 import { categoryLabel } from "@/lib/categories";
+import { daysFrom, formatDate, formatMonth, formatRelativeDays } from "@/lib/format";
 
 export function HomeScreen({
   month,
@@ -48,7 +49,7 @@ export function HomeScreen({
   const transactions = useTransactions(month);
   const accounts = useAccounts();
   const data = summary.data;
-  const previousLabel = shortMonthLabel(shiftMonth(month, -1));
+  const previousLabel = formatMonth(shiftMonth(month, -1), "short");
   const failure = accounts.error ?? summary.error;
 
   if (failure && (!data || !accounts.data)) {
@@ -91,7 +92,7 @@ export function HomeScreen({
 
       <header className="month-hero">
         <div className="min-w-0">
-          <p className="design-eyebrow">{monthLabel(month)}</p>
+          <p className="design-eyebrow">{formatMonth(month)}</p>
           <h1 className="mt-3 text-sm font-normal text-muted">{positive ? t("home.result.surplus") : t("home.result.deficit")}</h1>
           <div className="hero-value mt-1 font-display tracking-tight">
             {data ? <Money amount={data.result.replace("-", "")} tone={positive ? "positive" : "negative"} /> : <div className="skeleton h-14 w-72" />}
@@ -130,7 +131,7 @@ export function HomeScreen({
           {!data ? (
             <div className="space-y-4">{[0, 1, 2].map((index) => <div key={index} className="skeleton h-8" />)}</div>
           ) : data.expensesByCategory.length === 0 ? (
-            <p className="text-sm text-faint">{t("home.categories.empty", { month: monthLabel(month).toLowerCase() })}</p>
+            <p className="text-sm text-faint">{t("home.categories.empty", { month: formatMonth(month).toLowerCase() })}</p>
           ) : (
             <ul className="-mx-2 space-y-1">
               {data.expensesByCategory.slice(0, 5).map((group) => {
@@ -225,6 +226,12 @@ function Attention({
   onCards: (cardId?: string) => void;
 }) {
   const { t } = useTranslation();
+  /** "Vence em 3 dias" within a week, "Vence 10 out" beyond; "Venceu ontem" once late. */
+  const dueLabel = (date: string) => {
+    const days = daysFrom(date);
+    const when = Math.abs(days) <= 7 ? formatRelativeDays(date) : formatDate(date);
+    return t(days < 0 ? "home.attention.overdue" : "home.attention.due", { when });
+  };
   return (
     <article className="min-w-0 rounded-3xl border border-line bg-surface p-2 @2xl:p-3">
       <h2 className="flex items-center gap-2 px-3 pt-3 pb-2 text-sm">
@@ -245,7 +252,7 @@ function Attention({
               <span className="min-w-0 flex-1">
                 <span className="block truncate text-sm">{t("home.attention.invoice", { name: invoice.card.name })}</span>
                 <span className="block text-xs text-muted">
-                  {t("home.attention.due", { date: shortDate(invoice.dueDate) })} · {t(invoiceStatusLabels[invoice.status]).toLowerCase()}
+                  {dueLabel(invoice.dueDate)} · {t(invoiceStatusLabels[invoice.status]).toLowerCase()}
                 </span>
               </span>
               <Money

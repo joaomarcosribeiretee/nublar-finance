@@ -16,8 +16,7 @@
     "failed": "Não foi possível salvar"
   },
   "dates": {
-    "today": "Hoje",
-    "yesterday": "Ontem"
+    "today": "Hoje"
   },
   "actions": {
     "close": "Fechar",

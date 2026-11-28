@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { useHideValues } from "@/hooks/useHideValues";
-import { compactBRL } from "@/lib/chart";
+import { formatCompactMoney } from "@/lib/format";
 
 /** Shared axis/grid styling: hairline, recessive, solid (never dashed). */
 export const axisTick = { fill: "var(--muted)", fontSize: 11 };
@@ -12,7 +12,7 @@ export const axisProps = {
 const yAxisMoney = {
   ...axisProps,
   width: 84,
-  tickFormatter: (value: number) => compactBRL(value),
+  tickFormatter: (value: number) => formatCompactMoney(value),
 } as const;
 /**
  * Money axis and tooltip for a chart. In privacy mode the marks keep their

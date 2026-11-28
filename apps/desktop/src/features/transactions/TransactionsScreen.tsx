@@ -9,10 +9,9 @@ import { Icon } from "@/components/Icon";
 import { Money } from "@/components/Money";
 import { Segmented } from "@/components/Segmented";
 import { errorMessage } from "@/lib/api";
-import { compactBRL, plotValue } from "@/lib/chart";
-import { HIDDEN_MONEY } from "@/lib/money";
+import { plotValue } from "@/lib/chart";
 import { useFormatMoney, useHideValues } from "@/hooks/useHideValues";
-import { currentMonth, dayLabel, monthLabel, shiftMonth, shortDate, shortMonthLabel } from "@/lib/dates";
+import { currentMonth, shiftMonth } from "@/lib/dates";
 import {
   useSummariesFor,
   useSummary,
@@ -26,6 +25,7 @@ import { TransactionRow } from "./TransactionRow";
 import { ImportFlow } from "@/features/imports/ImportFlow";
 import { RecurringScreen } from "@/features/recurring/RecurringScreen";
 import { categoryLabel } from "@/lib/categories";
+import { HIDDEN_MONEY, formatCompactMoney, formatDate, formatMonth } from "@/lib/format";
 
 type Group = { key: string; date: string; title: string; items: Transaction[]; invoice: boolean };
 
@@ -162,7 +162,7 @@ export function TransactionsScreen({
           ) : !hasAny ? (
             <EmptyState
               icon="list"
-              title={t("transactions.empty.title", { month: monthLabel(month).toLowerCase() })}
+              title={t("transactions.empty.title", { month: formatMonth(month).toLowerCase() })}
               description={t("transactions.empty.description")}
               action={
                 <Button variant="primary" onClick={onNew}>
@@ -223,7 +223,7 @@ function groupEntries(list: Transaction[], invoices: Summary["invoices"]): Group
   const result: Group[] = [...byDay.entries()].map(([date, items]) => ({
     key: date,
     date,
-    title: dayLabel(date),
+    title: formatDate(date, "weekday"),
     items,
     invoice: false,
   }));
@@ -232,7 +232,7 @@ function groupEntries(list: Transaction[], invoices: Summary["invoices"]): Group
     result.push({
       key: `invoice:${cardId}`,
       date: dueDate,
-      title: t("transactions.group.invoice", { name: items[0].card?.name ?? "", date: shortDate(dueDate) }),
+      title: t("transactions.group.invoice", { name: items[0].card?.name ?? "", date: formatDate(dueDate) }),
       items,
       invoice: true,
     });
@@ -324,7 +324,7 @@ function UpcomingMonths({
                 size={15}
                 className={`text-muted transition-transform ${expanded ? "rotate-90" : ""}`}
               />
-              <span className="flex-1 truncate text-sm">{monthLabel(month)}</span>
+              <span className="flex-1 truncate text-sm">{formatMonth(month)}</span>
               {totals ? (
                 <span className="flex items-center gap-5 text-xs">
                   <span className="hidden text-muted @2xl:inline">
@@ -455,7 +455,7 @@ function MonthStrip({ month, onChange }: { month: string; onChange: (month: stri
               }`}
             >
               <span className={`text-sm ${active ? "text-foreground" : "text-muted"}`}>
-                {shortMonthLabel(item)}
+                {formatMonth(item, "short")}
                 {showYear ? <span className="text-faint"> {item.slice(2, 4)}</span> : null}
                 {item === today ? <span className="sr-only"> {t("transactions.strip.currentMarker")}</span> : null}
               </span>
@@ -474,7 +474,7 @@ function MonthStrip({ month, onChange }: { month: string; onChange: (month: stri
                   className={`text-[11px] whitespace-nowrap tabular ${result.startsWith("-") ? "text-negative" : "text-positive"}`}
                 >
                   {result.startsWith("-") ? "−" : "+"}
-                  {hideValues ? HIDDEN_MONEY : compactBRL(Math.abs(plotValue(result)))}
+                  {hideValues ? HIDDEN_MONEY : formatCompactMoney(Math.abs(plotValue(result)))}
                 </span>
               )}
             </button>

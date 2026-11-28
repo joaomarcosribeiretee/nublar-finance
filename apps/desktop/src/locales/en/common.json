@@ -16,8 +16,7 @@
     "failed": "Couldn't save"
   },
   "dates": {
-    "today": "Today",
-    "yesterday": "Yesterday"
+    "today": "Today"
   },
   "actions": {
     "close": "Close",

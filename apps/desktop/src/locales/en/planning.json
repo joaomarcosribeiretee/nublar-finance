@@ -39,7 +39,7 @@
     "form": {
       "errors": {
         "category": "Choose the category.",
-        "limit": "Enter the limit, for example 800,00."
+        "limit": "Enter the limit, for example 800.00."
       },
       "saved": "Budget saved",
       "removed": "Budget removed",
@@ -79,8 +79,8 @@
     "form": {
       "errors": {
         "name": "Give the goal a name.",
-        "target": "Enter how much you want to save, for example 10.000,00.",
-        "saved": "The amount already saved is invalid. Use something like 1.500,00."
+        "target": "Enter how much you want to save, for example 10,000.00.",
+        "saved": "The amount already saved is invalid. Use something like 1,500.00."
       },
       "updated": "Goal updated",
       "created": "Goal created",

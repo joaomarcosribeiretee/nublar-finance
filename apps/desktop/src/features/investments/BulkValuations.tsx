@@ -5,10 +5,11 @@ import { controlClass, Field, MoneyInput } from "@/components/Field";
 import { FormFooter } from "@/components/Modal";
 import { useToast } from "@/components/Toast";
 import { errorMessage } from "@/lib/api";
-import { shortDate, todayLocal } from "@/lib/dates";
+import { todayLocal } from "@/lib/dates";
 import { assetClassLabels } from "@/lib/labels";
 import { minorUnitsToInput, parseReaisToMinorUnits } from "@/lib/money";
 import { useAddValuations, type InvestmentItem } from "@/lib/queries";
+import { formatDate } from "@/lib/format";
 
 /**
  * The monthly check-in: open the bank app, copy each value, done.
@@ -64,7 +65,7 @@ export function BulkValuations({ items, onDone }: { items: InvestmentItem[]; onD
               <span className="block truncate text-xs text-faint">
                 {item.institution?.name ? `${item.institution.name} · ` : ""}
                 {t(assetClassLabels[item.assetClass])}
-                {item.lastValuation ? ` · ${t("investments.bulk.updatedOn", { date: shortDate(item.lastValuation) })}` : ""}
+                {item.lastValuation ? ` · ${t("investments.bulk.updatedOn", { date: formatDate(item.lastValuation) })}` : ""}
               </span>
             </span>
             <div className="relative w-36 shrink-0 sm:w-40">

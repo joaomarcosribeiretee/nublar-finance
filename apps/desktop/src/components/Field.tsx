@@ -1,4 +1,5 @@
 import { useEffect, useState, type InputHTMLAttributes, type ReactNode } from "react";
+import { numberSeparators } from "@/lib/format";
 import { clampInteger, sanitizeDecimal, sanitizeInteger, sanitizeMoney, sanitizeText } from "@/lib/input";
 
 export function Field({
@@ -40,13 +41,13 @@ export function TextInput({ value, onChange, className = controlClass, ...props 
   );
 }
 
-/** Reais: digits, thousand dots and one comma with two cents. */
+/** Reais: digits, thousands separators and one decimal separator with two cents, in the language shown. */
 export function MoneyInput({
   value,
   onChange,
   signed,
   className = `${controlClass} tabular`,
-  placeholder = "0,00",
+  placeholder,
   ...props
 }: TextProps & { signed?: boolean }) {
   return (
@@ -56,7 +57,7 @@ export function MoneyInput({
       // The numeric keypad has no minus key on phones.
       inputMode={signed ? "text" : "decimal"}
       autoComplete="off"
-      placeholder={placeholder}
+      placeholder={placeholder ?? `0${numberSeparators().decimal}00`}
       className={className}
       value={value}
       onChange={(event) => onChange(sanitizeMoney(event.target.value, { signed }))}
@@ -64,7 +65,7 @@ export function MoneyInput({
   );
 }
 
-/** A number with a decimal comma: a rate, a quantity. */
+/** A number with one decimal separator: a rate, a quantity. */
 export function DecimalInput({
   value,
   onChange,

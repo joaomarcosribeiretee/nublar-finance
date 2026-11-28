@@ -34,8 +34,8 @@ import { Money } from "@/components/Money";
 import { Segmented } from "@/components/Segmented";
 import { ErrorNote, PageHeader, ProgressBar } from "@/components/Page";
 import { errorMessage } from "@/lib/api";
-import { allocationColors, formatBps, plotValue } from "@/lib/chart";
-import { monthLabel, shiftMonth, shortMonthLabel } from "@/lib/dates";
+import { allocationColors, plotValue } from "@/lib/chart";
+import { shiftMonth } from "@/lib/dates";
 import { percentOf } from "@/lib/money";
 import { useFormatMoney } from "@/hooks/useHideValues";
 import { activeSeries } from "@/lib/insights";
@@ -43,6 +43,7 @@ import { useAnalytics, type Analytics, type AssetClass } from "@/lib/queries";
 import { IncomeSplitCard, ReserveCard, SpendingPace } from "./Insights";
 import { BudgetOverview } from "@/features/planning/BudgetOverview";
 import { categoryLabel } from "@/lib/categories";
+import { formatMonth, formatPercent } from "@/lib/format";
 
 type Point = Analytics["series"][number];
 
@@ -65,8 +66,8 @@ function sliceName(slice: { key: string; name: string }): string {
 /** "out" or "jan 26" at year boundaries. */
 function axisMonth(month: string): string {
   return month.endsWith("-01")
-    ? `${shortMonthLabel(month)} ${month.slice(2, 4)}`
-    : shortMonthLabel(month);
+    ? `${formatMonth(month, "short")} ${month.slice(2, 4)}`
+    : formatMonth(month, "short");
 }
 
 export function AnalyticsScreen({
@@ -90,7 +91,7 @@ export function AnalyticsScreen({
   return (
     <section className="animate-enter space-y-6">
       <PageHeader
-        eyebrow={data ? t("analytics.range", { from: monthLabel(data.from), to: monthLabel(data.to) }) : t("analytics.eyebrow")}
+        eyebrow={data ? t("analytics.range", { from: formatMonth(data.from), to: formatMonth(data.to) }) : t("analytics.eyebrow")}
         title={t("shell.screens.analytics")}
         actions={
           <Segmented
@@ -174,7 +175,7 @@ function Kpis({ data }: { data: Analytics | undefined }) {
                 {change > 0n ? "+" : ""}
                 <Money amount={change.toString()} />
               </span>{" "}
-              {t("analytics.kpis.since", { month: monthLabel(since.month).toLowerCase() })}
+              {t("analytics.kpis.since", { month: formatMonth(since.month).toLowerCase() })}
             </>
           ) : k ? (
             t("analytics.kpis.firstMonth")
@@ -185,7 +186,7 @@ function Kpis({ data }: { data: Analytics | undefined }) {
         label={t("analytics.kpis.result")}
         loading={loading}
         value={point ? <Money amount={result.toString()} tone="auto" /> : null}
-        detail={point ? t("analytics.kpis.resultDetail", { income: money(point.income), rate: formatBps(point.savingsRateBps) }) : null}
+        detail={point ? t("analytics.kpis.resultDetail", { income: money(point.income), rate: formatPercent(point.savingsRateBps) }) : null}
       />
     </div>
   );
@@ -205,7 +206,7 @@ function NetWorthChart({ data, dim }: { data: Analytics | undefined; dim: boolea
       title={t("analytics.worth.title")}
       subtitle={
         trimmed && rows[0]
-          ? t("analytics.worth.subtitleSince", { month: monthLabel(rows[0].month).toLowerCase() })
+          ? t("analytics.worth.subtitleSince", { month: formatMonth(rows[0].month).toLowerCase() })
           : t("analytics.worth.subtitle")
       }
       dim={dim}
@@ -231,7 +232,7 @@ function NetWorthChart({ data, dim }: { data: Analytics | undefined; dim: boolea
                   if (!active || !point) return null;
                   return (
                     <TooltipBox
-                      title={monthLabel(point.month)}
+                      title={formatMonth(point.month)}
                       rows={[
                         { label: t("home.netWorth"), color: colors.worth, value: <Money amount={point.netWorth} /> },
                         { label: t("analytics.allocation.cash"), value: <Money amount={point.cash} />, strong: false },
@@ -301,12 +302,12 @@ function IncomeExpenseChart({ data, dim }: { data: Analytics | undefined; dim: b
                   if (!active || !point) return null;
                   return (
                     <TooltipBox
-                      title={monthLabel(point.month)}
+                      title={formatMonth(point.month)}
                       rows={[
                         { label: t("transactions.filters.income"), color: colors.income, value: <Money amount={point.income} /> },
                         { label: t("transactions.filters.expense"), color: colors.expense, value: <Money amount={point.expense} /> },
                         { label: t("transactions.result"), value: <Money amount={point.result} /> },
-                        { label: t("analytics.savings"), value: formatBps(point.savingsRateBps), strong: false },
+                        { label: t("analytics.savings"), value: formatPercent(point.savingsRateBps), strong: false },
                       ]}
                     />
                   );
@@ -332,12 +333,12 @@ function CategoriesCard({ data, dim }: { data: Analytics | undefined; dim: boole
     for (const v of [c.amount, c.average]) if (BigInt(v) > BigInt(m)) m = v;
     return m;
   }, "0");
-  const previousMonth = data ? shortMonthLabel(shiftMonth(data.to, -1)) : "";
+  const previousMonth = data ? formatMonth(shiftMonth(data.to, -1), "short") : "";
 
   return (
     <ChartCard
       title={t("home.categories.title")}
-      subtitle={data ? t("analytics.categories.subtitle", { month: monthLabel(data.to) }) : undefined}
+      subtitle={data ? t("analytics.categories.subtitle", { month: formatMonth(data.to) }) : undefined}
       dim={dim}
     >
       {!data ? (
@@ -368,7 +369,7 @@ function CategoriesCard({ data, dim }: { data: Analytics | undefined; dim: boole
                       >
                         <Icon name={delta > 0n ? "arrowUp" : "arrowDown"} size={11} />
                         <span className="sr-only">{delta > 0n ? t("home.delta.up") : t("home.delta.down")}{" "}</span>
-                        {formatBps(Math.abs(deltaBps))}
+                        {formatPercent(Math.abs(deltaBps))}
                       </span>
                     ) : null}
                     <Money amount={category.amount} />
@@ -510,7 +511,7 @@ function CommitmentsChart({ data, dim }: { data: Analytics | undefined; dim: boo
                   if (!active || !row) return null;
                   return (
                     <TooltipBox
-                      title={monthLabel(row.month)}
+                      title={formatMonth(row.month)}
                       rows={[
                         { label: t("invoices.groups.installments"), color: colors.installments, value: <Money amount={row.installments} /> },
                         { label: t("analytics.commitments.recurring"), color: colors.fixed, value: <Money amount={row.recurringExpense} /> },
@@ -572,11 +573,11 @@ function MonthlyTable({ data, onInspectMonth }: { data: Analytics | undefined; o
             <tbody>
               {[...activeSeries(data.series)].reverse().map((p) => (
                 <tr key={p.month} className="border-t border-line">
-                  <td className="px-3 py-2 text-left"><button type="button" className="rounded-md py-1 text-accent hover:underline" onClick={() => onInspectMonth(p.month)} aria-label={t("home.categories.open", { name: monthLabel(p.month) })}>{monthLabel(p.month)}</button></td>
+                  <td className="px-3 py-2 text-left"><button type="button" className="rounded-md py-1 text-accent hover:underline" onClick={() => onInspectMonth(p.month)} aria-label={t("home.categories.open", { name: formatMonth(p.month) })}>{formatMonth(p.month)}</button></td>
                   <td className="px-3 py-2"><Money amount={p.income} /></td>
                   <td className="px-3 py-2"><Money amount={p.expense} /></td>
                   <td className="px-3 py-2"><Money amount={p.result} /></td>
-                  <td className="px-3 py-2">{formatBps(p.savingsRateBps)}</td>
+                  <td className="px-3 py-2">{formatPercent(p.savingsRateBps)}</td>
                   <td className="px-3 py-2"><Money amount={p.invested} /></td>
                   <td className="px-3 py-2"><Money amount={p.netWorth} /></td>
                 </tr>

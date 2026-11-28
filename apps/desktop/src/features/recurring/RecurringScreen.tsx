@@ -12,7 +12,7 @@ import { ErrorNote, Panel } from "@/components/Page";
 import { Segmented } from "@/components/Segmented";
 import { useToast } from "@/components/Toast";
 import { errorMessage } from "@/lib/api";
-import { currentMonth, monthLabel, shortMonthLabel } from "@/lib/dates";
+import { currentMonth } from "@/lib/dates";
 import { minorUnitsToInput, parseReaisToMinorUnits } from "@/lib/money";
 import { useFormatMoney } from "@/hooks/useHideValues";
 import {
@@ -27,15 +27,16 @@ import {
 } from "@/lib/queries";
 import { CategoryChips } from "@/features/transactions/CategoryChips";
 import { categoryLabel } from "@/lib/categories";
+import { formatMonth } from "@/lib/format";
 
 /** "todo dia 8 · Nubank · Conta corrente", "em toda fatura · Cartão Nubank", "10x · até jan 27". */
 function describeRule(rule: RecurringRule): string {
   const where = rule.card ? t("institutions.panel.card", { name: rule.card.name }) : (rule.account?.name ?? "");
   const when = rule.card ? t("recurring.describe.everyInvoice") : t("recurring.describe.everyDay", { day: rule.dayOfMonth });
   const until = rule.installments
-    ? `${rule.installments}x · ${t("recurring.describe.until", { month: `${shortMonthLabel(rule.endMonth ?? rule.startMonth)} ${(rule.endMonth ?? "").slice(2, 4)}` })}`
+    ? `${rule.installments}x · ${t("recurring.describe.until", { month: `${formatMonth(rule.endMonth ?? rule.startMonth, "short")} ${(rule.endMonth ?? "").slice(2, 4)}` })}`
     : rule.endMonth
-      ? t("recurring.describe.until", { month: monthLabel(rule.endMonth).toLowerCase() })
+      ? t("recurring.describe.until", { month: formatMonth(rule.endMonth).toLowerCase() })
       : null;
   return [categoryLabel(rule.category.name), when, where, until].filter(Boolean).join(" · ");
 }

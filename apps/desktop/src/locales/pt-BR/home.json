@@ -49,6 +49,7 @@
   "attention": {
     "title": "Precisa de atenção",
     "invoice": "Fatura {{name}}",
-    "due": "Vence {{date}}"
+    "due": "Vence {{when}}",
+    "overdue": "Venceu {{when}}"
   }
 }

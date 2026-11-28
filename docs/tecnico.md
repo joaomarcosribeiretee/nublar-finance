@@ -253,6 +253,8 @@ currency: BRL
 
 Formatação só na borda, na hora de mostrar.
 
+Todo número, valor e data exibido passa por `apps/desktop/src/lib/format.ts` (`formatMoney`, `formatPercent`, `formatDate`, `formatMonth`, `formatRelativeDays`), que usa `Intl` com o idioma ativo. A moeda é sempre BRL: em inglês muda só o separador (`R$ 1,234.56`), nunca a moeda. Os campos de valor aceitam o separador decimal do idioma.
+
 ---
 
 # Segurança

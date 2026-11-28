@@ -1,4 +1,6 @@
-import { t, type TranslationKey } from "@/i18n";
+import type { Locale } from "@nublar/validation";
+import { currentLocale, t, type TranslationKey } from "@/i18n";
+import { numberSeparators } from "@/lib/format";
 
 export type Indexer = "CDI" | "IPCA" | "PREFIXED" | "SELIC";
 export type Liquidity = "DAILY" | "AT_MATURITY";
@@ -62,12 +64,12 @@ export function parsePercentToBps(input: string): number | null {
   return Number(match[1]) * 100 + Number((match[2] ?? "").padEnd(2, "0"));
 }
 
-/** 650 → "6,5"; 11000 → "110". */
-export function bpsToPercentInput(bps: number): string {
+/** 650 → "6,5" (pt-BR) / "6.5" (en); 11000 → "110". */
+export function bpsToPercentInput(bps: number, locale: Locale = currentLocale()): string {
   const whole = Math.floor(bps / 100);
   const fraction = bps % 100;
   if (fraction === 0) return String(whole);
-  return `${whole},${String(fraction).padStart(2, "0").replace(/0$/, "")}`;
+  return `${whole}${numberSeparators(locale).decimal}${String(fraction).padStart(2, "0").replace(/0$/, "")}`;
 }
 
 /** "110% do CDI", "IPCA + 6,5%", "12% a.a.", "Selic + 0,1%" or "Selic". */

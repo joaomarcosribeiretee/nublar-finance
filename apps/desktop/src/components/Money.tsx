@@ -1,5 +1,7 @@
+import { useTranslation } from "react-i18next";
 import { useHideValues } from "@/hooks/useHideValues";
-import { formatMoney } from "@/lib/money";
+import { resolveLocale } from "@nublar/validation";
+import { formatMoney } from "@/lib/format";
 
 const tones = {
   plain: "",
@@ -26,6 +28,8 @@ export function Money({
   className?: string;
 }) {
   const hidden = useHideValues();
+  // Separators follow the language, so a switch in Settings re-renders every amount.
+  const { i18n } = useTranslation();
   const negative = amount.startsWith("-");
   const color =
     tone === "auto"
@@ -35,7 +39,7 @@ export function Money({
           ? tones.positive
           : ""
       : tones[tone];
-  const text = formatMoney(amount, hidden);
+  const text = formatMoney(amount, hidden, resolveLocale(i18n.language));
 
   return (
     <span className={`tabular whitespace-nowrap ${color} ${className}`}>

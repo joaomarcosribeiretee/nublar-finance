@@ -31,7 +31,7 @@
     "paid": "Statement paid",
     "action": "Pay statement",
     "errors": {
-      "amount": "Enter an amount, for example 250,00.",
+      "amount": "Enter an amount, for example 250.00.",
       "account": "Choose the account the payment comes from.",
       "tooMuch": "The amount is more than what's left to pay on this statement."
     },
@@ -41,7 +41,7 @@
     "submit": "Confirm payment"
   },
   "form": {
-    "invalidLimit": "Invalid limit. Use something like 5.000,00.",
+    "invalidLimit": "Invalid limit. Use something like 5,000.00.",
     "updated": "Card updated",
     "created": "Card created",
     "deleted": "Card deleted",

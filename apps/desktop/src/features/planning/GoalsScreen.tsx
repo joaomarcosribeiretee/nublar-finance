@@ -10,8 +10,6 @@ import { Segmented } from "@/components/Segmented";
 import { ErrorNote, PageHeader, Panel, ProgressBar } from "@/components/Page";
 import { useToast } from "@/components/Toast";
 import { errorMessage } from "@/lib/api";
-import { formatBps } from "@/lib/chart";
-import { monthLabel } from "@/lib/dates";
 import { institutionColors } from "@/lib/institutions";
 import { minorUnitsToInput, parseReaisToMinorUnits } from "@/lib/money";
 import { useFormatMoney } from "@/hooks/useHideValues";
@@ -24,6 +22,7 @@ import {
   type Goal,
 } from "@/lib/queries";
 import { ColorPicker } from "@/features/institutions/InstitutionForm";
+import { formatMonth, formatPercent } from "@/lib/format";
 
 export function GoalsScreen() {
   const { t } = useTranslation();
@@ -107,7 +106,7 @@ function GoalCard({ goal, onOpen }: { goal: Goal; onOpen: () => void }) {
       <span className="flex items-center gap-2 text-sm">
         <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-raised" style={{ color: goal.color }}><Icon name={goal.reached ? "check" : "target"} size={20} /></span>
         <span className="truncate">{goal.name}</span>
-        <span className="ml-auto text-xs text-muted tabular">{formatBps(goal.progressBps)}</span>
+        <span className="ml-auto text-xs text-muted tabular">{formatPercent(goal.progressBps)}</span>
       </span>
       <span className="mt-6 break-words text-3xl tabular">
         <Money amount={goal.saved} />
@@ -125,7 +124,7 @@ function GoalCard({ goal, onOpen }: { goal: Goal; onOpen: () => void }) {
           <span className="text-muted">
             <Trans
               i18nKey="planning.goals.card.monthly"
-              values={{ amount: money(goal.monthlyNeeded), month: goal.targetDate ? monthLabel(goal.targetDate.slice(0, 7)).toLowerCase() : "" }}
+              values={{ amount: money(goal.monthlyNeeded), month: goal.targetDate ? formatMonth(goal.targetDate.slice(0, 7)).toLowerCase() : "" }}
               components={{ value: <span className="text-foreground" /> }}
             />
           </span>
