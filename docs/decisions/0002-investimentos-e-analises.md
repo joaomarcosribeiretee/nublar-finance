@@ -4,7 +4,7 @@ Data: 2026-10-01 · Status: aceita (proposta pelo agente; revisar se algum núme
 
 ## Investimento é posição, não conta
 
-Um investimento (CDB, ação, FII, ETF, cripto…) é uma **posição** dentro de uma instituição, com classe de ativo, nome e, opcionalmente, código e quantidade (só informativos: não há cotação automática).
+Um investimento (CDB, ação, FII, ETF, cripto…) é uma **posição** dentro de uma instituição, com classe de ativo, nome e, opcionalmente, código e quantidade (só informativos, exceto em cripto com cotação automática; ver `0005-cotacao-automatica-de-cripto.md`).
 
 ## Valor da posição
 

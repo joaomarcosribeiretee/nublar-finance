@@ -17,6 +17,7 @@ import { usePortfolio, type AssetClass, type InvestmentItem } from "@/lib/querie
 import { InvestmentDetail } from "./InvestmentDetail";
 import { InvestmentForm } from "./InvestmentForm";
 import { BulkValuations } from "./BulkValuations";
+import { QuoteAge, QuoteWarning } from "./QuoteStatus";
 import { liquidityLabels, rateLabel } from "@/lib/rates";
 import { formatDate } from "@/lib/format";
 
@@ -31,6 +32,8 @@ export function InvestmentsScreen() {
   const [assetFilter, setAssetFilter] = useState<AssetClass | null>(null);
   const data = portfolio.data;
   const totals = data?.totals;
+  // Auto-quoted positions update themselves; the check-in is for the rest.
+  const manualItems = data?.items.filter((item) => !item.autoQuote) ?? [];
 
   return (
     <section className="animate-enter space-y-6">
@@ -39,7 +42,7 @@ export function InvestmentsScreen() {
         title={t("shell.screens.investments")}
         actions={
           <>
-            {data && data.items.length > 0 ? (
+            {manualItems.length > 0 ? (
               <Button variant="ghost" onClick={() => setUpdating(true)}>
                 {t("investments.updateValues")}
               </Button>
@@ -120,7 +123,7 @@ export function InvestmentsScreen() {
       )}
 
       <Modal open={updating} onClose={() => setUpdating(false)} title={t("investments.updateValues")} width={560}>
-        {data ? <BulkValuations items={data.items} onDone={() => setUpdating(false)} /> : null}
+        {data ? <BulkValuations items={manualItems} onDone={() => setUpdating(false)} /> : null}
       </Modal>
       <Modal open={creating} onClose={() => setCreating(false)} title={t("investments.new")} width={600}>
         <InvestmentForm investment={null} onDone={() => setCreating(false)} />
@@ -194,12 +197,20 @@ function ClassGroup({
 }) {
   const { t } = useTranslation();
   const total = items.reduce((sum, item) => sum + BigInt(item.current), 0n).toString();
+  // Every quoted coin comes from the same fetch: one status for the group.
+  const quote = items.find((item) => item.quote)?.quote ?? null;
   return (
     <article className="min-w-0 rounded-3xl border border-line bg-surface p-2 @2xl:p-3">
-      <header className="flex items-center gap-2 px-3 pt-2 pb-2">
+      <header className="flex flex-wrap items-center gap-2 px-3 pt-2 pb-2">
         <span className="h-2.5 w-2.5 rounded-[3px]" style={{ background: allocationColors[assetClass] }} />
         <h2 className="text-sm text-muted">{t(assetClassLabels[assetClass])}</h2>
+        {quote ? <QuoteAge quote={quote} /> : null}
         <Money amount={total} className="ml-auto text-sm" />
+        {quote?.stale ? (
+          <div className="w-full">
+            <QuoteWarning quote={quote} />
+          </div>
+        ) : null}
       </header>
       <ul>
         {items.map((item) => (
@@ -246,7 +257,11 @@ function describe(item: InvestmentItem): string {
     item.assetClass === "FIXED_INCOME" ? rateLabel(item.indexer, item.rateBps) : null,
     item.liquidity ? t(liquidityLabels[item.liquidity]).toLowerCase() : null,
     item.maturityDate ? t("investments.describe.matures", { date: `${formatDate(item.maturityDate)} ${item.maturityDate.slice(2, 4)}` }) : null,
-    item.lastValuation ? t("investments.bulk.updatedOn", { date: formatDate(item.lastValuation) }) : t("investments.describe.noValue"),
+    item.autoQuote
+      ? t("investments.quote.auto")
+      : item.lastValuation
+        ? t("investments.bulk.updatedOn", { date: formatDate(item.lastValuation) })
+        : t("investments.describe.noValue"),
   ];
   return parts.filter(Boolean).join(" · ");
 }

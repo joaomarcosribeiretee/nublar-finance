@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
+import { coinForSymbol } from "@nublar/validation";
 import { Button } from "@/components/Button";
 import { controlClass, DecimalInput, Field, MoneyInput, TextInput } from "@/components/Field";
 import { FormFooter } from "@/components/Modal";
@@ -85,6 +86,8 @@ export function InvestmentForm({
   const [ticker, setTicker] = useState(investment?.ticker ?? "");
   const [quantity, setQuantity] = useState(investment?.quantity ?? "");
   const [maturityDate, setMaturityDate] = useState(investment?.maturityDate ?? "");
+  // On by default for coins with a quote; an existing position keeps its choice.
+  const [autoQuote, setAutoQuote] = useState(investment?.autoQuote ?? true);
   const [current, setCurrent] = useState("");
   const [knowsHistory, setKnowsHistory] = useState(false);
   const [applied, setApplied] = useState("");
@@ -96,6 +99,8 @@ export function InvestmentForm({
   const listed = assetClass === "STOCK" || assetClass === "FII" || assetClass === "ETF" || assetClass === "CRYPTO";
   const institutionName = institutions.data?.find((i) => i.id === institutionId)?.name ?? "";
   const rateBps = rate.trim() ? parsePercentToBps(rate) : null;
+  const coinId = assetClass === "CRYPTO" ? coinForSymbol(ticker) : null;
+  const quoting = coinId !== null && autoQuote;
 
   // A sensible name when the user does not type one: "CDB Nubank 110% do CDI".
   const suggestedName = fixedIncome
@@ -119,26 +124,34 @@ export function InvestmentForm({
       setError(t("investments.form.errors.rate"));
       return;
     }
+    // A trailing separator ("10,") is a number still being typed, not a fraction.
+    const typedQuantity = quantity.trim().replace(/[.,]$/, "");
+    if (quoting && !/[1-9]/.test(typedQuantity)) {
+      setError(t("investments.form.errors.quantity"));
+      return;
+    }
     const details = {
       name: name.trim() || suggestedName,
       assetClass,
       institutionId: institutionId || null,
       ticker: ticker.trim(),
-      // A trailing separator ("10,") is a number still being typed, not a fraction.
-      quantity: quantity.trim().replace(/[.,]$/, ""),
+      quantity: typedQuantity,
       maturityDate: maturityDate || null,
       product: fixedIncome ? product : null,
       // Without a rate the index says nothing, so neither is saved.
       indexer: fixedIncome && rateBps !== null ? indexer : null,
       rateBps: fixedIncome && indexer ? rateBps : null,
       liquidity: fixedIncome ? liquidity : null,
+      coinId,
+      autoQuote: quoting,
     };
     try {
       if (investment) {
         await update.mutateAsync({ id: investment.id, input: details });
         toast(t("investments.form.updated"));
       } else {
-        const currentValue = parseNonNegative(current);
+        // With the quote on, the API values it: quantity × today's quote.
+        const currentValue = quoting ? undefined : parseNonNegative(current);
         if (currentValue === null) {
           setError(t("investments.form.errors.current"));
           return;
@@ -213,7 +226,7 @@ export function InvestmentForm({
         </Field>
       ) : null}
 
-      {investment ? null : (
+      {investment || quoting ? null : (
         <label className="block rounded-2xl border border-line bg-surface-2 px-4 py-3 transition-colors focus-within:border-accent/60">
           <span className="text-xs text-muted">{t("investments.form.current")}</span>
           <div className="mt-1 flex items-baseline gap-2">
@@ -326,9 +339,30 @@ export function InvestmentForm({
               onChange={(event) => setTicker(sanitizeTicker(event.target.value))}
             />
           </Field>
-          <Field label={t("investments.form.quantity")}>
-            <DecimalInput placeholder="100" decimals={8} wholeDigits={12} value={quantity} onChange={setQuantity} />
+          <Field label={quoting ? t("investments.form.quantityAuto") : t("investments.form.quantity")}>
+            <DecimalInput placeholder={assetClass === "CRYPTO" ? "0,5" : "100"} decimals={8} wholeDigits={12} value={quantity} onChange={setQuantity} />
           </Field>
+          {coinId ? (
+            <button
+              type="button"
+              role="switch"
+              aria-checked={autoQuote}
+              onClick={() => setAutoQuote((value) => !value)}
+              className="col-span-2 flex items-center gap-3 rounded-2xl border border-line px-4 py-3 text-left"
+            >
+              <span className="flex-1">
+                <span className="block text-sm">{t("investments.form.autoQuote")}</span>
+                <span className="block text-xs text-faint">{t("investments.form.autoQuoteHint")}</span>
+              </span>
+              <span
+                className={`relative h-6 w-10 shrink-0 rounded-full transition-colors ${autoQuote ? "bg-accent" : "bg-line-strong"}`}
+              >
+                <span
+                  className={`absolute top-1 h-4 w-4 rounded-full bg-background transition-[left] ${autoQuote ? "left-5" : "left-1"}`}
+                />
+              </span>
+            </button>
+          ) : null}
         </div>
       ) : null}
 

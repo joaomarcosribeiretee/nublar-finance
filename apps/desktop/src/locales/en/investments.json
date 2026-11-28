@@ -46,7 +46,8 @@
     "errors": {
       "rate": "Invalid rate. Use something like 110 or 6.5.",
       "current": "Enter how much you have today.",
-      "applied": "Enter how much you invested."
+      "applied": "Enter how much you invested.",
+      "quantity": "Enter the quantity to use the quote."
     },
     "updated": "Investment updated",
     "created": "Investment added",
@@ -69,7 +70,10 @@
     "history": "I know how much and when I invested",
     "historyHint": "Optional. Without it, returns are counted from today.",
     "applied": "Amount invested",
-    "since": "Since"
+    "since": "Since",
+    "autoQuote": "Update the quote automatically",
+    "autoQuoteHint": "Value = quantity × quote in reais, refreshed every 5 minutes. Turn it off to type the value yourself.",
+    "quantityAuto": "Quantity"
   },
   "horizons": {
     "oneMonth": "1 month",
@@ -109,7 +113,8 @@
     "deleteValue": "Delete value",
     "valueDeleted": "Value deleted",
     "deleteConfirm": "Delete?",
-    "matures": "Matures {{date}}"
+    "matures": "Matures {{date}}",
+    "quotedValue": "Automatic quote"
   },
   "preview": {
     "title": "Return preview",
@@ -120,5 +125,14 @@
     "cdiLabel": "Annual CDI",
     "gross": "gross",
     "note": "Estimate with a constant CDI; it doesn't change the position's value, which follows your updates."
+  },
+  "quote": {
+    "updated": "Updated {{time}}",
+    "updatedNow": "Updated just now",
+    "refresh": "Refresh quote",
+    "stale": "Couldn't refresh the quote. Keeping the last value.",
+    "unavailable": "Quote unavailable right now. Keeping the last value.",
+    "price": "1 {{symbol}} = {{price}}",
+    "auto": "automatic quote"
   }
 }

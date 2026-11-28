@@ -1,4 +1,4 @@
-import { fixedIncomeSummary } from './investments.service';
+import { fixedIncomeSummary, quoteOf } from './investments.service';
 
 describe('fixedIncomeSummary', () => {
   const base = { assetClass: 'FIXED_INCOME', maturityDate: null };
@@ -84,5 +84,35 @@ describe('fixedIncomeSummary', () => {
       '2026-10-02',
     );
     expect(summary.maturities.map((m) => m.id)).toEqual(['a', 'b']);
+  });
+});
+
+describe('quoteOf', () => {
+  const fetchedAt = new Date('2026-11-27T12:00:00.000Z');
+  const board = {
+    quotes: new Map([['bitcoin', { price: '512345.12', fetchedAt }]]),
+    stale: false,
+  };
+
+  it('is null for positions with manual values', () => {
+    expect(
+      quoteOf({ coinId: 'bitcoin', autoQuote: false }, board).quote,
+    ).toBeNull();
+  });
+
+  it('shows the price and when it was fetched', () => {
+    expect(
+      quoteOf({ coinId: 'bitcoin', autoQuote: true }, board).quote,
+    ).toEqual({
+      price: '512345.12',
+      fetchedAt: fetchedAt.toISOString(),
+      stale: false,
+    });
+  });
+
+  it('flags a missing quote as stale instead of showing zero', () => {
+    expect(quoteOf({ coinId: 'solana', autoQuote: true }, board).quote).toEqual(
+      { price: null, fetchedAt: null, stale: true },
+    );
   });
 });

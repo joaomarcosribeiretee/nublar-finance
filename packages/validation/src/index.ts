@@ -270,6 +270,30 @@ export const assetClassSchema = z.enum([
   "OTHER",
 ]);
 
+/**
+ * Coins with an automatic BRL quote (CoinGecko ids). Add one here and it
+ * becomes available everywhere.
+ */
+export const cryptoCoins = [
+  { id: "bitcoin", symbol: "BTC" },
+  { id: "ethereum", symbol: "ETH" },
+  { id: "solana", symbol: "SOL" },
+  { id: "tether", symbol: "USDT" },
+  { id: "usd-coin", symbol: "USDC" },
+] as const;
+
+export type CoinId = (typeof cryptoCoins)[number]["id"];
+
+export const coinIdSchema = z.enum(
+  cryptoCoins.map((coin) => coin.id) as [CoinId, ...CoinId[]],
+);
+
+/** The coin a ticker such as "btc" stands for, when it has a quote. */
+export function coinForSymbol(symbol: string): CoinId | null {
+  const upper = symbol.trim().toUpperCase();
+  return cryptoCoins.find((coin) => coin.symbol === upper)?.id ?? null;
+}
+
 const nonNegativeMinorSchema = moneyAmountSchema.refine(
   (amount) => amount >= 0n,
   msg("amountNegative"),
@@ -312,21 +336,54 @@ const investmentDetailsSchema = z.object({
     .nullable()
     .optional(),
   liquidity: z.enum(["DAILY", "AT_MATURITY"]).nullable().optional(),
+  /** Crypto only: the coin whose quote values the position. */
+  coinId: coinIdSchema.nullable().optional(),
+  /** Value = quantity × quote, refreshed by the API. Off = manual values. */
+  autoQuote: z.boolean().optional(),
 });
 
-export const createInvestmentSchema = investmentDetailsSchema.extend({
+/** An automatic quote needs a coin and how many of it the user holds. */
+function quoteNeedsQuantity(
+  input: { autoQuote?: boolean; coinId?: string | null; quantity?: string },
+  ctx: z.RefinementCtx,
+) {
+  if (!input.autoQuote) return;
+  if (!input.coinId) {
+    ctx.addIssue({ code: "custom", path: ["coinId"], message: msg("chooseCoin") });
+  }
+  if (!input.quantity || /^[0.,]+$/.test(input.quantity)) {
+    ctx.addIssue({ code: "custom", path: ["quantity"], message: msg("quantityRequired") });
+  }
+}
+
+const createInvestmentBaseSchema = investmentDetailsSchema.extend({
   /**
    * Already applied before tracking started; not an expense. Omitted when
    * the user only knows today's value: then it equals `currentValue` and the
    * gain is measured from the moment of registration.
    */
   openingApplied: nonNegativeMinorSchema.optional(),
-  currentValue: nonNegativeMinorSchema,
+  /** Optional with an automatic quote: then it is quantity × quote. */
+  currentValue: nonNegativeMinorSchema.optional(),
   /** Only meaningful with `openingApplied`. */
   startDate: calendarDateSchema.optional(),
 });
 
-export const updateInvestmentSchema = investmentDetailsSchema;
+export const createInvestmentSchema = createInvestmentBaseSchema.superRefine(
+  (input, ctx) => {
+    quoteNeedsQuantity(input, ctx);
+    if (input.currentValue === undefined && !input.autoQuote) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["currentValue"],
+        message: msg("currentValueRequired"),
+      });
+    }
+  },
+);
+
+export const updateInvestmentSchema =
+  investmentDetailsSchema.superRefine(quoteNeedsQuantity);
 
 /** Today's value of several positions at once. */
 export const bulkValuationSchema = z.object({

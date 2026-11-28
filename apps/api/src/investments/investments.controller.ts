@@ -25,6 +25,13 @@ export class InvestmentsController {
     return this.investments.list(user.id);
   }
 
+  /** The refresh button: a fresh quote, at most once a minute. */
+  @Post('quotes/refresh')
+  @HttpCode(200)
+  refreshQuotes(@CurrentUser() user: AuthUser) {
+    return this.investments.refreshQuotes(user.id);
+  }
+
   @Post('valuations')
   addValuations(@CurrentUser() user: AuthUser, @Body() body: unknown) {
     return this.investments.addValuations(user.id, body);

@@ -3,6 +3,7 @@ import {
   ConflictException,
   Injectable,
   NotFoundException,
+  ServiceUnavailableException,
 } from '@nestjs/common';
 import {
   bulkValuationSchema,
@@ -22,7 +23,9 @@ import {
 } from '../ledger/investments';
 import { LedgerService, type Position } from '../ledger/ledger.service';
 import { shiftMonth } from '../ledger/month';
+import { quotedValue } from '../ledger/quotes';
 import { PrismaService } from '../prisma/prisma.service';
+import { QuotesService, type QuoteBoard } from '../quotes/quotes.service';
 
 const assetClassNames = {
   FIXED_INCOME: 'Renda fixa',
@@ -40,10 +43,12 @@ export class InvestmentsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly ledger: LedgerService,
+    private readonly quotes: QuotesService,
   ) {}
 
   /** Positions with performance, plus portfolio totals and allocation. */
-  async list(userId: string) {
+  async list(userId: string, { force = false } = {}) {
+    const board = await this.syncQuotes(userId, { force });
     const [positions, details] = await Promise.all([
       this.ledger.positions(userId),
       this.prisma.db.investment.findMany({
@@ -77,6 +82,7 @@ export class InvestmentsService {
         assetClass: position.assetClass,
         ticker: detail.ticker,
         quantity: detail.quantity,
+        ...quoteOf(detail, board),
         institution: detail.institution,
         startDate: detail.startDate.toISOString().slice(0, 10),
         maturityDate: detail.maturityDate?.toISOString().slice(0, 10) ?? null,
@@ -109,6 +115,8 @@ export class InvestmentsService {
   }
 
   async detail(userId: string, id: string) {
+    await this.find(userId, id);
+    const board = await this.syncQuotes(userId, { only: id });
     const investment = await this.find(userId, id);
     const [position] = (await this.ledger.positions(userId)).filter(
       (p) => p.id === id,
@@ -132,6 +140,7 @@ export class InvestmentsService {
       assetClass: investment.assetClass,
       ticker: investment.ticker,
       quantity: investment.quantity,
+      ...quoteOf(investment, board),
       institutionId: investment.institutionId,
       startDate: investment.startDate.toISOString().slice(0, 10),
       maturityDate: investment.maturityDate?.toISOString().slice(0, 10) ?? null,
@@ -144,6 +153,7 @@ export class InvestmentsService {
         id: valuation.id,
         date: valuation.date.toISOString().slice(0, 10),
         value: valuation.value.toString(),
+        auto: valuation.auto,
       })),
       movements: movements.map((movement) => ({
         id: movement.id,
@@ -166,8 +176,12 @@ export class InvestmentsService {
     // Simple mode: only today's value is known. Like an account's opening
     // balance, it counts from the start of tracking, and gains are measured
     // from here on (applied = value).
+    const quote = autoQuoteOf(input);
+    const currentValue = quote
+      ? await this.quotedNow(quote.coinId, input.quantity ?? '')
+      : input.currentValue!;
     const simple = input.openingApplied === undefined;
-    const opening = input.openingApplied ?? input.currentValue;
+    const opening = input.openingApplied ?? currentValue;
     const since = simple ? await this.trackingStart(userId, now) : startDate;
 
     const investment = await this.prisma.db.$transaction(async (tx) => {
@@ -179,6 +193,8 @@ export class InvestmentsService {
           assetClass: input.assetClass,
           ticker: input.ticker ?? '',
           quantity: input.quantity ?? '',
+          coinId: input.assetClass === 'CRYPTO' ? (input.coinId ?? null) : null,
+          autoQuote: quote !== null,
           openingApplied: opening,
           startDate: asDate(since),
           maturityDate: input.maturityDate ? asDate(input.maturityDate) : null,
@@ -191,19 +207,21 @@ export class InvestmentsService {
       // What was applied on the start date, then what it is worth today:
       // the history between them is a straight step, not invented returns.
       const valuations = simple
-        ? [{ date: since, value: input.currentValue }]
+        ? [{ date: since, value: currentValue }]
         : since < now && opening > 0n
           ? [
               { date: since, value: opening },
-              { date: now, value: input.currentValue },
+              { date: now, value: currentValue },
             ]
-          : [{ date: now, value: input.currentValue }];
+          : [{ date: now, value: currentValue }];
       await tx.investmentValuation.createMany({
         data: valuations.map((valuation) => ({
           userId,
           investmentId: created.id,
           date: asDate(valuation.date),
           value: valuation.value,
+          // Today's quoted value is refreshed in place from now on.
+          auto: quote !== null && valuation.date === now,
         })),
       });
       return created;
@@ -215,6 +233,7 @@ export class InvestmentsService {
     const input = parseBody(updateInvestmentSchema, body);
     await this.find(userId, id);
     await assertInstitution(this.prisma, userId, input.institutionId);
+    const quote = autoQuoteOf(input);
     await this.prisma.db.investment.update({
       where: { id },
       data: {
@@ -223,6 +242,8 @@ export class InvestmentsService {
         institutionId: input.institutionId ?? null,
         ticker: input.ticker ?? '',
         quantity: input.quantity ?? '',
+        coinId: input.assetClass === 'CRYPTO' ? (input.coinId ?? null) : null,
+        autoQuote: quote !== null,
         maturityDate: input.maturityDate ? asDate(input.maturityDate) : null,
         product: fixed(input.assetClass, input.product),
         indexer: fixed(input.assetClass, input.indexer),
@@ -309,6 +330,75 @@ export class InvestmentsService {
       })),
     });
     return { updated: input.items.length };
+  }
+
+  /** Refreshes the quote now (the button), then answers like `list`. */
+  refreshQuotes(userId: string) {
+    return this.list(userId, { force: true });
+  }
+
+  /**
+   * Values every auto-quoted position at quantity × today's quote: one
+   * valuation per day, refreshed in place, so past days keep their own
+   * quote and the net-worth history stays right. When the source is down
+   * nothing is written and the last value stands.
+   */
+  private async syncQuotes(
+    userId: string,
+    { force = false, only }: { force?: boolean; only?: string } = {},
+  ): Promise<QuoteBoard | null> {
+    const positions = await this.prisma.db.investment.findMany({
+      where: {
+        userId,
+        assetClass: 'CRYPTO',
+        autoQuote: true,
+        coinId: { not: null },
+        ...(only ? { id: only } : {}),
+      },
+      select: { id: true, coinId: true, quantity: true },
+    });
+    if (positions.length === 0) {
+      return null;
+    }
+    const board = await this.quotes.board({ force });
+    if (board.stale) {
+      return board;
+    }
+    const date = asDate(today());
+    for (const position of positions) {
+      const quote = board.quotes.get(position.coinId!);
+      const value = quote ? quotedValue(position.quantity, quote.price) : null;
+      if (value === null) continue;
+      const existing = await this.prisma.db.investmentValuation.findFirst({
+        where: { investmentId: position.id, date, auto: true },
+        orderBy: { createdAt: 'desc' },
+      });
+      if (!existing) {
+        await this.prisma.db.investmentValuation.create({
+          data: { userId, investmentId: position.id, date, value, auto: true },
+        });
+      } else if (existing.value !== value) {
+        // A fresh createdAt: the quoted value already reflects today's movements.
+        await this.prisma.db.investmentValuation.update({
+          where: { id: existing.id },
+          data: { value, createdAt: new Date() },
+        });
+      }
+    }
+    return board;
+  }
+
+  /** Value of a quantity at the current quote, for a new position. */
+  private async quotedNow(coinId: string, quantity: string): Promise<bigint> {
+    const board = await this.quotes.board();
+    const quote = board.quotes.get(coinId);
+    const value = quote ? quotedValue(quantity, quote.price) : null;
+    if (value === null) {
+      throw new ServiceUnavailableException(
+        'Cotação indisponível agora. Desligue a cotação automática e informe o valor.',
+      );
+    }
+    return value;
   }
 
   /** First day the user has anything recorded, or today. */
@@ -488,4 +578,38 @@ function lastUpdate(position: Position): string | null {
     }
   }
   return latest ? today(new Date(latest)) : null;
+}
+
+/** The coin to quote, when the position is auto-quoted crypto. */
+function autoQuoteOf(input: {
+  assetClass: string;
+  coinId?: string | null;
+  autoQuote?: boolean;
+}): { coinId: string } | null {
+  return input.assetClass === 'CRYPTO' && input.autoQuote && input.coinId
+    ? { coinId: input.coinId }
+    : null;
+}
+
+/**
+ * What the screen shows next to an auto-quoted position. Without any known
+ * price the quote is `stale` with nulls: the last value stands, never zero.
+ */
+export function quoteOf(
+  investment: { coinId: string | null; autoQuote: boolean },
+  board: QuoteBoard | null,
+) {
+  if (!investment.autoQuote || !investment.coinId) {
+    return { coinId: investment.coinId, autoQuote: false, quote: null };
+  }
+  const quote = board?.quotes.get(investment.coinId);
+  return {
+    coinId: investment.coinId,
+    autoQuote: true,
+    quote: {
+      price: quote?.price ?? null,
+      fetchedAt: quote?.fetchedAt.toISOString() ?? null,
+      stale: !quote || (board?.stale ?? true),
+    },
+  };
 }
