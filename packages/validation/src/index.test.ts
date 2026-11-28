@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
+  btcToSats,
   coinForSymbol,
+  satsToBtc,
   createInvestmentSchema,
   updateInvestmentSchema,
   cardPurchaseSchema,
@@ -231,5 +233,37 @@ describe("crypto quotes", () => {
   it("still asks for the value when it is manual", () => {
     expect(createInvestmentSchema.safeParse({ ...base, quantity: "1" }).success).toBe(false);
     expect(createInvestmentSchema.safeParse({ ...base, quantity: "1", currentValue: "100" }).success).toBe(true);
+  });
+});
+
+describe("bitcoin in sats", () => {
+  it("turns BTC text into whole sats without floats", () => {
+    expect(btcToSats("1")).toBe(100_000_000n);
+    expect(btcToSats("0,5")).toBe(50_000_000n);
+    expect(btcToSats("0.00000001")).toBe(1n);
+    // 0.1 + 0.2 style float error would show up here.
+    expect(btcToSats("0.3")).toBe(30_000_000n);
+    expect(btcToSats("21000000.12345678")).toBe(2_100_000_012_345_678n);
+  });
+
+  it("rejects less than one sat or text that is not a number", () => {
+    expect(btcToSats("0.000000001")).toBeNull();
+    expect(btcToSats("abc")).toBeNull();
+    expect(btcToSats("")).toBeNull();
+  });
+
+  it("writes sats back as BTC with no trailing zeros", () => {
+    expect(satsToBtc(50_000_000n)).toBe("0.5");
+    expect(satsToBtc(1n)).toBe("0.00000001");
+    expect(satsToBtc(200_000_000n)).toBe("2");
+    expect(satsToBtc(0n)).toBe("0");
+  });
+
+  it("refuses a bitcoin quantity finer than one sat", () => {
+    const base = { name: "Bitcoin", assetClass: "CRYPTO" as const, coinId: "bitcoin" as const };
+    expect(updateInvestmentSchema.safeParse({ ...base, quantity: "0.123456789" }).success).toBe(false);
+    expect(updateInvestmentSchema.safeParse({ ...base, quantity: "0,12345678" }).success).toBe(true);
+    // Other coins keep any precision.
+    expect(updateInvestmentSchema.safeParse({ ...base, coinId: "ethereum", quantity: "0.123456789" }).success).toBe(true);
   });
 });

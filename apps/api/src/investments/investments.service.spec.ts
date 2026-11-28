@@ -1,4 +1,9 @@
-import { fixedIncomeSummary, quoteOf } from './investments.service';
+import {
+  fixedIncomeSummary,
+  quantityOf,
+  quoteOf,
+  storedQuantity,
+} from './investments.service';
 
 describe('fixedIncomeSummary', () => {
   const base = { assetClass: 'FIXED_INCOME', maturityDate: null };
@@ -114,5 +119,51 @@ describe('quoteOf', () => {
     expect(quoteOf({ coinId: 'solana', autoQuote: true }, board).quote).toEqual(
       { price: null, fetchedAt: null, stale: true },
     );
+  });
+});
+
+describe('bitcoin quantity in sats', () => {
+  const btc = { assetClass: 'CRYPTO', coinId: 'bitcoin' };
+
+  it('stores bitcoin as whole sats and no typed text', () => {
+    expect(storedQuantity({ ...btc, quantity: '0,5' })).toEqual({
+      quantity: '',
+      sats: 50_000_000n,
+    });
+    expect(storedQuantity({ ...btc, quantity: '0.00000001' })).toEqual({
+      quantity: '',
+      sats: 1n,
+    });
+  });
+
+  it('keeps other positions as typed', () => {
+    expect(
+      storedQuantity({
+        assetClass: 'CRYPTO',
+        coinId: 'ethereum',
+        quantity: '1,5',
+      }),
+    ).toEqual({ quantity: '1,5', sats: null });
+    // A BTC coin outside crypto is not a coin at all.
+    expect(
+      storedQuantity({
+        assetClass: 'STOCK',
+        coinId: 'bitcoin',
+        quantity: '100',
+      }),
+    ).toEqual({ quantity: '100', sats: null });
+    expect(storedQuantity({ ...btc, quantity: '' })).toEqual({
+      quantity: '',
+      sats: null,
+    });
+  });
+
+  it('refuses less than one sat', () => {
+    expect(() => storedQuantity({ ...btc, quantity: '0.000000001' })).toThrow();
+  });
+
+  it('shows sats back as BTC text', () => {
+    expect(quantityOf({ quantity: '', sats: 12_345n })).toBe('0.00012345');
+    expect(quantityOf({ quantity: '100', sats: null })).toBe('100');
   });
 });

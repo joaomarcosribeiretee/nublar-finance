@@ -25,6 +25,7 @@ import {
 } from "@/lib/queries";
 import { bpsToPercentInput, liquidityLabels, parsePercentToBps, productLabels, rateLabel } from "@/lib/rates";
 import { cdiPreview, isTaxExempt, loadCdiBps, saveCdiBps } from "@/lib/yield";
+import { BitcoinHolding } from "./BitcoinUnit";
 import { GainText } from "./GainText";
 import { InvestmentForm } from "./InvestmentForm";
 import { QuoteStatus } from "./QuoteStatus";
@@ -63,6 +64,8 @@ export function InvestmentDetail({ id, onClose }: { id: string; onClose: () => v
       <FixedIncomeFacts data={data} />
 
       {data.autoQuote && data.quote ? <QuoteStatus coinId={data.coinId} quote={data.quote} /> : null}
+
+      {data.coinId === "bitcoin" && data.quantity ? <BitcoinHolding quantity={data.quantity} /> : null}
 
       <CdiPreview data={data} />
 
