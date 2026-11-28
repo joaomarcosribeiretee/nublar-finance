@@ -294,6 +294,26 @@ export function coinForSymbol(symbol: string): CoinId | null {
   return cryptoCoins.find((coin) => coin.symbol === upper)?.id ?? null;
 }
 
+/** 1 BTC = 100.000.000 sats, the smallest unit; BTC positions are stored in sats. */
+export const SATS_PER_BTC = 100_000_000n;
+
+/**
+ * "0,5" or "0.00012" BTC as whole sats, exact (no floats). Null when it is
+ * not a plain decimal or has more than 8 places (less than one sat).
+ */
+export function btcToSats(text: string): bigint | null {
+  const match = /^(\d+)(?:[.,](\d{1,8}))?$/.exec(text.trim());
+  if (!match) return null;
+  return BigInt(match[1]) * SATS_PER_BTC + BigInt((match[2] ?? "").padEnd(8, "0"));
+}
+
+/** Whole sats as BTC decimal text with "." and no trailing zeros: 50000000n → "0.5". */
+export function satsToBtc(sats: bigint): string {
+  const whole = sats / SATS_PER_BTC;
+  const fraction = (sats % SATS_PER_BTC).toString().padStart(8, "0").replace(/0+$/, "");
+  return fraction ? `${whole}.${fraction}` : whole.toString();
+}
+
 const nonNegativeMinorSchema = moneyAmountSchema.refine(
   (amount) => amount >= 0n,
   msg("amountNegative"),
@@ -356,6 +376,16 @@ function quoteNeedsQuantity(
   }
 }
 
+/** Bitcoin is kept in whole sats: at most 8 decimal places of BTC. */
+function bitcoinInSats(
+  input: { coinId?: string | null; quantity?: string },
+  ctx: z.RefinementCtx,
+) {
+  if (input.coinId === "bitcoin" && input.quantity && btcToSats(input.quantity) === null) {
+    ctx.addIssue({ code: "custom", path: ["quantity"], message: msg("invalidQuantity") });
+  }
+}
+
 const createInvestmentBaseSchema = investmentDetailsSchema.extend({
   /**
    * Already applied before tracking started; not an expense. Omitted when
@@ -372,6 +402,7 @@ const createInvestmentBaseSchema = investmentDetailsSchema.extend({
 export const createInvestmentSchema = createInvestmentBaseSchema.superRefine(
   (input, ctx) => {
     quoteNeedsQuantity(input, ctx);
+    bitcoinInSats(input, ctx);
     if (input.currentValue === undefined && !input.autoQuote) {
       ctx.addIssue({
         code: "custom",
@@ -382,8 +413,12 @@ export const createInvestmentSchema = createInvestmentBaseSchema.superRefine(
   },
 );
 
-export const updateInvestmentSchema =
-  investmentDetailsSchema.superRefine(quoteNeedsQuantity);
+export const updateInvestmentSchema = investmentDetailsSchema.superRefine(
+  (input, ctx) => {
+    quoteNeedsQuantity(input, ctx);
+    bitcoinInSats(input, ctx);
+  },
+);
 
 /** Today's value of several positions at once. */
 export const bulkValuationSchema = z.object({

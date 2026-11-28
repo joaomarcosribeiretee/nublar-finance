@@ -30,3 +30,10 @@ Investimentos de cripto em moedas suportadas valem **quantidade × cotação em 
 - Nada é gravado e o **último valor fica**, nunca zero.
 - A tela mostra um aviso discreto ("Não deu para atualizar a cotação. Mantendo o último valor.").
 - Uma posição nova com cotação ligada não pode ser criada sem cotação: a API pede para desligar o switch e informar o valor.
+
+## Bitcoin em sats (issue #12)
+
+- 1 BTC = 100.000.000 sats. A quantidade de Bitcoin é **guardada sempre em sats inteiros** (`Investment.sats`, BigInt); o texto `quantity` fica vazio nessas posições. Outras moedas seguem como texto digitado.
+- A API continua recebendo e devolvendo `quantity` em BTC (texto decimal, até 8 casas). Menos de 1 sat é recusado.
+- No app, a tela de detalhe e o formulário têm o seletor **BTC ⇄ sats**. Trocar a unidade só muda a exibição e converte o que está digitado; a escolha fica salva no aparelho.
+- Posições de Bitcoin já existentes foram convertidas para sats na migration `20261129120000_bitcoin_sats`.

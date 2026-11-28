@@ -1,12 +1,14 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { coinForSymbol } from "@nublar/validation";
+import { btcToSats, coinForSymbol, satsToBtc } from "@nublar/validation";
 import { Button } from "@/components/Button";
 import { controlClass, DecimalInput, Field, MoneyInput, TextInput } from "@/components/Field";
 import { FormFooter } from "@/components/Modal";
-import { sanitizeTicker } from "@/lib/input";
+import { MAX_SATS_DIGITS, satsToInput, typedToSats, type BtcUnit } from "@/lib/bitcoin";
+import { sanitizeInteger, sanitizeTicker } from "@/lib/input";
 import { Icon } from "@/components/Icon";
 import { Segmented } from "@/components/Segmented";
+import { BtcUnitToggle, useBtcUnit } from "./BitcoinUnit";
 import { useToast } from "@/components/Toast";
 import { errorMessage } from "@/lib/api";
 import { todayLocal } from "@/lib/dates";
@@ -84,7 +86,12 @@ export function InvestmentForm({
   const [name, setName] = useState(investment?.name ?? "");
   const [institutionId, setInstitutionId] = useState(investment?.institutionId ?? "");
   const [ticker, setTicker] = useState(investment?.ticker ?? "");
-  const [quantity, setQuantity] = useState(investment?.quantity ?? "");
+  const [btcUnit, setBtcUnit] = useBtcUnit();
+  // Bitcoin opens in the unit last chosen; the API sends BTC text.
+  const [quantity, setQuantity] = useState(() => {
+    const sats = investment?.coinId === "bitcoin" ? btcToSats(investment.quantity) : null;
+    return sats === null ? (investment?.quantity ?? "") : satsToInput(sats, btcUnit);
+  });
   const [maturityDate, setMaturityDate] = useState(investment?.maturityDate ?? "");
   // On by default for coins with a quote; an existing position keeps its choice.
   const [autoQuote, setAutoQuote] = useState(investment?.autoQuote ?? true);
@@ -101,6 +108,15 @@ export function InvestmentForm({
   const rateBps = rate.trim() ? parsePercentToBps(rate) : null;
   const coinId = assetClass === "CRYPTO" ? coinForSymbol(ticker) : null;
   const quoting = coinId !== null && autoQuote;
+  const bitcoin = coinId === "bitcoin";
+
+  /** Switching the unit converts what is typed, so nothing is lost. */
+  function chooseBtcUnit(next: BtcUnit) {
+    const sats = typedToSats(quantity.replace(/[.,]$/, ""), btcUnit);
+    if (sats !== null) setQuantity(satsToInput(sats, next));
+    else if (next === "SATS") setQuantity("");
+    setBtcUnit(next);
+  }
 
   // A sensible name when the user does not type one: "CDB Nubank 110% do CDI".
   const suggestedName = fixedIncome
@@ -125,10 +141,19 @@ export function InvestmentForm({
       return;
     }
     // A trailing separator ("10,") is a number still being typed, not a fraction.
-    const typedQuantity = quantity.trim().replace(/[.,]$/, "");
+    let typedQuantity = quantity.trim().replace(/[.,]$/, "");
     if (quoting && !/[1-9]/.test(typedQuantity)) {
       setError(t("investments.form.errors.quantity"));
       return;
+    }
+    // Bitcoin goes to the API as BTC text, which it keeps in whole sats.
+    if (bitcoin && typedQuantity) {
+      const sats = typedToSats(typedQuantity, btcUnit);
+      if (sats === null) {
+        setError(t("investments.bitcoin.invalid"));
+        return;
+      }
+      typedQuantity = satsToBtc(sats);
     }
     const details = {
       name: name.trim() || suggestedName,
@@ -340,7 +365,29 @@ export function InvestmentForm({
             />
           </Field>
           <Field label={quoting ? t("investments.form.quantityAuto") : t("investments.form.quantity")}>
-            <DecimalInput placeholder={assetClass === "CRYPTO" ? "0,5" : "100"} decimals={8} wholeDigits={12} value={quantity} onChange={setQuantity} />
+            {bitcoin ? (
+              <span className="relative block">
+                {btcUnit === "SATS" ? (
+                  <input
+                    className={`${controlClass} tabular pr-28`}
+                    type="text"
+                    inputMode="numeric"
+                    autoComplete="off"
+                    placeholder="50000000"
+                    value={quantity}
+                    onChange={(event) => setQuantity(sanitizeInteger(event.target.value, MAX_SATS_DIGITS))}
+                  />
+                ) : (
+                  <DecimalInput className={`${controlClass} tabular pr-28`} placeholder="0,5" decimals={8} wholeDigits={8} value={quantity} onChange={setQuantity} />
+                )}
+                <span className="absolute top-1/2 right-0.5 -translate-y-1/2">
+                  <BtcUnitToggle unit={btcUnit} onChange={chooseBtcUnit} />
+                </span>
+              </span>
+            ) : (
+              <DecimalInput placeholder={assetClass === "CRYPTO" ? "0,5" : "100"} decimals={8} wholeDigits={12} value={quantity} onChange={setQuantity} />
+            )}
+            {bitcoin ? <span className="text-[11px] text-faint">{t("investments.bitcoin.hint")}</span> : null}
           </Field>
           {coinId ? (
             <button

@@ -260,6 +260,9 @@ model Investment {
   /// whose value is quantity × quote.
   ticker         String                @default("")
   quantity       String                @default("")
+  /// Bitcoin only: the quantity in whole sats (1 BTC = 100.000.000 sats), so
+  /// it never goes through floats; `quantity` stays empty. See btcToSats.
+  sats           BigInt?
   /// Crypto only: CoinGecko id ("bitcoin"); see cryptoCoins in @nublar/validation.
   coinId         String?
   /// On: the API values the position with the coin's BRL quote every day.

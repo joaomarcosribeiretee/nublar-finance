@@ -351,7 +351,7 @@ Patrimônio, saldo, receitas, despesas, investimentos, faturas, próximos compro
 
 ## Fase 4 — Investimentos
 
-Renda fixa, ações, FIIs, ETFs, cripto, distribuição e rentabilidade. Cripto tem cotação automática em BRL; regras em `docs/decisions/0005-cotacao-automatica-de-cripto.md`.
+Renda fixa, ações, FIIs, ETFs, cripto, distribuição e rentabilidade. Cripto tem cotação automática em BRL e Bitcoin pode ser visto em BTC ou sats (guardado em sats inteiros); regras em `docs/decisions/0005-cotacao-automatica-de-cripto.md`.
 
 ## Fase 5 — Planejamento
 

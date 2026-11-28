@@ -134,5 +134,17 @@
     "unavailable": "Cotação indisponível no momento. Mantendo o último valor.",
     "price": "1 {{symbol}} = {{price}}",
     "auto": "cotação automática"
+  },
+  "bitcoin": {
+    "unit": "Unidade do Bitcoin",
+    "btc": "BTC",
+    "sats": "sats",
+    "holding": "Você tem",
+    "amount": {
+      "BTC": "{{amount}} BTC",
+      "SATS": "{{amount}} sats"
+    },
+    "hint": "1 BTC = 100.000.000 sats",
+    "invalid": "Quantidade inválida. Em sats, use só números inteiros; em BTC, até 8 casas."
   }
 }

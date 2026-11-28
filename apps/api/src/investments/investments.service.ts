@@ -6,9 +6,11 @@ import {
   ServiceUnavailableException,
 } from '@nestjs/common';
 import {
+  btcToSats,
   bulkValuationSchema,
   createInvestmentSchema,
   investmentMovementSchema,
+  satsToBtc,
   updateInvestmentSchema,
   valuationSchema,
 } from '@nublar/validation';
@@ -81,7 +83,7 @@ export class InvestmentsService {
         name: position.name,
         assetClass: position.assetClass,
         ticker: detail.ticker,
-        quantity: detail.quantity,
+        quantity: quantityOf(detail),
         ...quoteOf(detail, board),
         institution: detail.institution,
         startDate: detail.startDate.toISOString().slice(0, 10),
@@ -139,7 +141,7 @@ export class InvestmentsService {
       name: investment.name,
       assetClass: investment.assetClass,
       ticker: investment.ticker,
-      quantity: investment.quantity,
+      quantity: quantityOf(investment),
       ...quoteOf(investment, board),
       institutionId: investment.institutionId,
       startDate: investment.startDate.toISOString().slice(0, 10),
@@ -192,8 +194,8 @@ export class InvestmentsService {
           name: input.name,
           assetClass: input.assetClass,
           ticker: input.ticker ?? '',
-          quantity: input.quantity ?? '',
-          coinId: input.assetClass === 'CRYPTO' ? (input.coinId ?? null) : null,
+          ...storedQuantity(input),
+          coinId: coinOf(input),
           autoQuote: quote !== null,
           openingApplied: opening,
           startDate: asDate(since),
@@ -241,8 +243,8 @@ export class InvestmentsService {
         assetClass: input.assetClass,
         institutionId: input.institutionId ?? null,
         ticker: input.ticker ?? '',
-        quantity: input.quantity ?? '',
-        coinId: input.assetClass === 'CRYPTO' ? (input.coinId ?? null) : null,
+        ...storedQuantity(input),
+        coinId: coinOf(input),
         autoQuote: quote !== null,
         maturityDate: input.maturityDate ? asDate(input.maturityDate) : null,
         product: fixed(input.assetClass, input.product),
@@ -355,7 +357,7 @@ export class InvestmentsService {
         coinId: { not: null },
         ...(only ? { id: only } : {}),
       },
-      select: { id: true, coinId: true, quantity: true },
+      select: { id: true, coinId: true, quantity: true, sats: true },
     });
     if (positions.length === 0) {
       return null;
@@ -367,7 +369,9 @@ export class InvestmentsService {
     const date = asDate(today());
     for (const position of positions) {
       const quote = board.quotes.get(position.coinId!);
-      const value = quote ? quotedValue(position.quantity, quote.price) : null;
+      const value = quote
+        ? quotedValue(quantityOf(position), quote.price)
+        : null;
       if (value === null) continue;
       const existing = await this.prisma.db.investmentValuation.findFirst({
         where: { investmentId: position.id, date, auto: true },
@@ -581,6 +585,43 @@ function lastUpdate(position: Position): string | null {
 }
 
 /** The coin to quote, when the position is auto-quoted crypto. */
+function coinOf(input: {
+  assetClass: string;
+  coinId?: string | null;
+}): string | null {
+  return input.assetClass === 'CRYPTO' ? (input.coinId ?? null) : null;
+}
+
+/**
+ * Bitcoin is stored in whole sats, never as typed text, so there is no
+ * floating-point drift. Every other position keeps the text as typed.
+ */
+export function storedQuantity(input: {
+  assetClass: string;
+  coinId?: string | null;
+  quantity?: string;
+}): { quantity: string; sats: bigint | null } {
+  const quantity = input.quantity ?? '';
+  if (coinOf(input) !== 'bitcoin' || !quantity) {
+    return { quantity, sats: null };
+  }
+  const sats = btcToSats(quantity);
+  if (sats === null) {
+    throw new BadRequestException('Quantidade inválida');
+  }
+  return { quantity: '', sats };
+}
+
+/** The quantity as the API shows it: bitcoin as BTC text, from its sats. */
+export function quantityOf(investment: {
+  quantity: string;
+  sats: bigint | null;
+}): string {
+  return investment.sats !== null
+    ? satsToBtc(investment.sats)
+    : investment.quantity;
+}
+
 function autoQuoteOf(input: {
   assetClass: string;
   coinId?: string | null;

@@ -134,5 +134,17 @@
     "unavailable": "Quote unavailable right now. Keeping the last value.",
     "price": "1 {{symbol}} = {{price}}",
     "auto": "automatic quote"
+  },
+  "bitcoin": {
+    "unit": "Bitcoin unit",
+    "btc": "BTC",
+    "sats": "sats",
+    "holding": "You have",
+    "amount": {
+      "BTC": "{{amount}} BTC",
+      "SATS": "{{amount}} sats"
+    },
+    "hint": "1 BTC = 100,000,000 sats",
+    "invalid": "Invalid quantity. In sats, use whole numbers only; in BTC, up to 8 decimal places."
   }
 }
